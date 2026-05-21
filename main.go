@@ -1,66 +1,35 @@
 package main
 
 import (
-	"fmt"
 	"github/teohen/mgm-tto/constants"
 	"github/teohen/mgm-tto/entity"
-	"github/teohen/mgm-tto/grid"
+	"github/teohen/mgm-tto/game"
+	"github/teohen/mgm-tto/spritebank"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 var (
 	running = true
-	g       grid.Grid
-
-	npc entity.NPC
+	g       game.Game
 )
-
-func drawScene() {
-	g.Draw()
-
-	npc.Draw()
-}
-
-func input() {
-	mousePos := rl.GetMousePosition()
-
-	if rl.IsMouseButtonPressed(rl.MouseLeftButton) {
-		g.IsDragging = true
-		g.DragStart = mousePos
-		g.DragEnd = mousePos
-	}
-
-	if rl.IsMouseButtonReleased(rl.MouseLeftButton) && g.IsDragging {
-		g.DragEnd = mousePos
-	}
-
-	if rl.IsMouseButtonReleased(rl.MouseLeftButton) && g.IsDragging {
-		g.IsDragging = false
-		g.SelectTilesInBox()
-	}
-}
-
-func update() {
-	running = !rl.WindowShouldClose()
-}
-
-func render() {
-	rl.BeginDrawing()
-	rl.ClearBackground(rl.White)
-	drawScene()
-	rl.EndDrawing()
-}
 
 func init() {
 	rl.InitWindow(constants.ScreenW, constants.ScreenH, "mgm-tto")
 	rl.SetExitKey(rl.KeyEscape)
 	rl.SetTargetFPS(60)
-	g = grid.NewGrid(constants.GridCols, constants.GridRows)
-	npc = entity.New("teo", "teo", 10, 10)
+
+	spritebank.LoadAll()
+	g = game.New()
+	npc := entity.New("teo", "teo", 10, 10)
+	g.AddNPC(&npc)
+
+	tree := entity.NewTree("tree-1", 30, 11, 3, 5)
+	g.AddTree(tree)
 }
 
 func quit() {
+	spritebank.UnloadAll()
 	rl.CloseWindow()
 }
 
@@ -68,12 +37,13 @@ func main() {
 	defer quit()
 
 	for running {
-		input()
-		update()
-		render()
-	}
-}
+		g.Input()
+		g.Update()
+		running = !rl.WindowShouldClose()
 
-func pr() {
-	fmt.Println("")
+		rl.BeginDrawing()
+		rl.ClearBackground(rl.White)
+		g.Draw()
+		rl.EndDrawing()
+	}
 }
