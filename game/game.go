@@ -6,7 +6,6 @@ import (
 
 	"github/teohen/mgm-tto/constants"
 	"github/teohen/mgm-tto/entity"
-	"github/teohen/mgm-tto/pathfinding"
 	"github/teohen/mgm-tto/world"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -14,11 +13,14 @@ import (
 
 const debugPrintInterval = 60
 
+type canTarget interface {
+	SetTarget(int, int, *world.World)
+}
+
 type Game struct {
-	world   world.World
-	villagers    []*entity.Villager
-	trees   []entity.Tree
-	camera  rl.Camera2D
+	world    world.World
+	entities []entity.Entity
+	camera   rl.Camera2D
 
 	isDragging      bool
 	dragStart       rl.Vector2
@@ -36,9 +38,8 @@ func New() Game {
 	w := world.NewWorld(constants.GridRows, constants.GridCols)
 
 	g := Game{
-		world: w,
-		villagers:  []*entity.Villager{},
-		trees: []entity.Tree{},
+		world:    w,
+		entities: []entity.Entity{},
 		camera: rl.Camera2D{
 			Target:   rl.NewVector2(float32(constants.GridCols)*constants.TileSize/2, float32(constants.GridRows)*constants.TileSize/2),
 			Offset:   rl.NewVector2(constants.ScreenW/2, constants.ScreenH/2),
@@ -54,12 +55,12 @@ func New() Game {
 }
 
 func (g *Game) AddVillager(v *entity.Villager) {
-	g.villagers = append(g.villagers, v)
+	g.entities = append(g.entities, v)
 	g.world.Occupy(v.X, v.Y)
 }
 
-func (g *Game) AddTree(tree entity.Tree) {
-	g.trees = append(g.trees, tree)
+func (g *Game) AddTree(tree *entity.Tree) {
+	g.entities = append(g.entities, tree)
 	g.world.Occupy(tree.X, tree.Y)
 }
 
@@ -102,8 +103,16 @@ func (g *Game) Update() {
 	ticks := g.clock.Advance(dt)
 
 	for i := 0; i < ticks; i++ {
-		for _, v := range g.villagers {
-			g.updateVillager(v)
+		for _, e := range g.entities {
+			event := e.Tick(&g.world)
+			switch event {
+			case entity.EventIdle, entity.EventArrived:
+				if t, ok := e.(canTarget); ok {
+					if job := g.jobQueue.Pop(); job != nil {
+						t.SetTarget(job.TargetX, job.TargetY, &g.world)
+					}
+				}
+			}
 		}
 	}
 
@@ -126,90 +135,13 @@ func (g *Game) Update() {
 		rl.GetFPS(), g.camera.Zoom, g.clock.TickCount(), screenPos.X, screenPos.Y, col, row)
 }
 
-func (g *Game) updateVillager(v *entity.Villager) {
-	switch v.State {
-	case entity.StateIdle:
-		job := g.jobQueue.Pop()
-		if job == nil {
-			return
-		}
-		v.TargetX = job.TargetX
-		v.TargetY = job.TargetY
-		from := pathfinding.Point{X: v.X, Y: v.Y}
-		to := pathfinding.Point{X: v.TargetX, Y: v.TargetY}
-		path := pathfinding.FindPath(&g.world, from, to)
-		if path == nil {
-			return
-		}
-		v.Waypoints = path
-		v.State = entity.StateMoving
-
-	case entity.StateMoving:
-		if len(v.Waypoints) == 0 {
-			v.State = entity.StateArrived
-			return
-		}
-		next := v.Waypoints[0]
-		if next.X == v.TargetX && next.Y == v.TargetY {
-			v.State = entity.StateArrived
-			return
-		}
-		if g.world.IsOccupied(next.X, next.Y) {
-			v.State = entity.StateWaiting
-			v.WaitTicks = 0
-			v.WaitCount++
-			return
-		}
-		g.world.Vacate(v.X, v.Y)
-		v.X = next.X
-		v.Y = next.Y
-		g.world.Occupy(v.X, v.Y)
-		v.Waypoints = v.Waypoints[1:]
-		v.WaitCount = 0
-
-	case entity.StateWaiting:
-		v.WaitTicks++
-		if v.WaitTicks >= entity.WaitDuration {
-			if v.WaitCount >= entity.MaxRetries {
-				v.State = entity.StateIdle
-				v.WaitCount = 0
-				v.TargetX = 0
-				v.TargetY = 0
-				v.Waypoints = nil
-				return
-			}
-			from := pathfinding.Point{X: v.X, Y: v.Y}
-			to := pathfinding.Point{X: v.TargetX, Y: v.TargetY}
-			path := pathfinding.FindPath(&g.world, from, to)
-			if len(path) == 0 {
-				v.State = entity.StateIdle
-				v.WaitCount = 0
-				return
-			}
-			v.Waypoints = path
-			v.State = entity.StateMoving
-		}
-
-	case entity.StateArrived:
-		v.State = entity.StateIdle
-		v.WaitCount = 0
-		v.TargetX = 0
-		v.TargetY = 0
-		v.Waypoints = nil
-	}
-}
-
 func (g *Game) Draw() {
 	rl.BeginMode2D(g.camera)
 
 	g.world.Draw()
 
-	for _, tree := range g.trees {
-		tree.Draw()
-	}
-
-	for _, v := range g.villagers {
-		v.Draw()
+	for _, e := range g.entities {
+		e.Draw()
 	}
 
 	if g.isDragging {

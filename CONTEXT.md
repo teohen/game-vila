@@ -64,6 +64,14 @@ _Avoid_: Viewport, view
 A package-level variable that owns loaded textures and makes them available to any entity that needs to draw. Exposes `Terrain` and `Human` textures. Created by the `spritebank` package, lifecycle managed via `LoadAll()` / `UnloadAll()`.
 _Avoid_: TextureManager, AssetRegistry, resource cache
 
+**Trait**:
+A composable unit of behavior and state embedded into an Entity. Each trait owns its own logic and lifecycle. Traits are mixed into entities via Go struct embedding. An entity may compose zero or more traits.
+_Avoid_: Component, module, plugin, system
+
+**Movement**:
+A trait that handles grid-based movement. Owns position (X, Y), target (TargetX, TargetY), path (Waypoints), and a state machine (Idle, Moving, Waiting, Arrived). Exposes `Update(world)` which advances one tick of movement, `SetTarget(x, y, world)` which initiates pathfinding toward a destination, and `Pos()` which returns current coordinates. Uses A* pathfinding via the pathfinding package and manages Occupy/Vacate on the World as it moves. Meant to be embedded in any mobile entity (Villager, future Animals, Vehicles).
+_Avoid_: Navigation, locomotion, mover
+
 **Tick**:
-The fundamental unit of game time. A pulse that fires at a fixed interval (configurable, independent of frame rate). On each tick the game advances its simulation: Villagers step, actions are processed, resources are updated. Ticks are deterministic — same interval always yields same behavior regardless of FPS.
+The fundamental unit of game time. A pulse that fires at a fixed interval (configurable, independent of frame rate). On each tick the game advances its simulation: entities Tick, actions are processed, resources are updated. Ticks are deterministic — same interval always yields same behavior regardless of FPS.
 _Avoid_: Frame, step, beat, cycle, turn
