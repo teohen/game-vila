@@ -17,6 +17,10 @@ func NewJobQueue() JobQueue {
 	}
 }
 
+func (q *JobQueue) Push(targetX, targetY int) {
+	q.jobs = append(q.jobs, Job{TargetX: targetX, TargetY: targetY})
+}
+
 func (q *JobQueue) Pop() *Job {
 	if len(q.jobs) == 0 {
 		return nil

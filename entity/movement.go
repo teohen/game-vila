@@ -54,6 +54,11 @@ func (m *Movement) Update(w *world.World) MovementEvent {
 		}
 		next := m.Waypoints[0]
 		if next.X == m.TargetX && next.Y == m.TargetY {
+			w.Vacate(m.X, m.Y)
+			m.X = next.X
+			m.Y = next.Y
+			w.Occupy(m.X, m.Y)
+			m.Waypoints = m.Waypoints[1:]
 			m.State = StateArrived
 			return EventArrived
 		}
