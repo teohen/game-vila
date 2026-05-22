@@ -6,21 +6,15 @@ import (
 
 	"github/teohen/mgm-tto/constants"
 	"github/teohen/mgm-tto/entity"
-	"github/teohen/mgm-tto/world"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 const debugPrintInterval = 60
 
-type canTarget interface {
-	SetTarget(int, int, *world.World)
-}
-
 type Game struct {
-	world    world.World
-	entities []entity.Entity
-	camera   rl.Camera2D
+	simulation *Simulation
+	camera     rl.Camera2D
 
 	isDragging      bool
 	dragStart       rl.Vector2
@@ -30,16 +24,12 @@ type Game struct {
 	debugMode       bool
 	debugFrameCount int
 
-	clock    Clock
-	jobQueue entity.JobQueue
+	clock Clock
 }
 
 func New() Game {
-	w := world.NewWorld(constants.GridRows, constants.GridCols)
-
-	g := Game{
-		world:    w,
-		entities: []entity.Entity{},
+	return Game{
+		simulation: NewSimulationDefault(),
 		camera: rl.Camera2D{
 			Target:   rl.NewVector2(float32(constants.GridCols)*constants.TileSize/2, float32(constants.GridRows)*constants.TileSize/2),
 			Offset:   rl.NewVector2(constants.ScreenW/2, constants.ScreenH/2),
@@ -48,20 +38,15 @@ func New() Game {
 		},
 		selected: make(map[rl.Vector2]bool),
 		clock:    newClock(),
-		jobQueue: entity.NewJobQueue(),
 	}
-
-	return g
 }
 
 func (g *Game) AddVillager(v *entity.Villager) {
-	g.entities = append(g.entities, v)
-	g.world.Occupy(v.X, v.Y)
+	g.simulation.AddVillager(v)
 }
 
 func (g *Game) AddTree(tree *entity.Tree) {
-	g.entities = append(g.entities, tree)
-	g.world.Occupy(tree.X, tree.Y)
+	g.simulation.AddTree(tree)
 }
 
 func (g *Game) Input() {
@@ -103,17 +88,7 @@ func (g *Game) Update() {
 	ticks := g.clock.Advance(dt)
 
 	for i := 0; i < ticks; i++ {
-		for _, e := range g.entities {
-			event := e.Tick(&g.world)
-			switch event {
-			case entity.EventIdle, entity.EventArrived:
-				if t, ok := e.(canTarget); ok {
-					if job := g.jobQueue.Pop(); job != nil {
-						t.SetTarget(job.TargetX, job.TargetY, &g.world)
-					}
-				}
-			}
-		}
+		g.simulation.Tick()
 	}
 
 	if !g.debugMode {
@@ -138,9 +113,9 @@ func (g *Game) Update() {
 func (g *Game) Draw() {
 	rl.BeginMode2D(g.camera)
 
-	g.world.Draw()
+	g.simulation.World().Draw()
 
-	for _, e := range g.entities {
+	for _, e := range g.simulation.Entities() {
 		e.Draw()
 	}
 
@@ -197,8 +172,8 @@ func (g *Game) selectTilesInBox() {
 
 	g.selected = make(map[rl.Vector2]bool)
 
-	for row := 0; row < g.world.Rows(); row++ {
-		for col := 0; col < g.world.Cols(); col++ {
+	for row := 0; row < g.simulation.World().Rows(); row++ {
+		for col := 0; col < g.simulation.World().Cols(); col++ {
 			x, y := constants.WorldToScreen(col, row)
 			tileCenterX := float64(x + constants.TileSize/2)
 			tileCenterY := float64(y + constants.TileSize/2)

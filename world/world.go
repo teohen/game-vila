@@ -21,6 +21,26 @@ func NewWorld(rows, cols int) World {
 	return w
 }
 
+func NewWorldFromCells(cells [][]CellType) *World {
+	rows := len(cells)
+	if rows == 0 {
+		return &World{}
+	}
+	cols := len(cells[0])
+	w := &World{
+		cells:    make([][]Cell, rows),
+		occupied: make([][]bool, rows),
+	}
+	for r := range cells {
+		w.cells[r] = make([]Cell, cols)
+		w.occupied[r] = make([]bool, cols)
+		for c := range cells[r] {
+			w.cells[r][c] = newTile(cells[r][c], r, c)
+		}
+	}
+	return w
+}
+
 func (w *World) Draw() {
 	for _, row := range w.cells {
 		for _, cell := range row {
