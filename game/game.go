@@ -16,7 +16,7 @@ const debugPrintInterval = 60
 
 type Game struct {
 	world   world.World
-	npcs    []*entity.NPC
+	villagers    []*entity.Villager
 	trees   []entity.Tree
 	camera  rl.Camera2D
 
@@ -37,7 +37,7 @@ func New() Game {
 
 	g := Game{
 		world: w,
-		npcs:  []*entity.NPC{},
+		villagers:  []*entity.Villager{},
 		trees: []entity.Tree{},
 		camera: rl.Camera2D{
 			Target:   rl.NewVector2(float32(constants.GridCols)*constants.TileSize/2, float32(constants.GridRows)*constants.TileSize/2),
@@ -53,9 +53,9 @@ func New() Game {
 	return g
 }
 
-func (g *Game) AddNPC(npc *entity.NPC) {
-	g.npcs = append(g.npcs, npc)
-	g.world.Occupy(npc.X, npc.Y)
+func (g *Game) AddVillager(v *entity.Villager) {
+	g.villagers = append(g.villagers, v)
+	g.world.Occupy(v.X, v.Y)
 }
 
 func (g *Game) AddTree(tree entity.Tree) {
@@ -102,8 +102,8 @@ func (g *Game) Update() {
 	ticks := g.clock.Advance(dt)
 
 	for i := 0; i < ticks; i++ {
-		for _, npc := range g.npcs {
-			g.updateNPC(npc)
+		for _, v := range g.villagers {
+			g.updateVillager(v)
 		}
 	}
 
@@ -126,76 +126,76 @@ func (g *Game) Update() {
 		rl.GetFPS(), g.camera.Zoom, g.clock.TickCount(), screenPos.X, screenPos.Y, col, row)
 }
 
-func (g *Game) updateNPC(npc *entity.NPC) {
-	switch npc.State {
+func (g *Game) updateVillager(v *entity.Villager) {
+	switch v.State {
 	case entity.StateIdle:
 		job := g.jobQueue.Pop()
 		if job == nil {
 			return
 		}
-		npc.TargetX = job.TargetX
-		npc.TargetY = job.TargetY
-		from := pathfinding.Point{X: npc.X, Y: npc.Y}
-		to := pathfinding.Point{X: npc.TargetX, Y: npc.TargetY}
+		v.TargetX = job.TargetX
+		v.TargetY = job.TargetY
+		from := pathfinding.Point{X: v.X, Y: v.Y}
+		to := pathfinding.Point{X: v.TargetX, Y: v.TargetY}
 		path := pathfinding.FindPath(&g.world, from, to)
 		if path == nil {
 			return
 		}
-		npc.Waypoints = path
-		npc.State = entity.StateMoving
+		v.Waypoints = path
+		v.State = entity.StateMoving
 
 	case entity.StateMoving:
-		if len(npc.Waypoints) == 0 {
-			npc.State = entity.StateArrived
+		if len(v.Waypoints) == 0 {
+			v.State = entity.StateArrived
 			return
 		}
-		next := npc.Waypoints[0]
-		if next.X == npc.TargetX && next.Y == npc.TargetY {
-			npc.State = entity.StateArrived
+		next := v.Waypoints[0]
+		if next.X == v.TargetX && next.Y == v.TargetY {
+			v.State = entity.StateArrived
 			return
 		}
 		if g.world.IsOccupied(next.X, next.Y) {
-			npc.State = entity.StateWaiting
-			npc.WaitTicks = 0
-			npc.WaitCount++
+			v.State = entity.StateWaiting
+			v.WaitTicks = 0
+			v.WaitCount++
 			return
 		}
-		g.world.Vacate(npc.X, npc.Y)
-		npc.X = next.X
-		npc.Y = next.Y
-		g.world.Occupy(npc.X, npc.Y)
-		npc.Waypoints = npc.Waypoints[1:]
-		npc.WaitCount = 0
+		g.world.Vacate(v.X, v.Y)
+		v.X = next.X
+		v.Y = next.Y
+		g.world.Occupy(v.X, v.Y)
+		v.Waypoints = v.Waypoints[1:]
+		v.WaitCount = 0
 
 	case entity.StateWaiting:
-		npc.WaitTicks++
-		if npc.WaitTicks >= entity.WaitDuration {
-			if npc.WaitCount >= entity.MaxRetries {
-				npc.State = entity.StateIdle
-				npc.WaitCount = 0
-				npc.TargetX = 0
-				npc.TargetY = 0
-				npc.Waypoints = nil
+		v.WaitTicks++
+		if v.WaitTicks >= entity.WaitDuration {
+			if v.WaitCount >= entity.MaxRetries {
+				v.State = entity.StateIdle
+				v.WaitCount = 0
+				v.TargetX = 0
+				v.TargetY = 0
+				v.Waypoints = nil
 				return
 			}
-			from := pathfinding.Point{X: npc.X, Y: npc.Y}
-			to := pathfinding.Point{X: npc.TargetX, Y: npc.TargetY}
+			from := pathfinding.Point{X: v.X, Y: v.Y}
+			to := pathfinding.Point{X: v.TargetX, Y: v.TargetY}
 			path := pathfinding.FindPath(&g.world, from, to)
 			if len(path) == 0 {
-				npc.State = entity.StateIdle
-				npc.WaitCount = 0
+				v.State = entity.StateIdle
+				v.WaitCount = 0
 				return
 			}
-			npc.Waypoints = path
-			npc.State = entity.StateMoving
+			v.Waypoints = path
+			v.State = entity.StateMoving
 		}
 
 	case entity.StateArrived:
-		npc.State = entity.StateIdle
-		npc.WaitCount = 0
-		npc.TargetX = 0
-		npc.TargetY = 0
-		npc.Waypoints = nil
+		v.State = entity.StateIdle
+		v.WaitCount = 0
+		v.TargetX = 0
+		v.TargetY = 0
+		v.Waypoints = nil
 	}
 }
 
@@ -208,8 +208,8 @@ func (g *Game) Draw() {
 		tree.Draw()
 	}
 
-	for _, npc := range g.npcs {
-		npc.Draw()
+	for _, v := range g.villagers {
+		v.Draw()
 	}
 
 	if g.isDragging {

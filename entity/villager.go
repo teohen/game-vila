@@ -13,29 +13,29 @@ const (
 	MaxRetries   = 10
 )
 
-type NPCState int
+type VillagerState int
 
 const (
-	StateIdle    NPCState = 0
-	StateMoving  NPCState = 1
-	StateWaiting NPCState = 2
-	StateArrived NPCState = 3
+	StateIdle    VillagerState = 0
+	StateMoving  VillagerState = 1
+	StateWaiting VillagerState = 2
+	StateArrived VillagerState = 3
 )
 
-type NPCType int
+type VillagerType int
 
 const (
-	Human NPCType = 1
+	Human VillagerType = 1
 )
 
-type NPC struct {
+type Villager struct {
 	ID   string
 	name string
-	Type NPCType
+	Type VillagerType
 	X    int
 	Y    int
 
-	State     NPCState
+	State     VillagerState
 	TargetX   int
 	TargetY   int
 	Waypoints []pathfinding.Point
@@ -43,8 +43,8 @@ type NPC struct {
 	WaitCount int
 }
 
-func New(id, name string, x, y int) NPC {
-	return NPC{
+func NewVillager(id, name string, x, y int) Villager {
+	return Villager{
 		ID:        id,
 		name:      name,
 		X:         x,
@@ -56,13 +56,13 @@ func New(id, name string, x, y int) NPC {
 	}
 }
 
-func getSource(n *NPC) (rl.Rectangle, rl.Rectangle) {
+func getSource(v *Villager) (rl.Rectangle, rl.Rectangle) {
 	src := rl.NewRectangle(0, 0, 0, 0)
 	dst := rl.NewRectangle(0, 0, 0, 0)
 
-	switch n.Type {
+	switch v.Type {
 	case Human:
-		x, y := constants.WorldToScreen(n.X, n.Y)
+		x, y := constants.WorldToScreen(v.X, v.Y)
 		dst.X = x
 		dst.Y = y
 
@@ -78,7 +78,7 @@ func getSource(n *NPC) (rl.Rectangle, rl.Rectangle) {
 	return src, dst
 }
 
-func (n *NPC) Draw() {
-	src, dst := getSource(n)
+func (v *Villager) Draw() {
+	src, dst := getSource(v)
 	rl.DrawTexturePro(spritebank.Human, src, dst, rl.NewVector2(0, 0), 0, rl.White)
 }
