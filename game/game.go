@@ -6,7 +6,6 @@ import (
 
 	"github/teohen/mgm-tto/constants"
 	"github/teohen/mgm-tto/entity"
-	"github/teohen/mgm-tto/pathfinding"
 	"github/teohen/mgm-tto/world"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -14,11 +13,14 @@ import (
 
 const debugPrintInterval = 60
 
+type canTarget interface {
+	SetTarget(int, int, *world.World)
+}
+
 type Game struct {
-	world   world.World
-	npcs    []*entity.NPC
-	trees   []entity.Tree
-	camera  rl.Camera2D
+	world    world.World
+	entities []entity.Entity
+	camera   rl.Camera2D
 
 	isDragging      bool
 	dragStart       rl.Vector2
@@ -36,9 +38,8 @@ func New() Game {
 	w := world.NewWorld(constants.GridRows, constants.GridCols)
 
 	g := Game{
-		world: w,
-		npcs:  []*entity.NPC{},
-		trees: []entity.Tree{},
+		world:    w,
+		entities: []entity.Entity{},
 		camera: rl.Camera2D{
 			Target:   rl.NewVector2(float32(constants.GridCols)*constants.TileSize/2, float32(constants.GridRows)*constants.TileSize/2),
 			Offset:   rl.NewVector2(constants.ScreenW/2, constants.ScreenH/2),
@@ -53,13 +54,13 @@ func New() Game {
 	return g
 }
 
-func (g *Game) AddNPC(npc *entity.NPC) {
-	g.npcs = append(g.npcs, npc)
-	g.world.Occupy(npc.X, npc.Y)
+func (g *Game) AddVillager(v *entity.Villager) {
+	g.entities = append(g.entities, v)
+	g.world.Occupy(v.X, v.Y)
 }
 
-func (g *Game) AddTree(tree entity.Tree) {
-	g.trees = append(g.trees, tree)
+func (g *Game) AddTree(tree *entity.Tree) {
+	g.entities = append(g.entities, tree)
 	g.world.Occupy(tree.X, tree.Y)
 }
 
@@ -102,8 +103,16 @@ func (g *Game) Update() {
 	ticks := g.clock.Advance(dt)
 
 	for i := 0; i < ticks; i++ {
-		for _, npc := range g.npcs {
-			g.updateNPC(npc)
+		for _, e := range g.entities {
+			event := e.Tick(&g.world)
+			switch event {
+			case entity.EventIdle, entity.EventArrived:
+				if t, ok := e.(canTarget); ok {
+					if job := g.jobQueue.Pop(); job != nil {
+						t.SetTarget(job.TargetX, job.TargetY, &g.world)
+					}
+				}
+			}
 		}
 	}
 
@@ -126,90 +135,13 @@ func (g *Game) Update() {
 		rl.GetFPS(), g.camera.Zoom, g.clock.TickCount(), screenPos.X, screenPos.Y, col, row)
 }
 
-func (g *Game) updateNPC(npc *entity.NPC) {
-	switch npc.State {
-	case entity.StateIdle:
-		job := g.jobQueue.Pop()
-		if job == nil {
-			return
-		}
-		npc.TargetX = job.TargetX
-		npc.TargetY = job.TargetY
-		from := pathfinding.Point{X: npc.X, Y: npc.Y}
-		to := pathfinding.Point{X: npc.TargetX, Y: npc.TargetY}
-		path := pathfinding.FindPath(&g.world, from, to)
-		if path == nil {
-			return
-		}
-		npc.Waypoints = path
-		npc.State = entity.StateMoving
-
-	case entity.StateMoving:
-		if len(npc.Waypoints) == 0 {
-			npc.State = entity.StateArrived
-			return
-		}
-		next := npc.Waypoints[0]
-		if next.X == npc.TargetX && next.Y == npc.TargetY {
-			npc.State = entity.StateArrived
-			return
-		}
-		if g.world.IsOccupied(next.X, next.Y) {
-			npc.State = entity.StateWaiting
-			npc.WaitTicks = 0
-			npc.WaitCount++
-			return
-		}
-		g.world.Vacate(npc.X, npc.Y)
-		npc.X = next.X
-		npc.Y = next.Y
-		g.world.Occupy(npc.X, npc.Y)
-		npc.Waypoints = npc.Waypoints[1:]
-		npc.WaitCount = 0
-
-	case entity.StateWaiting:
-		npc.WaitTicks++
-		if npc.WaitTicks >= entity.WaitDuration {
-			if npc.WaitCount >= entity.MaxRetries {
-				npc.State = entity.StateIdle
-				npc.WaitCount = 0
-				npc.TargetX = 0
-				npc.TargetY = 0
-				npc.Waypoints = nil
-				return
-			}
-			from := pathfinding.Point{X: npc.X, Y: npc.Y}
-			to := pathfinding.Point{X: npc.TargetX, Y: npc.TargetY}
-			path := pathfinding.FindPath(&g.world, from, to)
-			if len(path) == 0 {
-				npc.State = entity.StateIdle
-				npc.WaitCount = 0
-				return
-			}
-			npc.Waypoints = path
-			npc.State = entity.StateMoving
-		}
-
-	case entity.StateArrived:
-		npc.State = entity.StateIdle
-		npc.WaitCount = 0
-		npc.TargetX = 0
-		npc.TargetY = 0
-		npc.Waypoints = nil
-	}
-}
-
 func (g *Game) Draw() {
 	rl.BeginMode2D(g.camera)
 
 	g.world.Draw()
 
-	for _, tree := range g.trees {
-		tree.Draw()
-	}
-
-	for _, npc := range g.npcs {
-		npc.Draw()
+	for _, e := range g.entities {
+		e.Draw()
 	}
 
 	if g.isDragging {

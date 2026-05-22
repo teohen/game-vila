@@ -3,6 +3,7 @@ package entity
 import (
 	"github/teohen/mgm-tto/constants"
 	"github/teohen/mgm-tto/spritebank"
+	"github/teohen/mgm-tto/world"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
@@ -14,14 +15,22 @@ type Tree struct {
 	WoodYield int
 }
 
-func NewTree(id string, x, y, health, woodYield int) Tree {
-	return Tree{
+func NewTree(id string, x, y, health, woodYield int) *Tree {
+	return &Tree{
 		ID:        id,
 		X:         x,
 		Y:         y,
 		Health:    health,
 		WoodYield: woodYield,
 	}
+}
+
+func (t *Tree) Tick(w *world.World) MovementEvent {
+	return EventNone
+}
+
+func (t *Tree) Pos() (int, int) {
+	return t.X, t.Y
 }
 
 func (t *Tree) Draw() {
