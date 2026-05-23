@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github/teohen/mgm-tto/constants"
+	"github/teohen/mgm-tto/debug"
 	"github/teohen/mgm-tto/entity"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -91,6 +92,12 @@ func (g *Game) Input() {
 
 	if rl.IsKeyPressed(rl.KeyF5) {
 		g.debugMode = !g.debugMode
+		debug.SetEnabled(g.debugMode)
+		if g.debugMode {
+			fmt.Printf("[DEBUG] Debug mode enabled — %s\n", debug.ActiveString())
+		} else {
+			fmt.Printf("[DEBUG] Debug mode disabled\n")
+		}
 	}
 
 	if rl.IsKeyPressed(rl.KeyOne) {
@@ -100,6 +107,27 @@ func (g *Game) Input() {
 		} else {
 			g.activeTool = ToolAxe
 			fmt.Println("[TOOL] Axe")
+		}
+	}
+
+	if g.debugMode {
+		if rl.IsKeyPressed(rl.KeyZero) {
+			debug.Toggle(debug.Sim)
+		}
+		if rl.IsKeyPressed(rl.KeyTwo) {
+			debug.Toggle(debug.Move)
+		}
+		if rl.IsKeyPressed(rl.KeyThree) {
+			debug.Toggle(debug.Path)
+		}
+		if rl.IsKeyPressed(rl.KeyFour) {
+			debug.Toggle(debug.Clock)
+		}
+		if rl.IsKeyPressed(rl.KeyFive) {
+			debug.Toggle(debug.Job)
+		}
+		if rl.IsKeyPressed(rl.KeySix) {
+			debug.Toggle(debug.World)
 		}
 	}
 }
@@ -122,13 +150,15 @@ func (g *Game) Update() {
 	}
 	g.debugFrameCount = 0
 
-	screenPos := rl.GetMousePosition()
-	worldPos := g.screenToWorld(screenPos)
-	col := int(worldPos.X) / constants.TileSize
-	row := int(worldPos.Y) / constants.TileSize
-
-	g.debugPrint("FPS=%d zoom=%.2f tick=%d mouse=(%.0f,%.0f) cell=(%d,%d)",
-		rl.GetFPS(), g.camera.Zoom, g.clock.TickCount(), screenPos.X, screenPos.Y, col, row)
+	entities := g.simulation.Entities()
+	villagers := 0
+	for _, e := range entities {
+		if _, ok := e.(*entity.Villager); ok {
+			villagers++
+		}
+	}
+	//g.debugPrint("FPS=%d zoom=%.2f tick=%d ents=%d villagers=%d tool=%d selected=%d",
+	//rl.GetFPS(), g.camera.Zoom, g.clock.TickCount(), len(entities), villagers, g.activeTool, len(g.selected))
 }
 
 func (g *Game) Draw() {
@@ -181,7 +211,7 @@ func (g *Game) zoom(factor float32) {
 	g.camera.Zoom = newZoom
 }
 
-func (g *Game) selectTilesInBox() {
+func (g *Game) selectCellsInBox() {
 	g.selected = make(map[rl.Vector2]bool)
 
 	minX := math.Min(float64(g.dragStart.X), float64(g.dragEnd.X))

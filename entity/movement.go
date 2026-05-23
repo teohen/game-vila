@@ -1,6 +1,9 @@
 package entity
 
 import (
+	"fmt"
+
+	"github/teohen/mgm-tto/debug"
 	"github/teohen/mgm-tto/pathfinding"
 	"github/teohen/mgm-tto/world"
 )
@@ -35,6 +38,8 @@ func (m *Movement) SetTarget(x, y int, w *world.World) {
 	from := pathfinding.Point{X: m.X, Y: m.Y}
 	to := pathfinding.Point{X: x, Y: y}
 	path := pathfinding.FindPath(w, from, to)
+	m.debugMovement(path, x, y)
+
 	if path == nil {
 		return
 	}
@@ -43,6 +48,7 @@ func (m *Movement) SetTarget(x, y int, w *world.World) {
 }
 
 func (m *Movement) Update(w *world.World) MovementEvent {
+	defer m.debugMovement(nil, 0, 0)
 	switch m.State {
 	case StateIdle:
 		return EventIdle
@@ -118,4 +124,17 @@ func (m *Movement) Update(w *world.World) MovementEvent {
 
 func (m *Movement) Pos() (int, int) {
 	return m.X, m.Y
+}
+
+func (m *Movement) debugMovement(path []pathfinding.Point, x, y int) {
+	if debug.IsEnabled(debug.Move) {
+		if path != nil {
+			fmt.Printf("[MOVEMENT - TARGER] Move path found len=%d from (%d,%d) to (%d,%d)\n", len(path), m.X, m.Y, x, y)
+		} else if x != 0 || y != 0 {
+			fmt.Printf("[MOVEMENT - TARGET] Move no path from (%d,%d) to (%d,%d)\n", m.X, m.Y, x, y)
+		}
+
+		fmt.Printf("[DEBUG] Move state=%d pos=(%d,%d) target=(%d,%d) waypoints=%d\n",
+			m.State, m.X, m.Y, m.TargetX, m.TargetY, len(m.Waypoints))
+	}
 }

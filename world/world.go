@@ -1,5 +1,11 @@
 package world
 
+import (
+	"fmt"
+
+	"github/teohen/mgm-tto/debug"
+)
+
 type World struct {
 	cells    [][]Cell
 	occupied [][]bool
@@ -73,6 +79,7 @@ func (w *World) Occupy(col, row int) bool {
 		return false
 	}
 	w.occupied[row][col] = true
+	w.debug("occupied", row, col)
 	return true
 }
 
@@ -81,6 +88,7 @@ func (w *World) Vacate(col, row int) {
 		return
 	}
 	w.occupied[row][col] = false
+	w.debug("vacate", row, col)
 }
 
 func (w *World) IsOccupied(col, row int) bool {
@@ -118,5 +126,11 @@ func (w *World) Generate(seed int64) {
 				w.cells[r][c] = newTile(Grass, r, c)
 			}
 		}
+	}
+}
+
+func (w *World) debug(action string, row, col int) {
+	if debug.IsEnabled(debug.World) {
+		fmt.Printf("[WORLD] %s (%d,%d)\n", action, col, row)
 	}
 }

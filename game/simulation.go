@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github/teohen/mgm-tto/constants"
+	"github/teohen/mgm-tto/debug"
 	"github/teohen/mgm-tto/entity"
 	"github/teohen/mgm-tto/save"
 	"github/teohen/mgm-tto/world"
@@ -65,15 +66,17 @@ func (s *Simulation) Tick() {
 		switch event {
 		case entity.EventIdle, entity.EventArrived:
 			job := s.jobQueue.Pop()
-			if job == nil {
-				job = s.randomTarget(v)
+			if job != nil {
+				v.SetTarget(job.TargetX, job.TargetY, s.world)
 			}
-			v.SetTarget(job.TargetX, job.TargetY, s.world)
+
 		}
 	}
 	for _, t := range s.trees {
 		t.Tick(s.world)
 	}
+
+	s.debugSimulation()
 
 	s.tickCount++
 }
@@ -203,4 +206,11 @@ func (s *Simulation) Entities() []entity.Entity {
 		all = append(all, t)
 	}
 	return all
+}
+
+func (s *Simulation) debugSimulation() {
+	if debug.IsEnabled(debug.Sim) {
+		fmt.Printf("[SIMULATION] Sim tick=%d villagers=%d trees=%d jobs=%d\n",
+			s.tickCount, len(s.villagers), len(s.trees), len(s.jobQueue.Get()))
+	}
 }
