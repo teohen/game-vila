@@ -136,6 +136,70 @@ func TestVillagerDoesNotWalkOntoOccupiedCell(t *testing.T) {
 	}
 }
 
+func TestMultipleChopJobs_WalkedInSequence(t *testing.T) {
+	s := NewSimulationFromSave(save.Save{
+		World: save.WorldSave{
+			Rows: 10, Cols: 10,
+			Cells: repeatGrid(10, 10, int(world.Empty)),
+		},
+		Villagers: []save.VillagerSave{
+			{ID: "v1", Name: "test", Type: 1, X: 0, Y: 0},
+		},
+		Jobs: []save.JobSave{
+			{TargetX: 3, TargetY: 0},
+			{TargetX: 6, TargetY: 0},
+		},
+	})
+
+	// Tick 1: idle → pop job → set target (no movement)
+	// Ticks 2-4: walk to (3,0) and arrive → pop second job → set target
+	s.AdvanceTicks(4)
+
+	x, y := s.Pos("v1")
+	if x != 3 || y != 0 {
+		t.Fatalf("expected v1 at (3,0) after first job, got (%d,%d)", x, y)
+	}
+
+	// Ticks 5-7: walk to (6,0) and arrive
+	s.AdvanceTicks(3)
+
+	x, y = s.Pos("v1")
+	if x != 6 || y != 0 {
+		t.Errorf("expected v1 at (6,0) after both jobs, got (%d,%d)", x, y)
+	}
+}
+
+func TestTwoVillagers_EachGetsAChopJob(t *testing.T) {
+	s := NewSimulationFromSave(save.Save{
+		World: save.WorldSave{
+			Rows: 10, Cols: 10,
+			Cells: repeatGrid(10, 10, int(world.Empty)),
+		},
+		Villagers: []save.VillagerSave{
+			{ID: "v1", Name: "alice", Type: 1, X: 0, Y: 0},
+			{ID: "v2", Name: "bob", Type: 1, X: 9, Y: 0},
+		},
+		Jobs: []save.JobSave{
+			{TargetX: 3, TargetY: 0},
+			{TargetX: 6, TargetY: 0},
+		},
+	})
+
+	// Tick 1: both idle → pop jobs → set targets (no movement)
+	// Ticks 2-4: v1 walks 3 cells to (3,0), v2 walks 3 cells to (6,0)
+	s.AdvanceTicks(4)
+
+	x1, y1 := s.Pos("v1")
+	x2, y2 := s.Pos("v2")
+
+	if x1 != 3 || y1 != 0 {
+		t.Errorf("expected v1 at (3,0), got (%d,%d)", x1, y1)
+	}
+	if x2 != 6 || y2 != 0 {
+		t.Errorf("expected v2 at (6,0), got (%d,%d)", x2, y2)
+	}
+}
+
 func repeatGrid(rows, cols int, val int) [][]int {
 	grid := make([][]int, rows)
 	for r := range grid {

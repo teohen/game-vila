@@ -143,6 +143,21 @@ func (s *Simulation) PushJob(job entity.Job) {
 	s.jobQueue.Push(job)
 }
 
+func (s *Simulation) ProcessAxeSelection(cells [][2]int) {
+	for _, cell := range cells {
+		col, row := cell[0], cell[1]
+		tree := s.TreeAt(col, row)
+		if tree == nil {
+			continue
+		}
+		s.PushJob(entity.Job{
+			Type:    entity.JobTypeChopTrees,
+			TargetX: tree.X,
+			TargetY: tree.Y,
+		})
+	}
+}
+
 func (s *Simulation) TreeAt(x, y int) *entity.Tree {
 	for _, t := range s.trees {
 		if t.X == x && t.Y == y {
@@ -154,6 +169,10 @@ func (s *Simulation) TreeAt(x, y int) *entity.Tree {
 
 func (s *Simulation) World() *world.World {
 	return s.world
+}
+
+func (s *Simulation) QueueJobs() []entity.Job {
+	return s.jobQueue.Get()
 }
 
 const (

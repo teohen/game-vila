@@ -245,18 +245,11 @@ func (g *Game) selectCellsInBox() {
 func (g *Game) onSelectionComplete() {
 	switch g.activeTool {
 	case ToolAxe:
+		cells := make([][2]int, 0, len(g.selected))
 		for pos := range g.selected {
-			col, row := int(pos.X), int(pos.Y)
-			tree := g.simulation.TreeAt(col, row)
-			if tree == nil {
-				continue
-			}
-			g.simulation.PushJob(entity.Job{
-				Type:    entity.JobTypeChopTrees,
-				TargetX: tree.X,
-				TargetY: tree.Y,
-			})
+			cells = append(cells, [2]int{int(pos.X), int(pos.Y)})
 		}
+		g.simulation.ProcessAxeSelection(cells)
 	}
 }
 
