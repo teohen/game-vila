@@ -75,3 +75,11 @@ _Avoid_: Navigation, locomotion, mover
 **Tick**:
 The fundamental unit of game time. A pulse that fires at a fixed interval (configurable, independent of frame rate). On each tick the game advances its simulation: entities Tick, actions are processed, resources are updated. Ticks are deterministic — same interval always yields same behavior regardless of FPS.
 _Avoid_: Frame, step, beat, cycle, turn
+
+**Noise**:
+A 2D Perlin noise function used for procedural world generation. Lives in the `world` package. Produces smooth continuous values in [-1, 1]. Used to determine terrain layout and forest density.
+_Avoid_: Random, Perlin (implementation detail)
+
+**Noise channel**:
+A distinct layer of noise with its own frequency and seed. Channel 1 (frequency ≈0.035) drives terrain type (Water/Dirt/Grass). Channel 2 (frequency ≈0.07) drives forest density. Each channel uses an independent seed to avoid correlation.
+_Avoid_: Layer, octave

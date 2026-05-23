@@ -10,11 +10,7 @@ type JobQueue struct {
 }
 
 func NewJobQueue() JobQueue {
-	return JobQueue{
-		jobs: []Job{
-			{TargetX: 30, TargetY: 11},
-		},
-	}
+	return JobQueue{}
 }
 
 func (q *JobQueue) Push(targetX, targetY int) {

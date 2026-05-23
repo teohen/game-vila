@@ -23,9 +23,6 @@ func init() {
 	g = game.New()
 	villager := entity.NewVillager("teo", "teo", 10, 10)
 	g.AddVillager(villager)
-
-	tree := entity.NewTree("tree-1", 30, 11, 3, 5)
-	g.AddTree(tree)
 }
 
 func quit() {

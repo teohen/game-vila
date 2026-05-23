@@ -52,23 +52,26 @@ func TestVillagerArrivesInExactTicks(t *testing.T) {
 	}
 }
 
-func TestVillagerDoesNotMoveWithoutTarget(t *testing.T) {
+func TestVillagerMovesRandomlyWhenNoJobs(t *testing.T) {
 	s := NewSimulationFromSave(save.Save{
 		World: save.WorldSave{
-			Rows:  3,
-			Cols:  3,
-			Cells: repeatGrid(3, 3, int(world.Empty)),
+			Rows:  5,
+			Cols:  5,
+			Cells: repeatGrid(5, 5, int(world.Empty)),
 		},
 		Villagers: []save.VillagerSave{
-			{ID: "v1", Name: "test", Type: 1, X: 1, Y: 1},
+			{ID: "v1", Name: "test", Type: 1, X: 2, Y: 2},
 		},
 	})
 
 	s.AdvanceTicks(10)
 
 	x, y := s.Pos("v1")
-	if x != 1 || y != 1 {
-		t.Errorf("expected villager to stay at (1,1), moved to (%d,%d)", x, y)
+	if x == 2 && y == 2 {
+		t.Errorf("expected villager to move to random target, but stayed at (2,2)")
+	}
+	if !s.World().IsWalkable(x, y) {
+		t.Errorf("villager ended at non-walkable cell (%d,%d)", x, y)
 	}
 }
 

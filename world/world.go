@@ -16,8 +16,6 @@ func NewWorld(rows, cols int) World {
 		w.occupied[i] = make([]bool, cols)
 	}
 
-	w.Generate()
-
 	return w
 }
 
@@ -100,17 +98,24 @@ func (w *World) IsWalkable(col, row int) bool {
 	return cell.Walkable()
 }
 
-func (w *World) Generate() {
-	for i := range w.cells {
-		for j := range w.cells[i] {
-			if i > 6 && i < 11 && j > 3 && j < 8 {
-				w.cells[i][j] = newTile(Grass, i, j)
-			} else if i == 20 && j == 21 {
-				w.cells[i][j] = newTile(Dirt, i, j)
-			} else if i == 30 && j == 21 {
-				w.cells[i][j] = newTile(Water, i, j)
-			} else {
-				w.cells[i][j] = newTile(Empty, i, j)
+const (
+	terrainFrequency = 0.035
+	waterThreshold   = -0.15
+	dirtThreshold    = 0.05
+)
+
+func (w *World) Generate(seed int64) {
+	n := NewNoise(seed)
+	for r := range w.cells {
+		for c := range w.cells[r] {
+			v := n.Noise2D(float64(c)*terrainFrequency, float64(r)*terrainFrequency)
+			switch {
+			case v < waterThreshold:
+				w.cells[r][c] = newTile(Water, r, c)
+			case v < dirtThreshold:
+				w.cells[r][c] = newTile(Dirt, r, c)
+			default:
+				w.cells[r][c] = newTile(Grass, r, c)
 			}
 		}
 	}
