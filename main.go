@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"github/teohen/mgm-tto/constants"
 	"github/teohen/mgm-tto/entity"
 	"github/teohen/mgm-tto/game"
 	"github/teohen/mgm-tto/spritebank"
+	"math/rand"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
@@ -21,8 +23,12 @@ func init() {
 
 	spritebank.LoadAll()
 	g = game.New()
-	villager := entity.NewVillager("teo", "teo", 10, 10)
-	g.AddVillager(villager)
+	for i := 0; i < 10; i++ {
+		x := rand.Intn(constants.GridCols)
+		y := rand.Intn(constants.GridRows)
+		villager := entity.NewVillager(fmt.Sprintf("teo-%s", i), fmt.Sprintf("teo-%s", i), x, y)
+		g.AddVillager(villager)
+	}
 }
 
 func quit() {

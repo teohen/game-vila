@@ -1,6 +1,9 @@
 package pathfinding
 
-import "math"
+import (
+	"github/teohen/mgm-tto/constants"
+	"math"
+)
 
 type Point struct {
 	X, Y int
@@ -36,9 +39,9 @@ func FindPath(grid WalkableGrid, from, to Point) []Point {
 		return nil
 	}
 
-	var info [50][50]cellInfo
-	for r := 0; r < 50; r++ {
-		for c := 0; c < 50; c++ {
+	var info [constants.GridRows][constants.GridCols]cellInfo
+	for r := 0; r < constants.GridRows; r++ {
+		for c := 0; c < constants.GridCols; c++ {
 			info[r][c] = cellInfo{g: math.MaxInt32}
 		}
 	}
@@ -73,7 +76,7 @@ func FindPath(grid WalkableGrid, from, to Point) []Point {
 		dirs := []Point{{0, -1}, {0, 1}, {-1, 0}, {1, 0}}
 		for _, d := range dirs {
 			nx, ny := current.X+d.X, current.Y+d.Y
-			if nx < 0 || nx >= 50 || ny < 0 || ny >= 50 {
+			if nx < 0 || nx >= constants.GridRows || ny < 0 || ny >= constants.GridCols {
 				continue
 			}
 
@@ -108,7 +111,7 @@ func FindPath(grid WalkableGrid, from, to Point) []Point {
 	return nil
 }
 
-func reconstructPath(info [50][50]cellInfo, from, to Point) []Point {
+func reconstructPath(info [constants.GridRows][constants.GridCols]cellInfo, from, to Point) []Point {
 	var path []Point
 	current := to
 	for current != from {

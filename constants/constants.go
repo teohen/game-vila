@@ -2,7 +2,7 @@ package constants
 
 const (
 	ScreenW  = 1200
-	ScreenH  = 800
+	ScreenH  = 1200
 	GridCols = 50
 	GridRows = 50
 	TileSize = ScreenW / GridCols
@@ -11,7 +11,7 @@ const (
 	GridOffsetY = 0
 
 	CameraZoomMin = 0.25
-	CameraZoomMax = 3.0
+	CameraZoomMax = 7.0
 
 	TickInterval = 200 // milliseconds between ticks (5 ticks/sec)
 )
