@@ -48,7 +48,7 @@ func NewSimulationFromSave(s save.Save) *Simulation {
 
 	q := entity.NewJobQueue()
 	for _, js := range s.Jobs {
-		q.Push(js.TargetX, js.TargetY)
+		q.Push(entity.Job{Type: entity.JobType(js.Type), TargetX: js.TargetX, TargetY: js.TargetY})
 	}
 
 	return &Simulation{
@@ -74,6 +74,7 @@ func (s *Simulation) Tick() {
 	for _, t := range s.trees {
 		t.Tick(s.world)
 	}
+
 	s.tickCount++
 }
 
@@ -88,7 +89,7 @@ func (s *Simulation) randomTarget(v *entity.Villager) *entity.Job {
 		if !s.world.IsWalkable(x, y) {
 			continue
 		}
-		return &entity.Job{TargetX: x, TargetY: y}
+		return &entity.Job{Type: entity.JobTypeMove, TargetX: x, TargetY: y}
 	}
 }
 
@@ -133,6 +134,19 @@ func (s *Simulation) AddVillager(v *entity.Villager) {
 func (s *Simulation) AddTree(tree *entity.Tree) {
 	s.trees = append(s.trees, tree)
 	s.world.Occupy(tree.X, tree.Y)
+}
+
+func (s *Simulation) PushJob(job entity.Job) {
+	s.jobQueue.Push(job)
+}
+
+func (s *Simulation) TreeAt(x, y int) *entity.Tree {
+	for _, t := range s.trees {
+		if t.X == x && t.Y == y {
+			return t
+		}
+	}
+	return nil
 }
 
 func (s *Simulation) World() *world.World {

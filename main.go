@@ -23,10 +23,10 @@ func init() {
 
 	spritebank.LoadAll()
 	g = game.New()
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 1; i++ {
 		x := rand.Intn(constants.GridCols)
 		y := rand.Intn(constants.GridRows)
-		villager := entity.NewVillager(fmt.Sprintf("teo-%s", i), fmt.Sprintf("teo-%s", i), x, y)
+		villager := entity.NewVillager(fmt.Sprintf("teo-%d", i), fmt.Sprintf("teo-%d", i), x, y)
 		g.AddVillager(villager)
 	}
 }

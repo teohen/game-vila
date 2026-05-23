@@ -1,6 +1,14 @@
 package entity
 
+type JobType int
+
+const (
+	JobTypeMove JobType = iota
+	JobTypeChopTrees
+)
+
 type Job struct {
+	Type    JobType
 	TargetX int
 	TargetY int
 }
@@ -13,8 +21,8 @@ func NewJobQueue() JobQueue {
 	return JobQueue{}
 }
 
-func (q *JobQueue) Push(targetX, targetY int) {
-	q.jobs = append(q.jobs, Job{TargetX: targetX, TargetY: targetY})
+func (q *JobQueue) Push(job Job) {
+	q.jobs = append(q.jobs, job)
 }
 
 func (q *JobQueue) Pop() *Job {
@@ -24,4 +32,8 @@ func (q *JobQueue) Pop() *Job {
 	job := q.jobs[0]
 	q.jobs = q.jobs[1:]
 	return &job
+}
+
+func (q *JobQueue) Get() []Job {
+	return q.jobs
 }

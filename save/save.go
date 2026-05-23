@@ -34,6 +34,7 @@ type TreeSave struct {
 }
 
 type JobSave struct {
+	Type    int `json:"type"`
 	TargetX int `json:"target_x"`
 	TargetY int `json:"target_y"`
 }

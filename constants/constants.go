@@ -3,8 +3,8 @@ package constants
 const (
 	ScreenW  = 1200
 	ScreenH  = 1200
-	GridCols = 50
-	GridRows = 50
+	GridCols = 20
+	GridRows = 20
 	TileSize = ScreenW / GridCols
 
 	GridOffsetX = 0

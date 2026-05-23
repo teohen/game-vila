@@ -10,16 +10,25 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
+type Tool int
+
+const (
+	ToolSelect Tool = iota
+	ToolAxe
+)
+
 const debugPrintInterval = 60
 
 type Game struct {
 	simulation *Simulation
 	camera     rl.Camera2D
 
-	isDragging      bool
-	dragStart       rl.Vector2
-	dragEnd         rl.Vector2
-	selected        map[rl.Vector2]bool
+	isDragging bool
+	dragStart  rl.Vector2
+	dragEnd    rl.Vector2
+	selected   map[rl.Vector2]bool
+
+	activeTool Tool
 
 	debugMode       bool
 	debugFrameCount int
@@ -75,11 +84,22 @@ func (g *Game) Input() {
 
 	if rl.IsMouseButtonReleased(rl.MouseLeftButton) && g.isDragging {
 		g.isDragging = false
-		g.selectTilesInBox()
+		g.selectCellsInBox()
+		g.onSelectionComplete()
 	}
 
 	if rl.IsKeyPressed(rl.KeyF5) {
 		g.debugMode = !g.debugMode
+	}
+
+	if rl.IsKeyPressed(rl.KeyOne) {
+		if g.activeTool == ToolAxe {
+			g.activeTool = ToolSelect
+			fmt.Println("[TOOL] Selection")
+		} else {
+			g.activeTool = ToolAxe
+			fmt.Println("[TOOL] Axe")
+		}
 	}
 }
 
@@ -164,7 +184,7 @@ func (g *Game) zoom(factor float32) {
 	g.camera.Zoom = newZoom
 }
 
-func (g *Game) selectTilesInBox() {
+func (g *Game) selectCellsInBox() {
 	minX := math.Min(float64(g.dragStart.X), float64(g.dragEnd.X))
 	maxX := math.Max(float64(g.dragStart.X), float64(g.dragEnd.X))
 	minY := math.Min(float64(g.dragStart.Y), float64(g.dragEnd.Y))
@@ -182,6 +202,24 @@ func (g *Game) selectTilesInBox() {
 				tileCenterY >= minY && tileCenterY <= maxY {
 				g.selected[rl.NewVector2(float32(col), float32(row))] = true
 			}
+		}
+	}
+}
+
+func (g *Game) onSelectionComplete() {
+	switch g.activeTool {
+	case ToolAxe:
+		for pos := range g.selected {
+			col, row := int(pos.X), int(pos.Y)
+			tree := g.simulation.TreeAt(col, row)
+			if tree == nil {
+				continue
+			}
+			g.simulation.PushJob(entity.Job{
+				Type:    entity.JobTypeChopTrees,
+				TargetX: tree.X,
+				TargetY: tree.Y,
+			})
 		}
 	}
 }

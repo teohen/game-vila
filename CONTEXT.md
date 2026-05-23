@@ -29,7 +29,7 @@ A non-player character that inhabits the village. Has an ID, name, type (current
 _Avoid_: Character, person, unit
 
 **Selection**:
-A set of Cells highlighted by the player via drag-to-select. Used to target commands (commands not yet implemented).
+A set of Cells highlighted by the player via drag-to-select. Used to target tools.
 _Avoid_: Highlight, pick, mark
 
 **Tree**:
@@ -52,9 +52,17 @@ _Avoid_: Blocked, taken, full, collided
 The system by which a Villager determines the sequence of cells to traverse toward a target. Uses A* on the 50×50 grid. Produces a list of waypoints the Villager follows one cell per tick. Inputs: walkable cells (static terrain) and occupied cells (dynamic entities).
 _Avoid_: Navigation, routing, move planning
 
+**Job**:
+A work order in the JobQueue. Has a Type (JobTypeChopTrees, JobTypeMove) and a target cell (TargetX, TargetY). Created by the player via tool actions (e.g., axe tool creates ChopTrees jobs).
+_Avoid_: Task, order, work item
+
 **JobQueue**:
-A future system that holds work orders (e.g., chop trees) for Villagers to consume. Villagers pull from this queue to determine their movement target. Not yet implemented; a stub is used during initial movement implementation.
+A queue that holds Jobs for Villagers to consume. Villagers pull from this queue to determine their movement target. Created by tool actions; consumed by any Idle/Arrived Villager.
 _Avoid_: TaskList, work queue, order book
+
+**JobType**:
+The kind of work a Job represents (e.g., JobTypeChopTrees, JobTypeMove). Determines what a Villager does upon arrival. A JobType maps to a Trait that provides the capacity to execute it — e.g., the Lumberjack Trait handles JobTypeChopTrees.
+_Avoid_: Job kind, work type, action type
 
 **Camera**:
 A 2D viewport that the player controls with right-click drag (pan) and mouse wheel (zoom). Clamped between 25% and 300%.
@@ -63,6 +71,10 @@ _Avoid_: Viewport, view
 **SpriteBank**:
 A package-level variable that owns loaded textures and makes them available to any entity that needs to draw. Exposes `Terrain` and `Human` textures. Created by the `spritebank` package, lifecycle managed via `LoadAll()` / `UnloadAll()`.
 _Avoid_: TextureManager, AssetRegistry, resource cache
+
+**Tool**:
+A mode the Player can activate to change what happens when they drag-select Cells. Pressing '1' toggles between ToolSelect (highlight cells only) and ToolAxe (highlight + create ChopTrees Jobs).
+_Avoid_: Mode, weapon, item
 
 **Trait**:
 A composable unit of behavior and state embedded into an Entity. Each trait owns its own logic and lifecycle. Traits are mixed into entities via Go struct embedding. An entity may compose zero or more traits.
