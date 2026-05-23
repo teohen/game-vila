@@ -101,6 +101,38 @@ func TestMultipleVillagersMoveIndependently(t *testing.T) {
 	}
 }
 
+func TestVillagerDoesNotWalkOntoOccupiedCell(t *testing.T) {
+	s := NewSimulationFromSave(save.Save{
+		World: save.WorldSave{
+			Rows:  5,
+			Cols:  5,
+			Cells: repeatGrid(5, 5, int(world.Empty)),
+		},
+		Villagers: []save.VillagerSave{
+			{ID: "v1", Name: "test", Type: 1, X: 0, Y: 0},
+		},
+		Trees: []save.TreeSave{
+			{ID: "tree-1", X: 2, Y: 2, Health: 10, WoodYield: 5},
+		},
+		Jobs: []save.JobSave{
+			{TargetX: 2, TargetY: 2},
+		},
+	})
+
+	s.AdvanceTicks(6)
+
+	vx, vy := s.Pos("v1")
+	if vx == 0 && vy == 0 {
+		t.Error("villager did not move")
+	}
+	if vx == 2 && vy == 2 {
+		t.Errorf("villager walked onto tree's cell at (2,2); should have stopped adjacent")
+	}
+	if !s.World().IsOccupied(2, 2) {
+		t.Error("tree cell (2,2) should still be occupied after villager arrives")
+	}
+}
+
 func repeatGrid(rows, cols int, val int) [][]int {
 	grid := make([][]int, rows)
 	for r := range grid {
