@@ -45,7 +45,7 @@ func newTile(t CellType, r, c int) Cell {
 		col:         c,
 		size:        constants.TileSize,
 		BorderWidth: 1,
-		BorderColor: rl.NewColor(50, 50, 50, 255),
+		BorderColor: rl.NewColor(255, 255, 255, 80),
 	}
 
 	return tile
@@ -70,10 +70,8 @@ func (t *Cell) Draw() {
 	src, dst := getSource(t)
 
 	rl.DrawRectangleRec(dst, t.bgColor())
-
-	rl.DrawRectangleLinesEx(dst, t.BorderWidth, t.BorderColor)
-
 	rl.DrawTexturePro(spritebank.Terrain, src, dst, rl.NewVector2(0, 0), 0, rl.White)
+	rl.DrawRectangleLinesEx(dst, t.BorderWidth, t.BorderColor)
 }
 
 func (t *Cell) bgColor() rl.Color {

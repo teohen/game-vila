@@ -78,11 +78,12 @@ func (g *Game) Input() {
 		g.dragEnd = worldPos
 	}
 
-	if rl.IsMouseButtonReleased(rl.MouseLeftButton) && g.isDragging {
+	if rl.IsMouseButtonDown(rl.MouseLeftButton) && g.isDragging {
 		g.dragEnd = worldPos
 	}
 
 	if rl.IsMouseButtonReleased(rl.MouseLeftButton) && g.isDragging {
+		g.dragEnd = worldPos
 		g.isDragging = false
 		g.selectCellsInBox()
 		g.onSelectionComplete()
@@ -140,15 +141,11 @@ func (g *Game) Draw() {
 	}
 
 	if g.isDragging {
-		w := g.dragEnd.X - g.dragStart.X
-		h := g.dragEnd.Y - g.dragStart.Y
-		rl.DrawRectangleLines(
-			int32(g.dragStart.X),
-			int32(g.dragStart.Y),
-			int32(w),
-			int32(h),
-			rl.Blue,
-		)
+		x := float32(math.Min(float64(g.dragStart.X), float64(g.dragEnd.X)))
+		y := float32(math.Min(float64(g.dragStart.Y), float64(g.dragEnd.Y)))
+		w := float32(math.Abs(float64(g.dragEnd.X - g.dragStart.X)))
+		h := float32(math.Abs(float64(g.dragEnd.Y - g.dragStart.Y)))
+		rl.DrawRectangleLines(int32(x), int32(y), int32(w), int32(h), rl.Blue)
 	}
 
 	for pos := range g.selected {
@@ -184,13 +181,22 @@ func (g *Game) zoom(factor float32) {
 	g.camera.Zoom = newZoom
 }
 
-func (g *Game) selectCellsInBox() {
+func (g *Game) selectTilesInBox() {
+	g.selected = make(map[rl.Vector2]bool)
+
 	minX := math.Min(float64(g.dragStart.X), float64(g.dragEnd.X))
 	maxX := math.Max(float64(g.dragStart.X), float64(g.dragEnd.X))
 	minY := math.Min(float64(g.dragStart.Y), float64(g.dragEnd.Y))
 	maxY := math.Max(float64(g.dragStart.Y), float64(g.dragEnd.Y))
 
-	g.selected = make(map[rl.Vector2]bool)
+	if maxX-minX < 4 && maxY-minY < 4 {
+		col := int(g.dragEnd.X) / constants.TileSize
+		row := int(g.dragEnd.Y) / constants.TileSize
+		if col >= 0 && col < constants.GridCols && row >= 0 && row < constants.GridRows {
+			g.selected[rl.NewVector2(float32(col), float32(row))] = true
+		}
+		return
+	}
 
 	for row := 0; row < g.simulation.World().Rows(); row++ {
 		for col := 0; col < g.simulation.World().Cols(); col++ {
