@@ -7,6 +7,7 @@ import (
 	"github/teohen/mgm-tto/constants"
 	"github/teohen/mgm-tto/debug"
 	"github/teohen/mgm-tto/entity"
+	"github/teohen/mgm-tto/save"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
@@ -37,17 +38,36 @@ type Game struct {
 	clock Clock
 }
 
+func newGameCamera() rl.Camera2D {
+	return rl.Camera2D{
+		Target:   rl.NewVector2(float32(constants.GridCols)*constants.TileSize/2, float32(constants.GridRows)*constants.TileSize/2),
+		Offset:   rl.NewVector2(constants.ScreenW/2, constants.ScreenH/2),
+		Rotation: 0,
+		Zoom:     1.0,
+	}
+}
+
 func New() Game {
 	return Game{
 		simulation: NewSimulationDefault(),
-		camera: rl.Camera2D{
-			Target:   rl.NewVector2(float32(constants.GridCols)*constants.TileSize/2, float32(constants.GridRows)*constants.TileSize/2),
-			Offset:   rl.NewVector2(constants.ScreenW/2, constants.ScreenH/2),
-			Rotation: 0,
-			Zoom:     1.0,
-		},
-		selected: make(map[rl.Vector2]bool),
-		clock:    newClock(),
+		camera:     newGameCamera(),
+		selected:   make(map[rl.Vector2]bool),
+		clock:      newClock(),
+	}
+}
+
+func NewFromSave(s save.Save) Game {
+	cam := newGameCamera()
+	if s.Camera.Zoom != 0 {
+		cam.Target.X = float32(s.Camera.TargetX)
+		cam.Target.Y = float32(s.Camera.TargetY)
+		cam.Zoom = float32(s.Camera.Zoom)
+	}
+	return Game{
+		simulation: NewSimulationFromSave(s),
+		camera:     cam,
+		selected:   make(map[rl.Vector2]bool),
+		clock:      newClock(),
 	}
 }
 
@@ -108,6 +128,14 @@ func (g *Game) Input() {
 			g.activeTool = ToolAxe
 			fmt.Println("[TOOL] Axe")
 		}
+	}
+
+	if rl.IsKeyPressed(rl.KeyF9) {
+		g.Save()
+	}
+
+	if rl.IsKeyPressed(rl.KeyF10) {
+		g.Load()
 	}
 
 	if g.debugMode {
@@ -254,4 +282,35 @@ func (g *Game) debugPrint(format string, args ...any) {
 		return
 	}
 	fmt.Printf("[DEBUG] "+format+"\n", args...)
+}
+
+func (g *Game) Save() {
+	s := g.simulation.ToSave()
+	s.Camera = save.CameraSave{
+		TargetX: float64(g.camera.Target.X),
+		TargetY: float64(g.camera.Target.Y),
+		Zoom:    float64(g.camera.Zoom),
+	}
+	/*if err := save.SaveToFile(savePath, s); err != nil {
+		fmt.Printf("[ERROR] Save failed: %v\n", err)
+		return
+	}
+	*/
+	savePath := save.GetSavePath()
+	fmt.Printf("[SAVE] Game saved to %s\n", savePath)
+}
+
+func (g *Game) Load() {
+	s, err := save.LoadFromFile(save.GetSavePath())
+	if err != nil {
+		fmt.Printf("[ERROR] Load failed: %v\n", err)
+		return
+	}
+
+	g.simulation = NewSimulationFromSave(s)
+	g.camera.Target.X = float32(s.Camera.TargetX)
+	g.camera.Target.Y = float32(s.Camera.TargetY)
+	g.camera.Zoom = float32(s.Camera.Zoom)
+	g.selected = make(map[rl.Vector2]bool)
+	fmt.Printf("[SAVE] Game loaded from %s\n", save.GetSavePath())
 }

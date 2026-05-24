@@ -171,6 +171,64 @@ func (s *Simulation) World() *world.World {
 	return s.world
 }
 
+func (s *Simulation) ToSave() save.Save {
+	cells := make([][]int, s.world.Rows())
+	for r := range cells {
+		cells[r] = make([]int, s.world.Cols())
+		for c := range cells[r] {
+			cells[r][c] = int(s.world.GetCell(c, r).Type)
+		}
+	}
+
+	villagers := make([]save.VillagerSave, len(s.villagers))
+	for i, v := range s.villagers {
+		vs := save.VillagerSave{
+			ID:   v.ID,
+			Name: v.Name(),
+			Type: int(v.Type),
+			X:    v.X,
+			Y:    v.Y,
+		}
+		if v.State != entity.StateIdle {
+			vs.TargetX = &v.TargetX
+			vs.TargetY = &v.TargetY
+			vs.State = v.State.String()
+		}
+		villagers[i] = vs
+	}
+
+	var trees []save.TreeSave
+	for _, t := range s.trees {
+		if t.Health <= 0 {
+			continue
+		}
+		trees = append(trees, save.TreeSave{
+			ID:        t.ID,
+			X:         t.X,
+			Y:         t.Y,
+			Health:    t.Health,
+			WoodYield: t.WoodYield,
+		})
+	}
+
+	jobs := make([]save.JobSave, len(s.jobQueue.Get()))
+	for i, j := range s.jobQueue.Get() {
+		jobs[i] = save.JobSave{
+			Type:    int(j.Type),
+			TargetX: j.TargetX,
+			TargetY: j.TargetY,
+		}
+	}
+
+	return save.Save{
+		Version:   1,
+		World:     save.WorldSave{Rows: s.world.Rows(), Cols: s.world.Cols(), Cells: cells},
+		Villagers: villagers,
+		Trees:     trees,
+		Jobs:      jobs,
+	}
+}
+
 func (s *Simulation) QueueJobs() []entity.Job {
 	return s.jobQueue.Get()
 }

@@ -95,3 +95,11 @@ _Avoid_: Random, Perlin (implementation detail)
 **Noise channel**:
 A distinct layer of noise with its own frequency and seed. Channel 1 (frequency ≈0.035) drives terrain type (Water/Dirt/Grass). Channel 2 (frequency ≈0.07) drives forest density. Each channel uses an independent seed to avoid correlation.
 _Avoid_: Layer, octave
+
+**Save**:
+A serialized snapshot of the whole Game state written to disk as a JSON file. Contains the World grid, Villagers (with movement state), Trees, Jobs, and Camera position/zoom. Created by pressing F9.
+_Avoid_: Save file, save data, save slot
+
+**Load**:
+The act of reading a Save from disk and replacing the current Game state entirely with the reconstructed state. Triggered by pressing F10. If the file is missing or corrupt, an error is printed and the game continues unchanged.
+_Avoid_: Restore, open, import

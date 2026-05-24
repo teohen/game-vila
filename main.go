@@ -1,10 +1,14 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"os"
+
 	"github/teohen/mgm-tto/constants"
 	"github/teohen/mgm-tto/entity"
 	"github/teohen/mgm-tto/game"
+	"github/teohen/mgm-tto/save"
 	"github/teohen/mgm-tto/spritebank"
 	"math/rand"
 
@@ -17,11 +21,25 @@ var (
 )
 
 func init() {
+	loadPath := flag.String("load", "", "start from a save file")
+	flag.Parse()
+
 	rl.InitWindow(constants.ScreenW, constants.ScreenH, "mgm-tto")
 	rl.SetExitKey(rl.KeyEscape)
 	rl.SetTargetFPS(60)
 
 	spritebank.LoadAll()
+
+	if *loadPath != "" {
+		s, err := save.LoadFromFile(*loadPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			os.Exit(1)
+		}
+		g = game.NewFromSave(s)
+		return
+	}
+
 	g = game.New()
 	for i := 0; i < 1; i++ {
 		x := rand.Intn(constants.GridCols)

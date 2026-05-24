@@ -22,6 +22,21 @@ const (
 	StateArrived MovementState = 3
 )
 
+func (s MovementState) String() string {
+	switch s {
+	case StateIdle:
+		return "idle"
+	case StateMoving:
+		return "moving"
+	case StateWaiting:
+		return "waiting"
+	case StateArrived:
+		return "arrived"
+	default:
+		return "unknown"
+	}
+}
+
 type Movement struct {
 	X, Y      int
 	TargetX   int
