@@ -35,7 +35,8 @@ type Game struct {
 	debugMode       bool
 	debugFrameCount int
 
-	clock Clock
+	clock   Clock
+	console Console
 }
 
 func newGameCamera() rl.Camera2D {
@@ -80,6 +81,18 @@ func (g *Game) AddTree(tree *entity.Tree) {
 }
 
 func (g *Game) Input() {
+	if rl.IsKeyPressed(rl.KeyGrave) {
+		g.console.Toggle()
+	}
+
+	if g.console.IsOpen() {
+		cmd := g.console.ReadInput()
+		if cmd != "" {
+			ExecuteCommand(g.simulation, cmd)
+		}
+		return
+	}
+
 	screenPos := rl.GetMousePosition()
 	worldPos := g.screenToWorld(screenPos)
 
@@ -181,8 +194,6 @@ func (g *Game) Update() {
 			villagers++
 		}
 	}
-	//g.debugPrint("FPS=%d zoom=%.2f tick=%d ents=%d villagers=%d tool=%d selected=%d",
-	//rl.GetFPS(), g.camera.Zoom, g.clock.TickCount(), len(entities), villagers, g.activeTool, len(g.selected))
 }
 
 func (g *Game) Draw() {
@@ -213,6 +224,18 @@ func (g *Game) Draw() {
 	}
 
 	rl.EndMode2D()
+
+	if g.console.IsOpen() {
+		g.drawConsole()
+	}
+}
+
+func (g *Game) drawConsole() {
+	const barH = 30
+	barY := constants.ScreenH - barH
+	rl.DrawRectangle(0, int32(barY), constants.ScreenW, barH, rl.NewColor(0, 0, 0, 200))
+	line := "> " + g.console.Input() + "|"
+	rl.DrawText(line, 8, int32(barY)+5, 18, rl.White)
 }
 
 func (g *Game) screenToWorld(screenPos rl.Vector2) rl.Vector2 {

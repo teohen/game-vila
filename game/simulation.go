@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"math/rand"
 	"time"
 
 	"github/teohen/mgm-tto/constants"
@@ -81,21 +80,6 @@ func (s *Simulation) Tick() {
 	s.tickCount++
 }
 
-func (s *Simulation) randomTarget(v *entity.Villager) *entity.Job {
-	cx, cy := v.Pos()
-	for {
-		x := rand.Intn(s.world.Cols())
-		y := rand.Intn(s.world.Rows())
-		if x == cx && y == cy {
-			continue
-		}
-		if !s.world.IsWalkable(x, y) {
-			continue
-		}
-		return &entity.Job{Type: entity.JobTypeMove, TargetX: x, TargetY: y}
-	}
-}
-
 func (s *Simulation) AdvanceTicks(n int) {
 	for i := 0; i < n; i++ {
 		s.Tick()
@@ -137,6 +121,28 @@ func (s *Simulation) AddVillager(v *entity.Villager) {
 func (s *Simulation) AddTree(tree *entity.Tree) {
 	s.trees = append(s.trees, tree)
 	s.world.Occupy(tree.X, tree.Y)
+}
+
+func (s *Simulation) RemoveTree(x, y int) bool {
+	for i, t := range s.trees {
+		if t.X == x && t.Y == y {
+			s.world.Vacate(x, y)
+			s.trees = append(s.trees[:i], s.trees[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
+func (s *Simulation) ClearTrees() {
+	for _, t := range s.trees {
+		s.world.Vacate(t.X, t.Y)
+	}
+	s.trees = s.trees[:0]
+}
+
+func (s *Simulation) ClearJobs() {
+	s.jobQueue = entity.NewJobQueue()
 }
 
 func (s *Simulation) PushJob(job entity.Job) {
