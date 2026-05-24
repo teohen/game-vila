@@ -29,7 +29,7 @@ func NewJobQueue() JobQueue {
 
 func (q *JobQueue) Push(job Job) {
 	q.jobs = append(q.jobs, job)
-	q.debugJobs(job)
+	q.debugJobs("push", job)
 }
 
 func (q *JobQueue) Pop() *Job {
@@ -38,7 +38,7 @@ func (q *JobQueue) Pop() *Job {
 	}
 	job := q.jobs[0]
 	q.jobs = q.jobs[1:]
-	q.debugJobs(job)
+	q.debugJobs("pop", job)
 	return &job
 }
 
@@ -46,9 +46,9 @@ func (q *JobQueue) Get() []Job {
 	return q.jobs
 }
 
-func (q *JobQueue) debugJobs(job Job) {
+func (q *JobQueue) debugJobs(action string, job Job) {
 	if debug.IsEnabled(debug.Job) {
-		fmt.Printf("[DEBUG] JobQueue push type=%d target=(%d,%d) queue=%d\n",
-			job.Type, job.TargetX, job.TargetY, len(q.jobs))
+		fmt.Printf("[DEBUG] JobQueue %s type=%d target=(%d,%d) queue=%d\n",
+			action, job.Type, job.TargetX, job.TargetY, len(q.jobs))
 	}
 }

@@ -111,22 +111,18 @@ func (g *Game) Input() {
 	}
 
 	if g.debugMode {
-		if rl.IsKeyPressed(rl.KeyZero) {
+		switch {
+		case rl.IsKeyPressed(rl.KeyZero):
 			debug.Toggle(debug.Sim)
-		}
-		if rl.IsKeyPressed(rl.KeyTwo) {
+		case rl.IsKeyPressed(rl.KeyTwo):
 			debug.Toggle(debug.Move)
-		}
-		if rl.IsKeyPressed(rl.KeyThree) {
+		case rl.IsKeyPressed(rl.KeyThree):
 			debug.Toggle(debug.Path)
-		}
-		if rl.IsKeyPressed(rl.KeyFour) {
+		case rl.IsKeyPressed(rl.KeyFour):
 			debug.Toggle(debug.Clock)
-		}
-		if rl.IsKeyPressed(rl.KeyFive) {
+		case rl.IsKeyPressed(rl.KeyFive):
 			debug.Toggle(debug.Job)
-		}
-		if rl.IsKeyPressed(rl.KeySix) {
+		case rl.IsKeyPressed(rl.KeySix):
 			debug.Toggle(debug.World)
 		}
 	}
