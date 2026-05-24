@@ -5,9 +5,17 @@ import (
 	"math"
 
 	"github/teohen/mgm-tto/constants"
+	"github/teohen/mgm-tto/debug"
 	"github/teohen/mgm-tto/entity"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
+)
+
+type Tool int
+
+const (
+	ToolSelect Tool = iota
+	ToolAxe
 )
 
 const debugPrintInterval = 60
@@ -16,10 +24,12 @@ type Game struct {
 	simulation *Simulation
 	camera     rl.Camera2D
 
-	isDragging      bool
-	dragStart       rl.Vector2
-	dragEnd         rl.Vector2
-	selected        map[rl.Vector2]bool
+	isDragging bool
+	dragStart  rl.Vector2
+	dragEnd    rl.Vector2
+	selected   map[rl.Vector2]bool
+
+	activeTool Tool
 
 	debugMode       bool
 	debugFrameCount int
@@ -76,11 +86,45 @@ func (g *Game) Input() {
 	if rl.IsMouseButtonReleased(rl.MouseLeftButton) && g.isDragging {
 		g.dragEnd = worldPos
 		g.isDragging = false
-		g.selectTilesInBox()
+		g.selectCellsInBox()
+		g.onSelectionComplete()
 	}
 
 	if rl.IsKeyPressed(rl.KeyF5) {
 		g.debugMode = !g.debugMode
+		debug.SetEnabled(g.debugMode)
+		if g.debugMode {
+			fmt.Printf("[DEBUG] Debug mode enabled — %s\n", debug.ActiveString())
+		} else {
+			fmt.Printf("[DEBUG] Debug mode disabled\n")
+		}
+	}
+
+	if rl.IsKeyPressed(rl.KeyOne) {
+		if g.activeTool == ToolAxe {
+			g.activeTool = ToolSelect
+			fmt.Println("[TOOL] Selection")
+		} else {
+			g.activeTool = ToolAxe
+			fmt.Println("[TOOL] Axe")
+		}
+	}
+
+	if g.debugMode {
+		switch {
+		case rl.IsKeyPressed(rl.KeyZero):
+			debug.Toggle(debug.Sim)
+		case rl.IsKeyPressed(rl.KeyTwo):
+			debug.Toggle(debug.Move)
+		case rl.IsKeyPressed(rl.KeyThree):
+			debug.Toggle(debug.Path)
+		case rl.IsKeyPressed(rl.KeyFour):
+			debug.Toggle(debug.Clock)
+		case rl.IsKeyPressed(rl.KeyFive):
+			debug.Toggle(debug.Job)
+		case rl.IsKeyPressed(rl.KeySix):
+			debug.Toggle(debug.World)
+		}
 	}
 }
 
@@ -102,13 +146,15 @@ func (g *Game) Update() {
 	}
 	g.debugFrameCount = 0
 
-	screenPos := rl.GetMousePosition()
-	worldPos := g.screenToWorld(screenPos)
-	col := int(worldPos.X) / constants.TileSize
-	row := int(worldPos.Y) / constants.TileSize
-
-	g.debugPrint("FPS=%d zoom=%.2f tick=%d mouse=(%.0f,%.0f) cell=(%d,%d)",
-		rl.GetFPS(), g.camera.Zoom, g.clock.TickCount(), screenPos.X, screenPos.Y, col, row)
+	entities := g.simulation.Entities()
+	villagers := 0
+	for _, e := range entities {
+		if _, ok := e.(*entity.Villager); ok {
+			villagers++
+		}
+	}
+	//g.debugPrint("FPS=%d zoom=%.2f tick=%d ents=%d villagers=%d tool=%d selected=%d",
+	//rl.GetFPS(), g.camera.Zoom, g.clock.TickCount(), len(entities), villagers, g.activeTool, len(g.selected))
 }
 
 func (g *Game) Draw() {
@@ -161,7 +207,7 @@ func (g *Game) zoom(factor float32) {
 	g.camera.Zoom = newZoom
 }
 
-func (g *Game) selectTilesInBox() {
+func (g *Game) selectCellsInBox() {
 	g.selected = make(map[rl.Vector2]bool)
 
 	minX := math.Min(float64(g.dragStart.X), float64(g.dragEnd.X))
@@ -189,6 +235,17 @@ func (g *Game) selectTilesInBox() {
 				g.selected[rl.NewVector2(float32(col), float32(row))] = true
 			}
 		}
+	}
+}
+
+func (g *Game) onSelectionComplete() {
+	switch g.activeTool {
+	case ToolAxe:
+		cells := make([][2]int, 0, len(g.selected))
+		for pos := range g.selected {
+			cells = append(cells, [2]int{int(pos.X), int(pos.Y)})
+		}
+		g.simulation.ProcessAxeSelection(cells)
 	}
 }
 
