@@ -19,6 +19,13 @@ type Simulation struct {
 	jobQueue  entity.JobQueue
 }
 
+const (
+	forestFrequency = 0.07
+	forestThreshold = 0.1
+	treeHealth      = 3
+	treeWoodYield   = 5
+)
+
 func NewSimulationFromSave(s save.Save) *Simulation {
 	cells := make([][]world.CellType, s.World.Rows)
 	for r := range cells {
@@ -56,6 +63,39 @@ func NewSimulationFromSave(s save.Save) *Simulation {
 		villagers: villagers,
 		trees:     trees,
 		jobQueue:  q,
+	}
+}
+
+func NewSimulationDefault() *Simulation {
+	seed := time.Now().UnixNano()
+	w := world.NewWorld(constants.GridRows, constants.GridCols)
+	w.Generate(seed)
+
+	forestNoise := world.NewNoise(seed + 1)
+	var trees []*entity.Tree
+	treeCount := 0
+	for r := 0; r < w.Rows(); r++ {
+		for c := 0; c < w.Cols(); c++ {
+			cell := w.GetCell(c, r)
+			if cell.Type != world.Grass {
+				continue
+			}
+			if forestNoise.Noise2D(float64(c)*forestFrequency, float64(r)*forestFrequency) < forestThreshold {
+				continue
+			}
+			treeCount++
+			id := fmt.Sprintf("tree-%d", treeCount)
+			t := entity.NewTree(id, c, r, treeHealth, treeWoodYield)
+			w.Occupy(c, r)
+			trees = append(trees, t)
+		}
+	}
+
+	return &Simulation{
+		world:     &w,
+		villagers: nil,
+		trees:     trees,
+		jobQueue:  entity.NewJobQueue(),
 	}
 }
 
@@ -132,17 +172,6 @@ func (s *Simulation) RemoveTree(x, y int) bool {
 		}
 	}
 	return false
-}
-
-func (s *Simulation) ClearTrees() {
-	for _, t := range s.trees {
-		s.world.Vacate(t.X, t.Y)
-	}
-	s.trees = s.trees[:0]
-}
-
-func (s *Simulation) ClearJobs() {
-	s.jobQueue = entity.NewJobQueue()
 }
 
 func (s *Simulation) PushJob(job entity.Job) {
@@ -237,46 +266,6 @@ func (s *Simulation) ToSave() save.Save {
 
 func (s *Simulation) QueueJobs() []entity.Job {
 	return s.jobQueue.Get()
-}
-
-const (
-	forestFrequency = 0.07
-	forestThreshold = 0.1
-	treeHealth      = 3
-	treeWoodYield   = 5
-)
-
-func NewSimulationDefault() *Simulation {
-	seed := time.Now().UnixNano()
-	w := world.NewWorld(constants.GridRows, constants.GridCols)
-	w.Generate(seed)
-
-	forestNoise := world.NewNoise(seed + 1)
-	var trees []*entity.Tree
-	treeCount := 0
-	for r := 0; r < w.Rows(); r++ {
-		for c := 0; c < w.Cols(); c++ {
-			cell := w.GetCell(c, r)
-			if cell.Type != world.Grass {
-				continue
-			}
-			if forestNoise.Noise2D(float64(c)*forestFrequency, float64(r)*forestFrequency) < forestThreshold {
-				continue
-			}
-			treeCount++
-			id := fmt.Sprintf("tree-%d", treeCount)
-			t := entity.NewTree(id, c, r, treeHealth, treeWoodYield)
-			w.Occupy(c, r)
-			trees = append(trees, t)
-		}
-	}
-
-	return &Simulation{
-		world:     &w,
-		villagers: nil,
-		trees:     trees,
-		jobQueue:  entity.NewJobQueue(),
-	}
 }
 
 func (s *Simulation) Entities() []entity.Entity {

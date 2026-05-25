@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"math"
+	"math/rand"
 
 	"github/teohen/mgm-tto/constants"
 	"github/teohen/mgm-tto/debug"
@@ -49,12 +50,20 @@ func newGameCamera() rl.Camera2D {
 }
 
 func New() Game {
-	return Game{
+	g := Game{
 		simulation: NewSimulationDefault(),
 		camera:     newGameCamera(),
 		selected:   make(map[rl.Vector2]bool),
 		clock:      newClock(),
 	}
+
+	for i := 0; i < 1; i++ {
+		x := rand.Intn(constants.GridCols)
+		y := rand.Intn(constants.GridRows)
+		villager := entity.NewVillager(fmt.Sprintf("teo-%d", i), fmt.Sprintf("teo-%d", i), x, y)
+		g.simulation.AddVillager(villager)
+	}
+	return g
 }
 
 func NewFromSave(s save.Save) Game {
@@ -70,14 +79,6 @@ func NewFromSave(s save.Save) Game {
 		selected:   make(map[rl.Vector2]bool),
 		clock:      newClock(),
 	}
-}
-
-func (g *Game) AddVillager(v *entity.Villager) {
-	g.simulation.AddVillager(v)
-}
-
-func (g *Game) AddTree(tree *entity.Tree) {
-	g.simulation.AddTree(tree)
 }
 
 func (g *Game) Input() {
@@ -298,13 +299,6 @@ func (g *Game) onSelectionComplete() {
 		}
 		g.simulation.ProcessAxeSelection(cells)
 	}
-}
-
-func (g *Game) debugPrint(format string, args ...any) {
-	if !g.debugMode {
-		return
-	}
-	fmt.Printf("[DEBUG] "+format+"\n", args...)
 }
 
 func (g *Game) Save() {
