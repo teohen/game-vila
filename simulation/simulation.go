@@ -1,4 +1,4 @@
-package game
+package simulation
 
 import (
 	"fmt"
@@ -9,6 +9,15 @@ import (
 	"github/teohen/mgm-tto/entity"
 	"github/teohen/mgm-tto/save"
 	"github/teohen/mgm-tto/world"
+
+	rl "github.com/gen2brain/raylib-go/raylib"
+)
+
+type Tool int
+
+const (
+	ToolSelect Tool = iota
+	ToolAxe
 )
 
 type Simulation struct {
@@ -17,6 +26,9 @@ type Simulation struct {
 	villagers []*entity.Villager
 	trees     []*entity.Tree
 	jobQueue  entity.JobQueue
+
+	ActiveTool Tool
+	Selected   map[rl.Vector2]bool
 }
 
 const (
@@ -26,7 +38,7 @@ const (
 	treeWoodYield   = 5
 )
 
-func NewSimulationFromSave(s save.Save) *Simulation {
+func NewFromSave(s save.Save) *Simulation {
 	cells := make([][]world.CellType, s.World.Rows)
 	for r := range cells {
 		cells[r] = make([]world.CellType, s.World.Cols)
@@ -66,7 +78,7 @@ func NewSimulationFromSave(s save.Save) *Simulation {
 	}
 }
 
-func NewSimulationDefault() *Simulation {
+func New() *Simulation {
 	seed := time.Now().UnixNano()
 	w := world.NewWorld(constants.GridRows, constants.GridCols)
 	w.Generate(seed)
@@ -284,5 +296,15 @@ func (s *Simulation) debugSimulation() {
 	if debug.IsEnabled(debug.Sim) {
 		fmt.Printf("[SIMULATION] Sim tick=%d villagers=%d trees=%d jobs=%d\n",
 			s.tickCount, len(s.villagers), len(s.trees), len(s.jobQueue.Get()))
+	}
+}
+func (s *Simulation) OnSelectionComplete() {
+	switch s.ActiveTool {
+	case ToolAxe:
+		cells := make([][2]int, 0, len(s.Selected))
+		for pos := range s.Selected {
+			cells = append(cells, [2]int{int(pos.X), int(pos.Y)})
+		}
+		s.ProcessAxeSelection(cells)
 	}
 }

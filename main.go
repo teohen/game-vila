@@ -50,13 +50,13 @@ func main() {
 	defer quit()
 
 	for running {
-		g.Input()
+		g.UI.Input()
 		g.Update()
 		running = !rl.WindowShouldClose()
 
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.White)
-		g.Draw()
+		g.UI.Draw()
 		rl.EndDrawing()
 	}
 }

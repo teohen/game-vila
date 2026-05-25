@@ -1,8 +1,10 @@
-package game
+package ui
 
 import (
 	"fmt"
+	"github/teohen/mgm-tto/constants"
 	"github/teohen/mgm-tto/entity"
+	"github/teohen/mgm-tto/simulation"
 	"strconv"
 	"strings"
 
@@ -14,7 +16,21 @@ type Console struct {
 	input []rune
 }
 
-func (c *Console) Toggle() {
+func (console *Console) handleConsole(ui *UI) {
+	if rl.IsKeyPressed(rl.KeyGrave) {
+		console.toggle()
+	}
+
+	if console.IsOpen() {
+		cmd := console.readInput()
+		if cmd != "" {
+			ExecuteCommand(ui.simulation, cmd)
+		}
+		return
+	}
+}
+
+func (c *Console) toggle() {
 	c.open = !c.open
 	if !c.open {
 		c.input = c.input[:0]
@@ -29,7 +45,7 @@ func (c *Console) Input() string {
 	return string(c.input)
 }
 
-func (c *Console) ReadInput() string {
+func (c *Console) readInput() string {
 	for ch := rl.GetCharPressed(); ch != 0; ch = rl.GetCharPressed() {
 		if ch == '`' || ch == '~' {
 			continue
@@ -50,7 +66,7 @@ func (c *Console) ReadInput() string {
 	return ""
 }
 
-func ExecuteCommand(sim *Simulation, cmd string) {
+func ExecuteCommand(sim *simulation.Simulation, cmd string) {
 	parts := strings.Fields(cmd)
 	if len(parts) == 0 {
 		return
@@ -141,4 +157,12 @@ func ExecuteCommand(sim *Simulation, cmd string) {
 	default:
 		fmt.Printf("unknown command: %s\n", parts[0])
 	}
+}
+
+func (c *Console) DrawConsole() {
+	const barH = 30
+	barY := constants.ScreenH - barH
+	rl.DrawRectangle(0, int32(barY), constants.ScreenW, barH, rl.NewColor(0, 0, 0, 200))
+	line := "> " + c.Input() + "|"
+	rl.DrawText(line, 8, int32(barY)+5, 18, rl.White)
 }
