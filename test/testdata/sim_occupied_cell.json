@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "world": {
+    "rows": 5,
+    "cols": 5,
+    "cells": [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]
+  },
+  "villagers": [
+    {"id": "v1", "name": "test", "type": 1, "x": 0, "y": 0}
+  ],
+  "trees": [
+    {"id": "tree-1", "x": 2, "y": 2, "health": 10, "wood_yield": 5}
+  ],
+  "jobs": [
+    {"target_x": 2, "target_y": 2}
+  ],
+  "camera": {"target_x": 0, "target_y": 0, "zoom": 0}
+}

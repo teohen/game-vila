@@ -5,7 +5,7 @@ import "fmt"
 type Category int
 
 const (
-	Sim   Category = 1 << iota
+	Sim Category = 1 << iota
 	Move
 	Path
 	Clock
@@ -20,6 +20,14 @@ var (
 
 func SetEnabled(v bool) {
 	master = v
+}
+
+func ToggleDebug() {
+	master = !master
+}
+
+func IsDebugActive() bool {
+	return master
 }
 
 func IsEnabled(c Category) bool {

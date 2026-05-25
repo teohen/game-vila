@@ -13,7 +13,7 @@ What the player builds over time. Composed of buildings, Villagers, and animals.
 _Avoid_: Town, city, settlement
 
 **World**:
-A fixed-size 2D grid of cells (50×50) where everything exists. Supports pan and zoom camera navigation.
+A fixed-size 2D grid of cells (30×30) where everything exists. Supports pan and zoom camera navigation.
 _Avoid_: Map, level, board
 
 **Cell**:
@@ -33,7 +33,7 @@ A set of Cells highlighted by the player via drag-to-select. Used to target tool
 _Avoid_: Highlight, pick, mark
 
 **Tree**:
-A world entity that yields Wood when chopped by a Villager. Has a grid position (x, y), health, and a WoodYield value. Occupies its cell (blocks movement). Does not move or act autonomously.
+A world entity that yields Wood when chopped by a Villager. Has a grid position (x, y), Health, and a WoodYield value. Occupies its cell (blocks movement). Does not move or act autonomously.
 _Avoid_: Resource, harvestable, node, object
 
 **WoodYield**:
@@ -49,7 +49,7 @@ A dynamic property of a Cell tracked by the World. True when a solid entity (Vil
 _Avoid_: Blocked, taken, full, collided
 
 **Pathfinding**:
-The system by which a Villager determines the sequence of cells to traverse toward a target. Uses A* on the 50×50 grid. Produces a list of waypoints the Villager follows one cell per tick. Inputs: walkable cells (static terrain) and occupied cells (dynamic entities).
+The system by which a Villager determines the sequence of cells to traverse toward a target. Uses A* on the 30×30 grid. Produces a list of waypoints the Villager follows one cell per tick. Inputs: walkable cells (static terrain) and occupied cells (dynamic entities).
 _Avoid_: Navigation, routing, move planning
 
 **Job**:
@@ -65,7 +65,7 @@ The kind of work a Job represents (e.g., JobTypeChopTrees, JobTypeMove). Determi
 _Avoid_: Job kind, work type, action type
 
 **Camera**:
-A 2D viewport that the player controls with right-click drag (pan) and mouse wheel (zoom). Clamped between 25% and 300%.
+A 2D viewport that the player controls with right-click drag (pan) and mouse wheel (zoom). Clamped between 25% and 700%.
 _Avoid_: Viewport, view
 
 **SpriteBank**:
@@ -92,6 +92,14 @@ _Avoid_: Frame, step, beat, cycle, turn
 A 2D Perlin noise function used for procedural world generation. Lives in the `world` package. Produces smooth continuous values in [-1, 1]. Used to determine terrain layout and forest density.
 _Avoid_: Random, Perlin (implementation detail)
 
-**Noise channel**:
-A distinct layer of noise with its own frequency and seed. Channel 1 (frequency ≈0.035) drives terrain type (Water/Dirt/Grass). Channel 2 (frequency ≈0.07) drives forest density. Each channel uses an independent seed to avoid correlation.
-_Avoid_: Layer, octave
+**Noise invocation**:
+A call to Noise at a given frequency and seed. Two invocations are used: one at frequency ≈0.035 for terrain type (Water/Dirt/Grass) and another at frequency ≈0.07 for forest density. Each uses an independent seed to avoid correlation.
+_Avoid_: Channel, layer, octave
+
+**Save**:
+A serialized snapshot of the whole Game state written to disk as a JSON file. Contains the World grid, Villagers (with movement state), Trees, Jobs, and Camera position/zoom. Created by pressing F9.
+_Avoid_: Save file, save data, save slot
+
+**Load**:
+The act of reading a Save from disk and replacing the current Game state entirely with the reconstructed state. Triggered by pressing F10. If the file is missing or corrupt, an error is printed and the game continues unchanged.
+_Avoid_: Restore, open, import

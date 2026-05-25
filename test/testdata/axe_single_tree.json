@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "world": {
+    "rows": 5,
+    "cols": 5,
+    "cells": [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]
+  },
+  "trees": [
+    {"id": "tree-1", "x": 2, "y": 2, "health": 3, "wood_yield": 5}
+  ],
+  "camera": {"target_x": 0, "target_y": 0, "zoom": 0}
+}

@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "world": {
+    "rows": 5,
+    "cols": 5,
+    "cells": [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]
+  },
+  "villagers": [
+    {"id": "v1", "name": "alice", "type": 1, "x": 0, "y": 0},
+    {"id": "v2", "name": "bob", "type": 1, "x": 4, "y": 4}
+  ],
+  "camera": {"target_x": 0, "target_y": 0, "zoom": 0}
+}

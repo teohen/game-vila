@@ -37,6 +37,10 @@ func (v *Villager) Tick(w *world.World) MovementEvent {
 	return v.Movement.Update(w)
 }
 
+func (v *Villager) Name() string {
+	return v.name
+}
+
 func (v *Villager) Pos() (int, int) {
 	return v.Movement.Pos()
 }
