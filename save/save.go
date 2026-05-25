@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 )
 
+var savePath = "test/testdata/sim_chop_sequence.json"
+
 type Save struct {
 	Version   int            `json:"version"`
 	World     WorldSave      `json:"world"`
@@ -52,8 +54,6 @@ type JobSave struct {
 	TargetX int `json:"target_x"`
 	TargetY int `json:"target_y"`
 }
-
-var savePath = "test/testdata/sim_chop_sequence.json"
 
 func SaveToFile(path string, s Save) error {
 	dir := filepath.Dir(path)

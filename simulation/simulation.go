@@ -9,8 +9,6 @@ import (
 	"github/teohen/mgm-tto/entity"
 	"github/teohen/mgm-tto/save"
 	"github/teohen/mgm-tto/world"
-
-	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 type Tool int
@@ -28,7 +26,7 @@ type Simulation struct {
 	jobQueue  entity.JobQueue
 
 	ActiveTool Tool
-	Selected   map[rl.Vector2]bool
+	Selected   map[[2]int]bool
 }
 
 const (
@@ -303,7 +301,7 @@ func (s *Simulation) OnSelectionComplete() {
 	case ToolAxe:
 		cells := make([][2]int, 0, len(s.Selected))
 		for pos := range s.Selected {
-			cells = append(cells, [2]int{int(pos.X), int(pos.Y)})
+			cells = append(cells, pos)
 		}
 		s.ProcessAxeSelection(cells)
 	}

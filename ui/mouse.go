@@ -24,7 +24,7 @@ func (g *UI) zoom(factor float32) {
 }
 
 func (ui *UI) selectCellsInBox() {
-	ui.simulation.Selected = make(map[rl.Vector2]bool)
+	ui.simulation.Selected = make(map[[2]int]bool)
 
 	minX := math.Min(float64(ui.dragStart.X), float64(ui.dragEnd.X))
 	maxX := math.Max(float64(ui.dragStart.X), float64(ui.dragEnd.X))
@@ -35,7 +35,7 @@ func (ui *UI) selectCellsInBox() {
 		col := int(ui.dragEnd.X) / constants.TileSize
 		row := int(ui.dragEnd.Y) / constants.TileSize
 		if col >= 0 && col < constants.GridCols && row >= 0 && row < constants.GridRows {
-			ui.simulation.Selected[rl.NewVector2(float32(col), float32(row))] = true
+			ui.simulation.Selected[[2]int{col, row}] = true
 		}
 		return
 	}
@@ -48,15 +48,16 @@ func (ui *UI) selectCellsInBox() {
 
 			if tileCenterX >= minX && tileCenterX <= maxX &&
 				tileCenterY >= minY && tileCenterY <= maxY {
-				ui.simulation.Selected[rl.NewVector2(float32(col), float32(row))] = true
+				ui.simulation.Selected[[2]int{col, row}] = true
 			}
 		}
 	}
 }
 
 func handleMouse(ui *UI) {
+	c := *ui.camera
 	screenPos := rl.GetMousePosition()
-	worldPos := screenToWorld(screenPos, ui.camera)
+	worldPos := screenToWorld(screenPos, c)
 
 	if rl.IsMouseButtonDown(rl.MouseRightButton) {
 		delta := rl.GetMouseDelta()

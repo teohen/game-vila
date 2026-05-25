@@ -13,36 +13,18 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
-const debugPrintInterval = 60
-
 type Game struct {
-	sim    *simulation.Simulation
-	UI     *ui.UI
-	camera rl.Camera2D
-
-	debugMode       bool
-	debugFrameCount int
-
+	sim   *simulation.Simulation
+	UI    *ui.UI
 	clock Clock
-}
-
-func newGameCamera() rl.Camera2D {
-	return rl.Camera2D{
-		Target:   rl.NewVector2(float32(constants.GridCols)*constants.TileSize/2, float32(constants.GridRows)*constants.TileSize/2),
-		Offset:   rl.NewVector2(constants.ScreenW/2, constants.ScreenH/2),
-		Rotation: 0,
-		Zoom:     1.0,
-	}
 }
 
 func New() Game {
 	sim := simulation.New()
-	cam := newGameCamera()
 	g := Game{
-		sim:    sim,
-		UI:     ui.New(sim, cam),
-		camera: newGameCamera(),
-		clock:  newClock(),
+		sim:   sim,
+		UI:    ui.New(sim),
+		clock: newClock(),
 	}
 
 	for i := 0; i < 1; i++ {
@@ -55,20 +37,11 @@ func New() Game {
 }
 
 func NewFromSave(s save.Save) Game {
-	cam := newGameCamera()
-	if s.Camera.Zoom != 0 {
-		cam.Target.X = float32(s.Camera.TargetX)
-		cam.Target.Y = float32(s.Camera.TargetY)
-		cam.Zoom = float32(s.Camera.Zoom)
-	}
-
 	sim := simulation.NewFromSave(s)
-	ui := ui.New(sim, cam)
 	return Game{
-		sim:    sim,
-		camera: cam,
-		UI:     ui,
-		clock:  newClock(),
+		sim:   sim,
+		UI:    ui.NewFromSave(sim, s),
+		clock: newClock(),
 	}
 }
 
@@ -78,24 +51,16 @@ func (g *Game) Update() {
 
 	for i := 0; i < ticks; i++ {
 		g.sim.Tick()
-		g.UI.Draw()
 	}
 }
 
 func (g *Game) Save() {
-	s := g.sim.ToSave()
-	s.Camera = save.CameraSave{
-		TargetX: float64(g.camera.Target.X),
-		TargetY: float64(g.camera.Target.Y),
-		Zoom:    float64(g.camera.Zoom),
-	}
-	/*if err := save.SaveToFile(savePath, s); err != nil {
+	/*if err := save.SaveToFile(save.GetSavePath(), g.sim.ToSave()); err != nil {
 		fmt.Printf("[ERROR] Save failed: %v\n", err)
 		return
 	}
 	*/
-	savePath := save.GetSavePath()
-	fmt.Printf("[SAVE] Game saved to %s\n", savePath)
+	fmt.Printf("[SAVE] Game saved to %s\n", save.GetSavePath())
 }
 
 func (g *Game) Load() {
@@ -106,9 +71,6 @@ func (g *Game) Load() {
 	}
 
 	g.sim = simulation.NewFromSave(s)
-	g.camera.Target.X = float32(s.Camera.TargetX)
-	g.camera.Target.Y = float32(s.Camera.TargetY)
-	g.camera.Zoom = float32(s.Camera.Zoom)
-	g.sim.Selected = make(map[rl.Vector2]bool)
+	g.sim.Selected = make(map[[2]int]bool)
 	fmt.Printf("[SAVE] Game loaded from %s\n", save.GetSavePath())
 }
