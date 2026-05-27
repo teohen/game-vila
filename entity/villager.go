@@ -110,6 +110,17 @@ func (v *Villager) Tick(w *world.World) MovementEvent {
 			}
 		}
 		return EventNone
+
+	case TraitDeposit:
+		v.Wood = 0
+		v.step++
+		v.State = StateIdle
+		v.Waypoints = nil
+		if v.step >= len(v.plan) {
+			v.clearPlan()
+			return EventIdle
+		}
+		return EventNone
 	}
 
 	return EventNone
@@ -122,6 +133,10 @@ func (v *Villager) SetPlan(plan []PlanStep) {
 	v.WaitTicks = 0
 	v.WaitCount = 0
 	v.Waypoints = nil
+}
+
+func (v *Villager) IsIdle() bool {
+	return len(v.plan) == 0
 }
 
 func (v *Villager) clearPlan() {

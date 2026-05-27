@@ -5,6 +5,7 @@ type TraitType int
 const (
 	TraitMove TraitType = iota
 	TraitChop
+	TraitDeposit
 )
 
 type PlanStep struct {

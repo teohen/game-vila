@@ -236,11 +236,11 @@ func TestVillagerMultipleChopJobs_CarriesAfterFirst(t *testing.T) {
 func TestVillagerSkipsNilTree(t *testing.T) {
 	s := loadSave(t, "testdata/lumberjack_nil_tree.json")
 
-	s.AdvanceTicks(5)
+	s.AdvanceTicks(4)
 
 	x, y := s.Pos("v1")
-	if x != 3 || y != 0 {
-		t.Fatalf("expected v1 at (3,0) after walk + nil-tree skip, got (%d,%d)", x, y)
+	if x != 0 || y != 0 {
+		t.Fatalf("expected v1 at (0,0) since goal already satisfied, got (%d,%d)", x, y)
 	}
 
 	wood := s.VillagerWood("v1")
@@ -273,13 +273,40 @@ func TestVillagerAcceptsJobs_WhenPartiallyCarrying(t *testing.T) {
 	}
 }
 
+func TestVillagerDepositsWood_WhenFull(t *testing.T) {
+	s := loadSave(t, "testdata/lumberjack_deposit.json")
+
+	s.AdvanceTicks(7)
+
+	wood := s.VillagerWood("v1")
+	if wood != 5 {
+		t.Fatalf("expected Wood=5 after first chop, got %d", wood)
+	}
+
+	if s.TreeAt(6, 0) == nil {
+		t.Fatal("tree-2 should exist before second chop")
+	}
+
+	s.PushJob(entity.Job{Type: entity.JobTypeChopTrees, TargetX: 6, TargetY: 0})
+	s.AdvanceTicks(18)
+
+	wood = s.VillagerWood("v1")
+	if wood != 5 {
+		t.Errorf("expected Wood=5 after deposit + second chop, got %d", wood)
+	}
+
+	if s.TreeAt(6, 0) != nil {
+		t.Error("tree-2 should be dead after second chop")
+	}
+}
+
 func TestVillagerSkipsNilTree_ReturnsToIdle(t *testing.T) {
 	s := loadSave(t, "testdata/lumberjack_nil_tree.json")
 
 	s.AdvanceTicks(4)
 
 	s.PushJob(entity.Job{Type: entity.JobTypeMove, TargetX: 4, TargetY: 0})
-	s.AdvanceTicks(3)
+	s.AdvanceTicks(5)
 
 	x, y := s.Pos("v1")
 	if x != 4 || y != 0 {

@@ -14,8 +14,14 @@ type Save struct {
 	World     WorldSave      `json:"world"`
 	Villagers []VillagerSave `json:"villagers,omitempty"`
 	Trees     []TreeSave     `json:"trees,omitempty"`
+	Deposits  []DepositSave  `json:"deposits,omitempty"`
 	Jobs      []JobSave      `json:"jobs,omitempty"`
 	Camera    CameraSave     `json:"camera"`
+}
+
+type DepositSave struct {
+	X int `json:"x"`
+	Y int `json:"y"`
 }
 
 type CameraSave struct {
