@@ -2,6 +2,8 @@ package game_test
 
 import (
 	"testing"
+
+	"github/teohen/mgm-tto/entity"
 )
 
 func TestVillagerWalksToTarget(t *testing.T) {
@@ -98,5 +100,216 @@ func TestTwoVillagers_EachGetsAChopJob(t *testing.T) {
 	}
 	if x2 != 6 || y2 != 0 {
 		t.Errorf("expected v2 at (6,0), got (%d,%d)", x2, y2)
+	}
+}
+
+func TestVillagerChopsTree_BasicFlow(t *testing.T) {
+	s := loadSave(t, "testdata/lumberjack_basic.json")
+
+	s.AdvanceTicks(4)
+
+	x, y := s.Pos("v1")
+	if x != 2 || y != 0 {
+		t.Fatalf("expected v1 adjacent to tree at (2,0), got (%d,%d)", x, y)
+	}
+
+	tree := s.TreeAt(3, 0)
+	if tree == nil {
+		t.Fatal("tree should exist before chopping")
+	}
+	if tree.Health != 3 {
+		t.Errorf("expected tree health 3 before chop, got %d", tree.Health)
+	}
+
+	if !s.World().IsOccupied(3, 0) {
+		t.Error("tree cell should be occupied before chop")
+	}
+
+	s.AdvanceTicks(3)
+
+	if s.TreeAt(3, 0) != nil {
+		t.Error("tree should be removed from world after chop")
+	}
+
+	if s.World().IsOccupied(3, 0) {
+		t.Error("tree cell should be vacated after destruction")
+	}
+
+	wood := s.VillagerWood("v1")
+	if wood != 5 {
+		t.Errorf("expected Wood=5 after chop, got %d", wood)
+	}
+}
+
+func TestVillagerCarrying_BlocksNewJobs(t *testing.T) {
+	s := loadSave(t, "testdata/lumberjack_basic.json")
+	s.SetMaxCarryWeight("v1", 10)
+
+	s.AdvanceTicks(7)
+
+	wood := s.VillagerWood("v1")
+	if wood != 5 {
+		t.Fatalf("expected villager to have wood after chop, got %d", wood)
+	}
+	x0, y0 := s.Pos("v1")
+
+	s.PushJob(entity.Job{Type: entity.JobTypeMove, TargetX: 9, TargetY: 9})
+	s.AdvanceTicks(10)
+
+	x, y := s.Pos("v1")
+	if x != x0 || y != y0 {
+		t.Errorf("expected v1 to stay at (%d,%d) while carrying, moved to (%d,%d)", x0, y0, x, y)
+	}
+
+	wood = s.VillagerWood("v1")
+	if wood != 5 {
+		t.Errorf("expected wood to remain 5 while carrying, got %d", wood)
+	}
+}
+
+func TestTwoVillagers_ChopDifferentTrees(t *testing.T) {
+	s := loadSave(t, "testdata/lumberjack_two_villagers.json")
+
+	s.AdvanceTicks(4)
+
+	x1, y1 := s.Pos("v1")
+	if x1 != 2 || y1 != 0 {
+		t.Errorf("expected v1 adjacent to tree-1 at (2,0), got (%d,%d)", x1, y1)
+	}
+
+	x2, y2 := s.Pos("v2")
+	if x2 != 7 || y2 != 0 {
+		t.Errorf("expected v2 adjacent to tree-2 at (7,0), got (%d,%d)", x2, y2)
+	}
+
+	if s.TreeAt(3, 0) == nil || s.TreeAt(6, 0) == nil {
+		t.Fatal("both trees should exist before chopping")
+	}
+
+	s.AdvanceTicks(3)
+
+	if s.TreeAt(3, 0) != nil {
+		t.Error("tree-1 should be removed after chop")
+	}
+	if s.TreeAt(6, 0) != nil {
+		t.Error("tree-2 should be removed after chop")
+	}
+
+	wood1 := s.VillagerWood("v1")
+	if wood1 != 5 {
+		t.Errorf("expected v1 Wood=5, got %d", wood1)
+	}
+
+	wood2 := s.VillagerWood("v2")
+	if wood2 != 5 {
+		t.Errorf("expected v2 Wood=5, got %d", wood2)
+	}
+}
+
+func TestVillagerMultipleChopJobs_CarriesAfterFirst(t *testing.T) {
+	s := loadSave(t, "testdata/lumberjack_two_villagers.json")
+	s.SetMaxCarryWeight("v1", 10)
+
+	s.AdvanceTicks(7)
+
+	wood := s.VillagerWood("v1")
+	if wood != 5 {
+		t.Fatalf("expected v1 Wood=5 after chop, got %d", wood)
+	}
+
+	x0, y0 := s.Pos("v1")
+
+	s.PushJob(entity.Job{Type: entity.JobTypeChopTrees, TargetX: 9, TargetY: 0})
+	s.AdvanceTicks(10)
+
+	x, y := s.Pos("v1")
+	if x != x0 || y != y0 {
+		t.Errorf("expected v1 to stay at (%d,%d) carrying wood, moved to (%d,%d)", x0, y0, x, y)
+	}
+
+	wood = s.VillagerWood("v1")
+	if wood != 5 {
+		t.Errorf("expected v1 wood to remain 5, got %d", wood)
+	}
+}
+
+func TestVillagerSkipsNilTree(t *testing.T) {
+	s := loadSave(t, "testdata/lumberjack_nil_tree.json")
+
+	s.AdvanceTicks(4)
+
+	x, y := s.Pos("v1")
+	if x != 0 || y != 0 {
+		t.Fatalf("expected v1 at (0,0) since goal already satisfied, got (%d,%d)", x, y)
+	}
+
+	wood := s.VillagerWood("v1")
+	if wood != 0 {
+		t.Errorf("expected Wood=0 (no tree to chop), got %d", wood)
+	}
+}
+
+func TestVillagerAcceptsJobs_WhenPartiallyCarrying(t *testing.T) {
+	s := loadSave(t, "testdata/lumberjack_high_capacity.json")
+
+	s.AdvanceTicks(7)
+
+	wood := s.VillagerWood("v1")
+	if wood != 5 {
+		t.Fatalf("expected Wood=5 after chop, got %d", wood)
+	}
+
+	currentWeight := wood * entity.WoodWeightPerUnit
+	if currentWeight >= s.VillagerMaxCarryWeight("v1") {
+		t.Fatal("villager should have room to carry more")
+	}
+
+	s.PushJob(entity.Job{Type: entity.JobTypeMove, TargetX: 9, TargetY: 0})
+	s.AdvanceTicks(8)
+
+	x, y := s.Pos("v1")
+	if x != 9 || y != 0 {
+		t.Errorf("expected v1 to walk to (9,0) while partially carrying, got (%d,%d)", x, y)
+	}
+}
+
+func TestVillagerDepositsWood_WhenFull(t *testing.T) {
+	s := loadSave(t, "testdata/lumberjack_deposit.json")
+
+	s.AdvanceTicks(7)
+
+	wood := s.VillagerWood("v1")
+	if wood != 5 {
+		t.Fatalf("expected Wood=5 after first chop, got %d", wood)
+	}
+
+	if s.TreeAt(6, 0) == nil {
+		t.Fatal("tree-2 should exist before second chop")
+	}
+
+	s.PushJob(entity.Job{Type: entity.JobTypeChopTrees, TargetX: 6, TargetY: 0})
+	s.AdvanceTicks(18)
+
+	wood = s.VillagerWood("v1")
+	if wood != 5 {
+		t.Errorf("expected Wood=5 after deposit + second chop, got %d", wood)
+	}
+
+	if s.TreeAt(6, 0) != nil {
+		t.Error("tree-2 should be dead after second chop")
+	}
+}
+
+func TestVillagerSkipsNilTree_ReturnsToIdle(t *testing.T) {
+	s := loadSave(t, "testdata/lumberjack_nil_tree.json")
+
+	s.AdvanceTicks(4)
+
+	s.PushJob(entity.Job{Type: entity.JobTypeMove, TargetX: 4, TargetY: 0})
+	s.AdvanceTicks(5)
+
+	x, y := s.Pos("v1")
+	if x != 4 || y != 0 {
+		t.Errorf("expected v1 at (4,0) after nil-tree skip + move, got (%d,%d)", x, y)
 	}
 }

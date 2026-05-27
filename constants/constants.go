@@ -13,7 +13,7 @@ const (
 	CameraZoomMin = 0.25
 	CameraZoomMax = 7.0
 
-	TickInterval = 200 // milliseconds between ticks (5 ticks/sec)
+	TickInterval = 50 // milliseconds between ticks (5 ticks/sec)
 )
 
 func WorldToScreen(col, row int) (x, y float32) {

@@ -8,6 +8,11 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
+const (
+	WoodWeightPerUnit    = 2
+	DefaultMaxCarryWeight = 50
+)
+
 type VillagerType int
 
 const (
@@ -16,9 +21,15 @@ const (
 
 type Villager struct {
 	Movement
-	ID   string
-	name string
-	Type VillagerType
+	Lumberjack
+	ID             string
+	name           string
+	Type           VillagerType
+	Wood           int
+	MaxCarryWeight int
+
+	plan []PlanStep
+	step int
 }
 
 func NewVillager(id, name string, x, y int) *Villager {
@@ -27,14 +38,110 @@ func NewVillager(id, name string, x, y int) *Villager {
 			X: x,
 			Y: y,
 		},
-		ID:   id,
-		name: name,
-		Type: Human,
+		ID:             id,
+		name:           name,
+		Type:           Human,
+		MaxCarryWeight: DefaultMaxCarryWeight,
 	}
 }
 
+func (v *Villager) CurrentWeight() int {
+	return v.Wood * WoodWeightPerUnit
+}
+
+func (v *Villager) IsCarrying() bool {
+	return v.CurrentWeight() >= v.MaxCarryWeight
+}
+
 func (v *Villager) Tick(w *world.World) MovementEvent {
-	return v.Movement.Update(w)
+	if len(v.plan) == 0 {
+		if v.IsCarrying() {
+			return EventNone
+		}
+		return EventIdle
+	}
+
+	step := v.plan[v.step]
+	switch step.Trait {
+	case TraitMove:
+		if v.State == StateIdle {
+			v.Movement.SetTarget(step.TargetX, step.TargetY, w)
+		}
+		event := v.Movement.Update(w)
+		if event == EventArrived {
+			v.step++
+			if v.step >= len(v.plan) {
+				v.clearPlan()
+				if v.IsCarrying() {
+					return EventNone
+				}
+				return EventIdle
+			}
+		}
+		return EventNone
+
+	case TraitChop:
+		if !v.IsHitting() {
+			if step.Tree == nil {
+				v.step++
+				if v.step >= len(v.plan) {
+					v.clearPlan()
+					if v.IsCarrying() {
+						return EventNone
+					}
+					return EventIdle
+				}
+				return EventNone
+			}
+			v.Lumberjack.Start(step.Tree)
+		}
+		wood, done := v.Lumberjack.Update(w)
+		if wood > 0 {
+			v.Wood += wood
+		}
+		if done {
+			v.step++
+			if v.step >= len(v.plan) {
+				v.clearPlan()
+				if v.IsCarrying() {
+					return EventNone
+				}
+				return EventIdle
+			}
+		}
+		return EventNone
+
+	case TraitDeposit:
+		v.Wood = 0
+		v.step++
+		v.State = StateIdle
+		v.Waypoints = nil
+		if v.step >= len(v.plan) {
+			v.clearPlan()
+			return EventIdle
+		}
+		return EventNone
+	}
+
+	return EventNone
+}
+
+func (v *Villager) SetPlan(plan []PlanStep) {
+	v.plan = plan
+	v.step = 0
+	v.State = StateIdle
+	v.WaitTicks = 0
+	v.WaitCount = 0
+	v.Waypoints = nil
+}
+
+func (v *Villager) IsIdle() bool {
+	return len(v.plan) == 0
+}
+
+func (v *Villager) clearPlan() {
+	v.plan = nil
+	v.step = 0
 }
 
 func (v *Villager) Name() string {

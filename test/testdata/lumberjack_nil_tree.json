@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "world": {
+    "rows": 5,
+    "cols": 5,
+    "cells": [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]
+  },
+  "villagers": [
+    {"id": "v1", "name": "test", "type": 1, "x": 0, "y": 0}
+  ],
+  "jobs": [
+    {"type": 1, "target_x": 3, "target_y": 0}
+  ],
+  "camera": {"target_x": 0, "target_y": 0, "zoom": 0}
+}
