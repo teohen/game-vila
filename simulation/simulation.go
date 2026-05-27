@@ -49,9 +49,16 @@ func NewFromSave(s save.Save) *Simulation {
 	villagers := make([]*entity.Villager, len(s.Villagers))
 	for i, vs := range s.Villagers {
 		v := entity.NewVillager(vs.ID, vs.Name, vs.X, vs.Y)
+		v.Wood = vs.Wood
+		if vs.MaxCarryWeight > 0 {
+			v.MaxCarryWeight = vs.MaxCarryWeight
+		}
 		w.Occupy(vs.X, vs.Y)
 		if vs.TargetX != nil && vs.TargetY != nil {
-			v.SetTarget(*vs.TargetX, *vs.TargetY, w)
+			plan := []entity.PlanStep{
+				{Trait: entity.TraitMove, TargetX: *vs.TargetX, TargetY: *vs.TargetY},
+			}
+			v.SetPlan(plan)
 		}
 		villagers[i] = v
 	}
@@ -112,22 +119,48 @@ func New() *Simulation {
 func (s *Simulation) Tick() {
 	for _, v := range s.villagers {
 		event := v.Tick(s.world)
-		switch event {
-		case entity.EventIdle, entity.EventArrived:
+		if event == entity.EventIdle {
 			job := s.jobQueue.Pop()
 			if job != nil {
-				v.SetTarget(job.TargetX, job.TargetY, s.world)
+				s.setPlan(v, *job)
 			}
-
 		}
 	}
+
 	for _, t := range s.trees {
 		t.Tick(s.world)
 	}
 
+	s.removeDeadTrees()
+
 	s.debugSimulation()
 
 	s.tickCount++
+}
+
+func (s *Simulation) setPlan(v *entity.Villager, job entity.Job) {
+	switch job.Type {
+	case entity.JobTypeChopTrees:
+		tree := s.TreeAt(job.TargetX, job.TargetY)
+		v.SetPlan([]entity.PlanStep{
+			{Trait: entity.TraitMove, TargetX: job.TargetX, TargetY: job.TargetY},
+			{Trait: entity.TraitChop, TargetX: job.TargetX, TargetY: job.TargetY, Tree: tree},
+		})
+	case entity.JobTypeMove:
+		v.SetPlan([]entity.PlanStep{
+			{Trait: entity.TraitMove, TargetX: job.TargetX, TargetY: job.TargetY},
+		})
+	}
+}
+
+func (s *Simulation) removeDeadTrees() {
+	alive := s.trees[:0]
+	for _, t := range s.trees {
+		if t.Health > 0 {
+			alive = append(alive, t)
+		}
+	}
+	s.trees = alive
 }
 
 func (s *Simulation) AdvanceTicks(n int) {
@@ -139,7 +172,10 @@ func (s *Simulation) AdvanceTicks(n int) {
 func (s *Simulation) SetTarget(villagerID string, x, y int) {
 	for _, v := range s.villagers {
 		if v.ID == villagerID {
-			v.SetTarget(x, y, s.world)
+			plan := []entity.PlanStep{
+				{Trait: entity.TraitMove, TargetX: x, TargetY: y},
+			}
+			v.SetPlan(plan)
 			return
 		}
 	}
@@ -212,6 +248,33 @@ func (s *Simulation) TreeAt(x, y int) *entity.Tree {
 	return nil
 }
 
+func (s *Simulation) VillagerWood(id string) int {
+	for _, v := range s.villagers {
+		if v.ID == id {
+			return v.Wood
+		}
+	}
+	return -1
+}
+
+func (s *Simulation) VillagerMaxCarryWeight(id string) int {
+	for _, v := range s.villagers {
+		if v.ID == id {
+			return v.MaxCarryWeight
+		}
+	}
+	return -1
+}
+
+func (s *Simulation) SetMaxCarryWeight(id string, weight int) {
+	for _, v := range s.villagers {
+		if v.ID == id {
+			v.MaxCarryWeight = weight
+			return
+		}
+	}
+}
+
 func (s *Simulation) World() *world.World {
 	return s.world
 }
@@ -228,11 +291,13 @@ func (s *Simulation) ToSave() save.Save {
 	villagers := make([]save.VillagerSave, len(s.villagers))
 	for i, v := range s.villagers {
 		vs := save.VillagerSave{
-			ID:   v.ID,
-			Name: v.Name(),
-			Type: int(v.Type),
-			X:    v.X,
-			Y:    v.Y,
+			ID:             v.ID,
+			Name:           v.Name(),
+			Type:           int(v.Type),
+			X:              v.X,
+			Y:              v.Y,
+			Wood:           v.Wood,
+			MaxCarryWeight: v.MaxCarryWeight,
 		}
 		if v.State != entity.StateIdle {
 			vs.TargetX = &v.TargetX

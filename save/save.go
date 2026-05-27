@@ -31,14 +31,16 @@ type WorldSave struct {
 }
 
 type VillagerSave struct {
-	ID      string `json:"id"`
-	Name    string `json:"name"`
-	Type    int    `json:"type"`
-	X       int    `json:"x"`
-	Y       int    `json:"y"`
-	TargetX *int   `json:"target_x,omitempty"`
-	TargetY *int   `json:"target_y,omitempty"`
-	State   string `json:"state,omitempty"`
+	ID             string `json:"id"`
+	Name           string `json:"name"`
+	Type           int    `json:"type"`
+	X              int    `json:"x"`
+	Y              int    `json:"y"`
+	Wood           int    `json:"wood,omitempty"`
+	MaxCarryWeight int    `json:"max_carry_weight,omitempty"`
+	TargetX        *int   `json:"target_x,omitempty"`
+	TargetY        *int   `json:"target_y,omitempty"`
+	State          string `json:"state,omitempty"`
 }
 
 type TreeSave struct {

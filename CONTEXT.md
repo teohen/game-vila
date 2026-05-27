@@ -52,17 +52,29 @@ _Avoid_: Blocked, taken, full, collided
 The system by which a Villager determines the sequence of cells to traverse toward a target. Uses A* on the 30×30 grid. Produces a list of waypoints the Villager follows one cell per tick. Inputs: walkable cells (static terrain) and occupied cells (dynamic entities).
 _Avoid_: Navigation, routing, move planning
 
+**Plan**:
+A sequence of PlanSteps that a Villager executes to fulfill a Job. Hardcoded per JobType in the Villager. When the current step completes (e.g., Movement arrives adjacent to the target), the Villager advances to the next step and activates the matching Trait.
+_Avoid_: Task list, itinerary, route
+
+**PlanStep**:
+A single sub-objective in a Plan. Has a TraitType (e.g., Move, Chop) and a target grid position (TargetX, TargetY). A Trait inspects the current PlanStep to determine what to do.
+_Avoid_: Waypoint, sub-task, goal
+
 **Job**:
 A work order in the JobQueue. Has a Type (JobTypeChopTrees, JobTypeMove) and a target cell (TargetX, TargetY). Created by the player via tool actions (e.g., axe tool creates ChopTrees jobs).
 _Avoid_: Task, order, work item
 
 **JobQueue**:
-A queue that holds Jobs for Villagers to consume. Villagers pull from this queue to determine their movement target. Created by tool actions; consumed by any Idle/Arrived Villager.
+A queue that holds Jobs for Villagers to consume. Villagers pull from this queue to determine their movement target. Created by tool actions; consumed by any Idle Villager.
 _Avoid_: TaskList, work queue, order book
 
 **JobType**:
-The kind of work a Job represents (e.g., JobTypeChopTrees, JobTypeMove). Determines what a Villager does upon arrival. A JobType maps to a Trait that provides the capacity to execute it — e.g., the Lumberjack Trait handles JobTypeChopTrees.
+The kind of work a Job represents (e.g., JobTypeChopTrees, JobTypeMove). Determines which Plan the Villager constructs when it picks up the Job. The Villager hardcodes the mapping from JobType to a sequence of PlanSteps.
 _Avoid_: Job kind, work type, action type
+
+**Lumberjack**:
+A Trait that handles the chopping of Trees. Embedded into a Villager. Owns a state machine (Idle, Hitting). Activated when the current PlanStep requires chopping at the Villager's adjacent cell. Each tick while Hitting deals damage to the target Tree. When Tree Health reaches zero, the Lumberjack collects the WoodYield and the Villager enters a Carrying state.
+_Avoid_: Woodcutter, forester, chopper
 
 **Camera**:
 A 2D viewport that the player controls with right-click drag (pan) and mouse wheel (zoom). Clamped between 25% and 700%.
