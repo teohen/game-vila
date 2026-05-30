@@ -2,11 +2,13 @@ package simulation
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github/teohen/mgm-tto/constants"
 	"github/teohen/mgm-tto/debug"
 	"github/teohen/mgm-tto/entity"
+	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/save"
 	"github/teohen/mgm-tto/world"
 )
@@ -23,17 +25,18 @@ type Simulation struct {
 	world     *world.World
 	villagers []*entity.Villager
 	trees     []*entity.Tree
-	jobQueue  entity.JobQueue
 
 	ActiveTool Tool
 	Selected   map[[2]int]bool
+	WorldState *goap.State
+	Goals      []*goap.State
 }
 
 const (
 	forestFrequency = 0.07
 	forestThreshold = 0.1
-	treeHealth      = 3
-	treeWoodYield   = 5
+	treeHealth      = 100
+	treeWoodYield   = 20
 )
 
 func NewFromSave(s save.Save) *Simulation {
@@ -72,7 +75,6 @@ func NewFromSave(s save.Save) *Simulation {
 		world:     w,
 		villagers: villagers,
 		trees:     trees,
-		jobQueue:  q,
 	}
 }
 
@@ -80,6 +82,8 @@ func New() *Simulation {
 	seed := time.Now().UnixNano()
 	w := world.NewWorld(constants.GridRows, constants.GridCols)
 	w.Generate(seed)
+
+	state := goap.StateOf("near_tree=0")
 
 	forestNoise := world.NewNoise(seed + 1)
 	var trees []*entity.Tree
@@ -94,7 +98,12 @@ func New() *Simulation {
 				continue
 			}
 			treeCount++
-			id := fmt.Sprintf("tree-%d", treeCount)
+			id := fmt.Sprintf("tree_%d", treeCount)
+			err := state.Add(fmt.Sprintf("%s_health=%d", id, treeHealth))
+			if err != nil {
+				log.Fatal("SDASDAS", err.Error())
+			}
+
 			t := entity.NewTree(id, c, r, treeHealth, treeWoodYield)
 			w.Occupy(c, r)
 			trees = append(trees, t)
@@ -102,10 +111,10 @@ func New() *Simulation {
 	}
 
 	return &Simulation{
-		world:     &w,
-		villagers: nil,
-		trees:     trees,
-		jobQueue:  entity.NewJobQueue(),
+		world:      &w,
+		villagers:  nil,
+		trees:      trees,
+		WorldState: state,
 	}
 }
 
@@ -114,7 +123,7 @@ func (s *Simulation) Tick() {
 		event := v.Tick(s.world)
 		switch event {
 		case entity.EventIdle, entity.EventArrived:
-			job := s.jobQueue.Pop()
+			job := entity.GetJobQueue().Pop()
 			if job != nil {
 				v.SetTarget(job.TargetX, job.TargetY, s.world)
 			}
@@ -185,7 +194,7 @@ func (s *Simulation) RemoveTree(x, y int) bool {
 }
 
 func (s *Simulation) PushJob(job entity.Job) {
-	s.jobQueue.Push(job)
+	entity.GetJobQueue().Push(job)
 }
 
 func (s *Simulation) ProcessAxeSelection(cells [][2]int) {
@@ -196,9 +205,11 @@ func (s *Simulation) ProcessAxeSelection(cells [][2]int) {
 			continue
 		}
 		s.PushJob(entity.Job{
-			Type:    entity.JobTypeChopTrees,
-			TargetX: tree.X,
-			TargetY: tree.Y,
+			Type:       entity.JobTypeChopTrees,
+			TargetX:    tree.X,
+			TargetY:    tree.Y,
+			TargetID:   tree.ID,
+			WorldState: s.WorldState,
 		})
 	}
 }
@@ -256,8 +267,8 @@ func (s *Simulation) ToSave() save.Save {
 		})
 	}
 
-	jobs := make([]save.JobSave, len(s.jobQueue.Get()))
-	for i, j := range s.jobQueue.Get() {
+	jobs := make([]save.JobSave, len(entity.GetJobQueue().GetJobs()))
+	for i, j := range entity.GetJobQueue().GetJobs() {
 		jobs[i] = save.JobSave{
 			Type:    int(j.Type),
 			TargetX: j.TargetX,
@@ -275,7 +286,7 @@ func (s *Simulation) ToSave() save.Save {
 }
 
 func (s *Simulation) QueueJobs() []entity.Job {
-	return s.jobQueue.Get()
+	return entity.GetJobQueue().GetJobs()
 }
 
 func (s *Simulation) Entities() []entity.Entity {
@@ -293,7 +304,7 @@ func (s *Simulation) Entities() []entity.Entity {
 func (s *Simulation) debugSimulation() {
 	if debug.IsEnabled(debug.Sim) {
 		fmt.Printf("[SIMULATION] Sim tick=%d villagers=%d trees=%d jobs=%d\n",
-			s.tickCount, len(s.villagers), len(s.trees), len(s.jobQueue.Get()))
+			s.tickCount, len(s.villagers), len(s.trees), len(entity.GetJobQueue().GetJobs()))
 	}
 }
 func (s *Simulation) OnSelectionComplete() {

@@ -1,9 +1,12 @@
 package entity
 
 import (
+	"fmt"
 	"github/teohen/mgm-tto/constants"
+	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/spritebank"
 	"github/teohen/mgm-tto/world"
+	"log"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
@@ -31,9 +34,31 @@ func NewVillager(id, name string, x, y int) *Villager {
 		name: name,
 		Type: Human,
 	}
+
 }
 
 func (v *Villager) Tick(w *world.World) MovementEvent {
+	if len(GetJobQueue().jobs) > 0 {
+		moveAction := NewAction("move_to", "!near_tree", "near_tree")
+		job := GetJobQueue().Pop()
+		chopTreeAction := NewAction("chopTree", "near_tree", fmt.Sprintf("%s_health-20", job.TargetID))
+
+		goal := goap.StateOf(fmt.Sprintf("%s_health=0", job.TargetID))
+		fmt.Println(job.WorldState.String())
+		fmt.Println(goal.String())
+		fmt.Println(moveAction.outcome.String())
+		fmt.Println(chopTreeAction.outcome.String())
+
+		plan, err := goap.Plan(job.WorldState, goal, []goap.Action{moveAction, chopTreeAction})
+		if err != nil {
+			log.Fatal("ERRRO", err.Error())
+		}
+
+		for i, action := range plan {
+			fmt.Printf("%2d. %s\n", i+1, action.(*Action).String())
+		}
+
+	}
 	return v.Movement.Update(w)
 }
 
