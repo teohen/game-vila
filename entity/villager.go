@@ -3,6 +3,7 @@ package entity
 import (
 	"fmt"
 	"github/teohen/mgm-tto/constants"
+	"github/teohen/mgm-tto/events"
 	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/spritebank"
 	"github/teohen/mgm-tto/world"
@@ -74,7 +75,7 @@ func (v *Villager) Tick(entities *[]Entity, w *world.World) {
 		fmt.Println("PLANNING")
 		v.State = "Executing"
 	case "Executing":
-		finalAction := v.executePlan(entities)
+		finalAction := v.executePlan()
 		if finalAction {
 			v.State = "Idle"
 		}
@@ -83,7 +84,7 @@ func (v *Villager) Tick(entities *[]Entity, w *world.World) {
 }
 
 func (v *Villager) setPlan(entities *[]Entity) {
-	if len(GetJobQueue().jobs) > 0 {
+	if len(GetJobQueue().Jobs) > 0 {
 		job := GetJobQueue().Pop()
 		switch job.Type {
 		case JobTypeChopTrees:
@@ -116,15 +117,15 @@ func (v *Villager) setPlan(entities *[]Entity) {
 	}
 }
 
-func (v *Villager) executePlan(entities *[]Entity) bool {
+func (v *Villager) executePlan() bool {
 	if v.ActionIdx >= len(v.plan.actions) {
 		return true
 	}
-	v.executeAction(entities)
+	v.executeAction()
 	return false
 }
 
-func (v *Villager) executeAction(entities *[]Entity) {
+func (v *Villager) executeAction() {
 	action := v.plan.actions[v.ActionIdx]
 	switch action.name {
 	case "move_to":
@@ -146,6 +147,13 @@ func (v *Villager) executeAction(entities *[]Entity) {
 		} else {
 			_, done := v.Lumberjack.Update(v.World)
 			if done {
+				events.Emit(events.GameEvent{
+					Type: events.EventTreeCut,
+					Payload: map[string]interface{}{
+						"treeX": t.X,
+						"treeY": t.Y,
+					},
+				})
 				v.ActionIdx += 1
 			}
 		}

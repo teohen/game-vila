@@ -36,7 +36,6 @@ func init() {
 			os.Exit(1)
 		}
 		log.Fatal("LOAD FROM SAVE NOT IMPLEMENTED")
-		// g = game.NewFromSave(s)
 		return
 	}
 

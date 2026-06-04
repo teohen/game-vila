@@ -6,8 +6,8 @@ import (
 
 	"github/teohen/mgm-tto/constants"
 	"github/teohen/mgm-tto/entity"
+	"github/teohen/mgm-tto/events"
 	"github/teohen/mgm-tto/goap"
-	"github/teohen/mgm-tto/save"
 	"github/teohen/mgm-tto/world"
 )
 
@@ -75,25 +75,11 @@ func (s *Simulation) Tick() {
 	for _, v := range s.villagers {
 		v.Tick(&all, s.world)
 	}
+	s.processEvents()
 	s.tickCount++
 }
 
-func (s *Simulation) AdvanceTicks(n int) {
-	for i := 0; i < n; i++ {
-		s.Tick()
-	}
-}
-
-func (s *Simulation) SetTarget(villagerID string, x, y int) {
-	for _, v := range s.villagers {
-		if v.ID == villagerID {
-			v.SetTarget(x, y, s.world)
-			return
-		}
-	}
-}
-
-func (s *Simulation) Pos(entityID string) (int, int) {
+func (s *Simulation) GetEntityPosition(entityID string) (int, int) {
 	for _, v := range s.villagers {
 		if v.ID == entityID {
 			return v.Pos()
@@ -105,10 +91,6 @@ func (s *Simulation) Pos(entityID string) (int, int) {
 		}
 	}
 	return -1, -1
-}
-
-func (s *Simulation) TickCount() int {
-	return s.tickCount
 }
 
 func (s *Simulation) AddVillager(v *entity.Villager) {
@@ -166,68 +148,6 @@ func (s *Simulation) World() *world.World {
 	return s.world
 }
 
-func (s *Simulation) ToSave() save.Save {
-	cells := make([][]int, s.world.Rows())
-	for r := range cells {
-		cells[r] = make([]int, s.world.Cols())
-		for c := range cells[r] {
-			cells[r][c] = int(s.world.GetCell(c, r).Type)
-		}
-	}
-
-	villagers := make([]save.VillagerSave, len(s.villagers))
-	for i, v := range s.villagers {
-		vs := save.VillagerSave{
-			ID:   v.ID,
-			Name: v.Name(),
-			Type: int(v.Type),
-			X:    v.X,
-			Y:    v.Y,
-		}
-		if v.MovementState != entity.StateIdle {
-			vs.TargetX = &v.TargetX
-			vs.TargetY = &v.TargetY
-			vs.State = v.MovementState.String()
-		}
-		villagers[i] = vs
-	}
-
-	var trees []save.TreeSave
-	for _, t := range s.trees {
-		if t.Health <= 0 {
-			continue
-		}
-		trees = append(trees, save.TreeSave{
-			ID:        t.ID,
-			X:         t.X,
-			Y:         t.Y,
-			Health:    t.Health,
-			WoodYield: t.WoodYield,
-		})
-	}
-
-	jobs := make([]save.JobSave, len(entity.GetJobQueue().GetJobs()))
-	for i, j := range entity.GetJobQueue().GetJobs() {
-		jobs[i] = save.JobSave{
-			Type:    int(j.Type),
-			TargetX: j.TargetX,
-			TargetY: j.TargetY,
-		}
-	}
-
-	return save.Save{
-		Version:   1,
-		World:     save.WorldSave{Rows: s.world.Rows(), Cols: s.world.Cols(), Cells: cells},
-		Villagers: villagers,
-		Trees:     trees,
-		Jobs:      jobs,
-	}
-}
-
-func (s *Simulation) QueueJobs() []entity.Job {
-	return entity.GetJobQueue().GetJobs()
-}
-
 func (s *Simulation) Entities() []entity.Entity {
 	total := len(s.villagers) + len(s.trees)
 	all := make([]entity.Entity, 0, total)
@@ -248,5 +168,25 @@ func (s *Simulation) OnSelectionComplete() {
 			cells = append(cells, pos)
 		}
 		s.ProcessAxeSelection(cells)
+	}
+}
+
+func (s *Simulation) processEvents() {
+	for {
+		select {
+		case evt := <-events.EventQueue:
+			switch evt.Type {
+			case events.EventTreeCut:
+				treeX := evt.Payload["treeX"].(int)
+				treeY := evt.Payload["treeY"].(int)
+				s.RemoveTree(treeX, treeY)
+			default:
+				// Canal está vazio, sai do loop de eventos e segue o frame
+				return
+			}
+		default:
+			// Canal está vazio, sai do loop de eventos e segue o frame
+			return
+		}
 	}
 }

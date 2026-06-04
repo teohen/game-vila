@@ -46,10 +46,5 @@ func (g *Game) Update() {
 }
 
 func (g *Game) Save() {
-	/*if err := save.SaveToFile(save.GetSavePath(), g.sim.ToSave()); err != nil {
-		fmt.Printf("[ERROR] Save failed: %v\n", err)
-		return
-	}
-	*/
 	fmt.Printf("[SAVE] Game saved to %s\n", save.GetSavePath())
 }

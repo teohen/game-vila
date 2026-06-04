@@ -1,11 +1,9 @@
 package pathfinding
 
 import (
-	"fmt"
 	"math"
 
 	"github/teohen/mgm-tto/constants"
-	"github/teohen/mgm-tto/debug"
 )
 
 type Point struct {
@@ -38,7 +36,6 @@ func heuristic(a, b Point) int {
 }
 
 func FindPath(grid WalkableGrid, from, to Point) []Point {
-	debugPathFinding(grid, from, to)
 
 	if from == to {
 		return nil
@@ -124,13 +121,4 @@ func reconstructPath(info [constants.GridRows][constants.GridCols]cellInfo, from
 		current = info[current.Y][current.X].parent
 	}
 	return path
-}
-
-func debugPathFinding(grid WalkableGrid, from, to Point) {
-	if debug.IsEnabled(debug.Path) {
-		fmt.Printf("[PATH FINDING] A* search from (%d,%d) to (%d,%d)\n", from.X, from.Y, to.X, to.Y)
-		defer func() {
-			fmt.Printf("[PATH FINDING] A* done from (%d,%d) to (%d,%d)\n", from.X, from.Y, to.X, to.Y)
-		}()
-	}
 }

@@ -1,11 +1,5 @@
 package world
 
-import (
-	"fmt"
-
-	"github/teohen/mgm-tto/debug"
-)
-
 type World struct {
 	cells    [][]Cell
 	occupied [][]bool
@@ -22,26 +16,6 @@ func NewWorld(rows, cols int) World {
 		w.occupied[i] = make([]bool, cols)
 	}
 
-	return w
-}
-
-func NewWorldFromCells(cells [][]CellType) *World {
-	rows := len(cells)
-	if rows == 0 {
-		return &World{}
-	}
-	cols := len(cells[0])
-	w := &World{
-		cells:    make([][]Cell, rows),
-		occupied: make([][]bool, rows),
-	}
-	for r := range cells {
-		w.cells[r] = make([]Cell, cols)
-		w.occupied[r] = make([]bool, cols)
-		for c := range cells[r] {
-			w.cells[r][c] = newTile(cells[r][c], r, c)
-		}
-	}
 	return w
 }
 
@@ -79,7 +53,6 @@ func (w *World) Occupy(col, row int) bool {
 		return false
 	}
 	w.occupied[row][col] = true
-	w.debug("occupied", row, col)
 	return true
 }
 
@@ -88,7 +61,6 @@ func (w *World) Vacate(col, row int) {
 		return
 	}
 	w.occupied[row][col] = false
-	w.debug("vacate", row, col)
 }
 
 func (w *World) IsOccupied(col, row int) bool {
@@ -126,11 +98,5 @@ func (w *World) Generate(seed int64) {
 				w.cells[r][c] = newTile(Grass, r, c)
 			}
 		}
-	}
-}
-
-func (w *World) debug(action string, row, col int) {
-	if debug.IsEnabled(debug.World) {
-		fmt.Printf("[WORLD] %s (%d,%d)\n", action, col, row)
 	}
 }

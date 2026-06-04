@@ -2,7 +2,6 @@ package ui
 
 import (
 	"github/teohen/mgm-tto/constants"
-	"github/teohen/mgm-tto/save"
 	"github/teohen/mgm-tto/simulation"
 	"math"
 
@@ -35,19 +34,6 @@ func New(sim *simulation.Simulation) *UI {
 	}
 }
 
-func NewFromSave(sim *simulation.Simulation, s save.Save) *UI {
-	cam := newGameCamera()
-	if s.Camera.Zoom != 0 {
-		cam.Target.X = float32(s.Camera.TargetX)
-		cam.Target.Y = float32(s.Camera.TargetY)
-		cam.Zoom = float32(s.Camera.Zoom)
-	}
-	return &UI{
-		simulation: sim,
-		camera:     cam,
-	}
-}
-
 func (ui *UI) Input() {
 	ui.console.handleConsole(ui)
 	if ui.console.IsOpen() {
@@ -63,9 +49,9 @@ func (ui *UI) Draw() {
 	rl.BeginMode2D(cam)
 	ui.simulation.World().Draw()
 	for _, e := range ui.simulation.Entities() {
-		if e.GetID() != "" {
-			e.Draw()
-		}
+		// if e.GetID() != "" {
+		e.Draw()
+		// }
 	}
 
 	drawSelectionRectangle(ui)

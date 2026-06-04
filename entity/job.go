@@ -18,28 +18,20 @@ type Job struct {
 }
 
 type JobQueue struct {
-	jobs []Job
-}
-
-func NewJobQueue() JobQueue {
-	return JobQueue{}
+	Jobs []Job
 }
 
 func (q *JobQueue) Push(job Job) {
-	q.jobs = append(q.jobs, job)
+	q.Jobs = append(q.Jobs, job)
 }
 
 func (q *JobQueue) Pop() *Job {
-	if len(q.jobs) == 0 {
+	if len(q.Jobs) == 0 {
 		return nil
 	}
-	job := q.jobs[0]
-	q.jobs = q.jobs[1:]
+	job := q.Jobs[0]
+	q.Jobs = q.Jobs[1:]
 	return &job
-}
-
-func (q *JobQueue) GetJobs() []Job {
-	return q.jobs
 }
 
 var jobQueue = &JobQueue{}

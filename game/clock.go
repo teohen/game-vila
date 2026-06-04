@@ -1,10 +1,7 @@
 package game
 
 import (
-	"fmt"
-
 	"github/teohen/mgm-tto/constants"
-	"github/teohen/mgm-tto/debug"
 )
 
 type Clock struct {
@@ -27,18 +24,9 @@ func (c *Clock) Advance(dtMs float64) int {
 		c.tickCount++
 		fired++
 	}
-
-	c.debugClock(fired, dtMs)
 	return fired
 }
 
 func (c *Clock) TickCount() int {
 	return c.tickCount
-}
-
-func (c *Clock) debugClock(fired int, dtMs float64) {
-	if debug.IsEnabled(debug.Clock) && fired > 0 && c.tickCount%120 == 0 {
-		fmt.Printf("[DEBUG] Clock dt=%.1fms fired=%d accum=%.1f tick=%d\n",
-			dtMs, fired, c.accumulator, c.tickCount)
-	}
 }
