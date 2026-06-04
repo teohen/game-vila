@@ -1,7 +1,7 @@
 package entity
 
 import (
-	"github/teohen/mgm-tto/constants"
+	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/spritebank"
 	"github/teohen/mgm-tto/world"
 
@@ -10,7 +10,7 @@ import (
 
 type Tree struct {
 	ID        string
-	X, Y      int
+	pos       cnts.Point
 	Health    int
 	WoodYield int
 }
@@ -18,8 +18,7 @@ type Tree struct {
 func NewTree(id string, x, y, health, woodYield int) *Tree {
 	return &Tree{
 		ID:        id,
-		X:         x,
-		Y:         y,
+		pos:       cnts.Point{X: x, Y: y},
 		Health:    health,
 		WoodYield: woodYield,
 	}
@@ -28,17 +27,21 @@ func NewTree(id string, x, y, health, woodYield int) *Tree {
 func (t *Tree) Tick(ent *[]Entity, w *world.World) {
 }
 
-func (t *Tree) Pos() (int, int) {
-	return t.X, t.Y
+func (t *Tree) Pos() cnts.Point {
+	return t.pos
 }
 
 func (t *Tree) Draw() {
-	x, y := constants.WorldToScreen(t.X, t.Y)
+	x, y := cnts.WorldToScreen(t.pos.X, t.pos.Y)
 	src := rl.NewRectangle(448, 192, 32, 32)
-	dst := rl.NewRectangle(x, y, constants.TileSize, constants.TileSize)
+	dst := rl.NewRectangle(x, y, cnts.TileSize, cnts.TileSize)
 	rl.DrawTexturePro(spritebank.Terrain, src, dst, rl.NewVector2(0, 0), 0, rl.White)
 }
 
 func (t *Tree) GetID() string {
 	return t.ID
+}
+
+func (t *Tree) GetType() EntityType {
+	return EntityTypeTree
 }

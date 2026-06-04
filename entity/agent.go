@@ -4,15 +4,24 @@ import (
 	"fmt"
 	"github/teohen/mgm-tto/events"
 	"github/teohen/mgm-tto/goap"
+	"github/teohen/mgm-tto/world"
 	"log"
 )
 
+type PlanType string
+
+const (
+	PlanTypeChopTrees PlanType = "chop_tree"
+)
+
 type IAgent interface {
-	SetPlan(entities *[]Entity)
+	SetPlan(planType PlanType, entities *[]Entity, target *Entity)
 	ExecuteAction()
 }
 
 type Agent struct {
+	Movement
+	Lumberjack
 	StartPlanState *goap.State
 	Goals          []goap.State
 	Actions        []goap.Action
@@ -20,12 +29,14 @@ type Agent struct {
 	ActionIdx      int
 }
 
-func NewAgent() Agent {
+func NewAgent(x, y int, w *world.World) Agent {
 	a := Agent{
 		Goals:          make([]goap.State, 0),
 		Actions:        make([]goap.Action, 0),
 		ActionIdx:      0,
 		StartPlanState: goap.StateOf("!near_tree"),
+		Movement:       NewMovement(x, y, w),
+		Lumberjack:     NewLumberjack(),
 	}
 
 	a.Actions = append(a.Actions, NewAction("move_to", "!near_tree", "near_tree"))
@@ -33,58 +44,65 @@ func NewAgent() Agent {
 	return a
 }
 
-func (a *Agent) SetPlan(entities *[]Entity) {
-	if len(GetJobQueue().Jobs) > 0 {
-		job := GetJobQueue().Pop()
-		switch job.Type {
-		case JobTypeChopTrees:
-			t := getTreeFrom(job.TargetID, entities)
-			v.VilState.Add(fmt.Sprintf("%s_health=%d", t.ID, t.Health))
-			goapActions := append(v.Actions, NewAction("chop_tree", "near_tree", fmt.Sprintf("%s_health-20", t.ID)))
-			goal := goap.StateOf(fmt.Sprintf("%s_health=0", t.ID))
-			plan, err := goap.Plan(v.VilState, goal, goapActions)
+func (a *Agent) SetPlan(planType PlanType, entities *[]Entity, target Entity) {
+	switch planType {
+	// TODO: fix this mess
+	case PlanTypeChopTrees:
+		trees := make([]Tree, 0)
+		t, ok := target.(*Tree)
 
-			if err != nil {
-				log.Fatal("ERRRO", err.Error())
-			}
-			finalActions := make([]*Action, 0)
-
-			for _, act := range plan {
-				action := act.(*Action)
-				action.target = t
-				finalActions = append(finalActions, action)
-
-			}
-
-			v.plan = Plan{
-				goal:    goal,
-				actions: finalActions,
-				TargetX: &job.TargetX,
-				TargetY: &job.TargetY,
-			}
-			v.State = "Planning"
+		if !ok {
+			log.Fatal("target is not a tree")
 		}
+		for _, ent := range *entities {
+			if ent.GetType() == EntityTypeTree {
+				tree, ok := target.(*Tree)
+				if !ok {
+					log.Fatal("target is not a tree")
+				}
+				trees = append(trees, *tree)
+			}
+		}
+		a.planChopTrees(trees, t)
 	}
 }
 
-func (a *Agent) ExecutePlan() bool {
-	if v.ActionIdx >= len(v.plan.actions) {
-		return true
+func (a *Agent) planChopTrees(trees []Tree, tree *Tree) {
+	a.StartPlanState.Add(fmt.Sprintf("%s_health=%d", tree.ID, tree.Health))
+	goapActions := append(a.Actions, NewAction("chop_tree", "near_tree", fmt.Sprintf("%s_health-20", tree.ID)))
+	goal := goap.StateOf(fmt.Sprintf("%s_health=0", tree.ID))
+
+	plan, err := goap.Plan(a.StartPlanState, goal, goapActions)
+
+	if err != nil {
+		log.Fatal("ERRRO", err.Error())
 	}
-	v.executeAction()
-	return false
+	finalActions := make([]*Action, 0)
+
+	for _, act := range plan {
+		action := act.(*Action)
+		action.target = tree
+		finalActions = append(finalActions, action)
+
+	}
+
+	a.plan = Plan{
+		goal:      goal,
+		actions:   finalActions,
+		TargetPos: tree.Pos(),
+	}
 }
 
 func (a *Agent) ExecuteAction() bool {
-	action := v.plan.actions[v.ActionIdx]
+	action := a.plan.actions[a.ActionIdx]
 	switch action.name {
 	case "move_to":
-		if v.Movement.TargetX < 1 && v.Movement.TargetY < 1 {
-			v.Movement.SetTarget(*v.plan.TargetX, *v.plan.TargetY, v.World)
+		if a.Movement.MovementState == StateMovementIdle {
+			a.Movement.SetTarget(a.plan.TargetPos)
 		} else {
-			movState := v.Movement.Update(v.World)
-			if movState == EventArrived {
-				v.ActionIdx += 1
+			a.Movement.Update()
+			if a.Movement.MovementState == StateMovementArrived {
+				a.ActionIdx += 1
 			}
 		}
 	case "chop_tree":
@@ -92,34 +110,20 @@ func (a *Agent) ExecuteAction() bool {
 		if !ok {
 			log.Fatal("TREE CONVERTION NOT WOTK")
 		}
-		if !v.Lumberjack.IsHitting() {
-			v.Lumberjack.Start(t)
+		if !a.Lumberjack.IsHitting() {
+			a.Lumberjack.Start(t)
 		} else {
-			_, done := v.Lumberjack.Update(v.World)
+			_, done := a.Lumberjack.Update()
 			if done {
 				events.Emit(events.GameEvent{
 					Type: events.EventTreeCut,
 					Payload: map[string]interface{}{
-						"treeX": t.X,
-						"treeY": t.Y,
+						"treePos": t.Pos(),
 					},
 				})
-				v.ActionIdx += 1
+				a.ActionIdx += 1
 			}
 		}
 	}
-}
-
-func getTreeFrom(id string, entities *[]Entity) *Tree {
-	for _, e := range *entities {
-		tree, ok := e.(*Tree)
-		if !ok {
-			continue
-		}
-
-		if tree.ID == id {
-			return tree
-		}
-	}
-	return nil
+	return true
 }

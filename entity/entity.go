@@ -5,18 +5,17 @@ import (
 	"github/teohen/mgm-tto/world"
 )
 
+type EntityType string
+
+const (
+	EntityTypeTree     EntityType = "tree"
+	EntityTypeVillager EntityType = "villager"
+)
+
 type Entity interface {
 	Tick(entities *[]Entity, w *world.World)
 	Draw()
 	Pos() cnts.Point
 	GetID() string
+	GetType() EntityType
 }
-
-type MovementEvent int
-
-const (
-	EventNone    MovementEvent = 0
-	EventIdle    MovementEvent = 1
-	EventArrived MovementEvent = 2
-	EventStuck   MovementEvent = 3
-)

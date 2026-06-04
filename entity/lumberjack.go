@@ -1,9 +1,5 @@
 package entity
 
-import (
-	"github/teohen/mgm-tto/world"
-)
-
 const (
 	LUMBERJACK_HIT = 20
 )
@@ -33,7 +29,7 @@ func (lj *Lumberjack) Start(tree *Tree) {
 	lj.tree = tree
 }
 
-func (lj *Lumberjack) Update(w *world.World) (woodCollected int, done bool) {
+func (lj *Lumberjack) Update() (woodCollected int, done bool) {
 	if lj.state != StateLumberjackIdle || lj.tree == nil {
 		return 0, false
 	}
@@ -41,10 +37,11 @@ func (lj *Lumberjack) Update(w *world.World) (woodCollected int, done bool) {
 	lj.tree.Health -= lj.hit
 
 	if lj.tree.Health <= 0 {
+		// emit the event
 		wood := lj.tree.WoodYield
-		w.Vacate(lj.tree.X, lj.tree.Y)
-		lj.tree.ID = ""
-		lj.state = StateLumberjackIdle
+		// w.Vacate(lj.tree.X, lj.tree.Y)
+		// lj.tree.ID = ""
+		// lj.state = StateLumberjackIdle
 		return wood, true
 	}
 

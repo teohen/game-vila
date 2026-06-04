@@ -27,10 +27,11 @@ type Movement struct {
 	MovementState MovementState
 	WaitTicks     int
 	WaitCount     int
+	w             *world.World
 }
 
-func (m *Movement) SetTarget(target cnts.Point, w *world.World) {
-	path := pathfinding.FindPath(w, m.pos, target)
+func (m *Movement) SetTarget(target cnts.Point) {
+	path := pathfinding.FindPath(m.w, m.pos, target)
 
 	if path == nil {
 		return
@@ -39,44 +40,42 @@ func (m *Movement) SetTarget(target cnts.Point, w *world.World) {
 	m.MovementState = StateMovementMoving
 }
 
-func (m *Movement) Update(w *world.World) MovementEvent {
+func (m *Movement) Update() {
 	switch m.MovementState {
 	case StateMovementIdle:
-		return EventIdle
+		m.MovementState = StateMovementIdle
 
 	case StateMovementMoving:
 		if len(m.Waypoints) == 0 {
 			m.MovementState = StateMovementArrived
-			return EventArrived
 		}
 		next := m.Waypoints[0]
 		if next == m.TargetPos {
-			if w.IsOccupied(m.TargetPos.X, m.TargetPos.Y) {
+			if m.w.IsOccupied(m.TargetPos.X, m.TargetPos.Y) {
 				m.Waypoints = m.Waypoints[1:]
 				m.MovementState = StateMovementArrived
-				return EventArrived
+
 			}
-			w.Vacate(m.pos.X, m.pos.Y)
+			m.w.Vacate(m.pos.X, m.pos.Y)
 			m.pos.X = next.X
 			m.pos.Y = next.Y
-			w.Occupy(m.pos.X, m.pos.Y)
+			m.w.Occupy(m.pos.X, m.pos.Y)
 			m.Waypoints = m.Waypoints[1:]
 			m.MovementState = StateMovementArrived
-			return EventArrived
+
 		}
-		if w.IsOccupied(next.X, next.Y) {
+		if m.w.IsOccupied(next.X, next.Y) {
 			m.MovementState = StateMovementWaiting
 			m.WaitTicks = 0
 			m.WaitCount++
-			return EventNone
+
 		}
-		w.Vacate(m.pos.X, m.pos.Y)
+		m.w.Vacate(m.pos.X, m.pos.Y)
 		m.pos.X = next.X
 		m.pos.Y = next.Y
-		w.Occupy(m.pos.X, m.pos.Y)
+		m.w.Occupy(m.pos.X, m.pos.Y)
 		m.Waypoints = m.Waypoints[1:]
 		m.WaitCount = 0
-		return EventNone
 
 	case StateMovementWaiting:
 		m.WaitTicks++
@@ -86,41 +85,38 @@ func (m *Movement) Update(w *world.World) MovementEvent {
 				m.WaitCount = 0
 				m.TargetPos = cnts.Point{X: 0, Y: 0}
 				m.Waypoints = nil
-				return EventStuck
 			}
 			from := m.pos
 			to := m.TargetPos
-			path := pathfinding.FindPath(w, from, to)
+			path := pathfinding.FindPath(m.w, from, to)
 			if len(path) == 0 {
 				m.MovementState = StateMovementIdle
 				m.WaitCount = 0
-				return EventStuck
+
 			}
 			m.Waypoints = path
 			m.MovementState = StateMovementMoving
 		}
-		return EventNone
 
 	case StateMovementArrived:
 		m.MovementState = StateMovementIdle
 		m.WaitCount = 0
-		m.TargetPos = cnts.Point{X: 0, Y: 0}
+		m.TargetPos = cnts.Point{X: -1, Y: -1}
 		m.Waypoints = nil
-		return EventArrived
 	}
-	return EventNone
 }
 
 func (m *Movement) Pos() cnts.Point {
 	return m.pos
 }
 
-func NewMovement(x, y int) Movement {
+func NewMovement(x, y int, w *world.World) Movement {
 	return Movement{
 		pos:       cnts.Point{X: x, Y: y},
 		TargetPos: cnts.Point{X: -1, Y: -1},
 		Waypoints: make([]cnts.Point, 0),
 		WaitTicks: 0,
 		WaitCount: 0,
+		w:         w,
 	}
 }
