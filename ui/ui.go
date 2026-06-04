@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"github/teohen/mgm-tto/constants"
+	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/simulation"
 	"math"
 
@@ -19,8 +19,8 @@ type UI struct {
 
 func newGameCamera() *rl.Camera2D {
 	cam := rl.Camera2D{
-		Target:   rl.NewVector2(float32(constants.GridCols)*constants.TileSize/2, float32(constants.GridRows)*constants.TileSize/2),
-		Offset:   rl.NewVector2(constants.ScreenW/2, constants.ScreenH/2),
+		Target:   rl.NewVector2(float32(cnts.GridCols)*cnts.TileSize/2, float32(cnts.GridRows)*cnts.TileSize/2),
+		Offset:   rl.NewVector2(cnts.ScreenW/2, cnts.ScreenH/2),
 		Rotation: 0,
 		Zoom:     1.0,
 	}
@@ -75,10 +75,10 @@ func drawSelectionRectangle(ui *UI) {
 func drawSelectedCells(ui *UI) {
 	for pos := range ui.simulation.Selected {
 		col, row := pos[0], pos[1]
-		x, y := constants.WorldToScreen(col, row)
+		x, y := cnts.WorldToScreen(col, row)
 		rl.DrawRectangleLines(
 			int32(x), int32(y),
-			int32(constants.TileSize), int32(constants.TileSize),
+			int32(cnts.TileSize), int32(cnts.TileSize),
 			rl.Red,
 		)
 	}

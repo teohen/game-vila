@@ -1,7 +1,7 @@
 package world
 
 import (
-	"github/teohen/mgm-tto/constants"
+	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/spritebank"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -43,7 +43,7 @@ func newTile(t CellType, r, c int) Cell {
 		Type:        t,
 		row:         r,
 		col:         c,
-		size:        constants.TileSize,
+		size:        cnts.TileSize,
 		BorderWidth: 1,
 		BorderColor: rl.NewColor(255, 255, 255, 80),
 	}

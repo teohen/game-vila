@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"fmt"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/pathfinding"
 	"github/teohen/mgm-tto/world"
@@ -38,23 +39,26 @@ func (m *Movement) SetTarget(target cnts.Point) {
 	}
 	m.Waypoints = path
 	m.MovementState = StateMovementMoving
+	m.TargetPos = target
 }
 
 func (m *Movement) Update() {
 	switch m.MovementState {
 	case StateMovementIdle:
 		m.MovementState = StateMovementIdle
+		return
 
 	case StateMovementMoving:
 		if len(m.Waypoints) == 0 {
 			m.MovementState = StateMovementArrived
+			return
 		}
 		next := m.Waypoints[0]
 		if next == m.TargetPos {
 			if m.w.IsOccupied(m.TargetPos.X, m.TargetPos.Y) {
 				m.Waypoints = m.Waypoints[1:]
 				m.MovementState = StateMovementArrived
-
+				return
 			}
 			m.w.Vacate(m.pos.X, m.pos.Y)
 			m.pos.X = next.X
@@ -62,13 +66,17 @@ func (m *Movement) Update() {
 			m.w.Occupy(m.pos.X, m.pos.Y)
 			m.Waypoints = m.Waypoints[1:]
 			m.MovementState = StateMovementArrived
-
+			return
 		}
-		if m.w.IsOccupied(next.X, next.Y) {
+		isoc := m.w.IsOccupied(next.X, next.Y)
+		if isoc == true {
+			fmt.Println("sim")
+		}
+		if isoc {
 			m.MovementState = StateMovementWaiting
 			m.WaitTicks = 0
 			m.WaitCount++
-
+			return
 		}
 		m.w.Vacate(m.pos.X, m.pos.Y)
 		m.pos.X = next.X
@@ -76,6 +84,7 @@ func (m *Movement) Update() {
 		m.w.Occupy(m.pos.X, m.pos.Y)
 		m.Waypoints = m.Waypoints[1:]
 		m.WaitCount = 0
+		return
 
 	case StateMovementWaiting:
 		m.WaitTicks++
@@ -85,6 +94,7 @@ func (m *Movement) Update() {
 				m.WaitCount = 0
 				m.TargetPos = cnts.Point{X: 0, Y: 0}
 				m.Waypoints = nil
+				return
 			}
 			from := m.pos
 			to := m.TargetPos
@@ -92,17 +102,18 @@ func (m *Movement) Update() {
 			if len(path) == 0 {
 				m.MovementState = StateMovementIdle
 				m.WaitCount = 0
-
+				return
 			}
 			m.Waypoints = path
 			m.MovementState = StateMovementMoving
 		}
-
+		return
 	case StateMovementArrived:
 		m.MovementState = StateMovementIdle
 		m.WaitCount = 0
 		m.TargetPos = cnts.Point{X: -1, Y: -1}
 		m.Waypoints = nil
+		return
 	}
 }
 
@@ -112,11 +123,12 @@ func (m *Movement) Pos() cnts.Point {
 
 func NewMovement(x, y int, w *world.World) Movement {
 	return Movement{
-		pos:       cnts.Point{X: x, Y: y},
-		TargetPos: cnts.Point{X: -1, Y: -1},
-		Waypoints: make([]cnts.Point, 0),
-		WaitTicks: 0,
-		WaitCount: 0,
-		w:         w,
+		pos:           cnts.Point{X: x, Y: y},
+		TargetPos:     cnts.Point{X: -1, Y: -1},
+		Waypoints:     make([]cnts.Point, 0),
+		WaitTicks:     0,
+		WaitCount:     0,
+		w:             w,
+		MovementState: StateMovementIdle,
 	}
 }

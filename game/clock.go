@@ -1,7 +1,7 @@
 package game
 
 import (
-	"github/teohen/mgm-tto/constants"
+	"github/teohen/mgm-tto/cnts"
 )
 
 type Clock struct {
@@ -12,7 +12,7 @@ type Clock struct {
 
 func newClock() Clock {
 	return Clock{
-		interval: float64(constants.TickInterval),
+		interval: float64(cnts.TickInterval),
 	}
 }
 

@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"github/teohen/mgm-tto/constants"
+	"github/teohen/mgm-tto/cnts"
 	"math"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -14,11 +14,11 @@ func (g *UI) pan(dx, dy float32) {
 
 func (g *UI) zoom(factor float32) {
 	newZoom := g.camera.Zoom * factor
-	if newZoom < constants.CameraZoomMin {
-		newZoom = constants.CameraZoomMin
+	if newZoom < cnts.CameraZoomMin {
+		newZoom = cnts.CameraZoomMin
 	}
-	if newZoom > constants.CameraZoomMax {
-		newZoom = constants.CameraZoomMax
+	if newZoom > cnts.CameraZoomMax {
+		newZoom = cnts.CameraZoomMax
 	}
 	g.camera.Zoom = newZoom
 }
@@ -32,9 +32,9 @@ func (ui *UI) selectCellsInBox() {
 	maxY := math.Max(float64(ui.dragStart.Y), float64(ui.dragEnd.Y))
 
 	if maxX-minX < 4 && maxY-minY < 4 {
-		col := int(ui.dragEnd.X) / constants.TileSize
-		row := int(ui.dragEnd.Y) / constants.TileSize
-		if col >= 0 && col < constants.GridCols && row >= 0 && row < constants.GridRows {
+		col := int(ui.dragEnd.X) / cnts.TileSize
+		row := int(ui.dragEnd.Y) / cnts.TileSize
+		if col >= 0 && col < cnts.GridCols && row >= 0 && row < cnts.GridRows {
 			ui.simulation.Selected[[2]int{col, row}] = true
 		}
 		return
@@ -42,9 +42,9 @@ func (ui *UI) selectCellsInBox() {
 
 	for row := 0; row < ui.simulation.World().Rows(); row++ {
 		for col := 0; col < ui.simulation.World().Cols(); col++ {
-			x, y := constants.WorldToScreen(col, row)
-			tileCenterX := float64(x + constants.TileSize/2)
-			tileCenterY := float64(y + constants.TileSize/2)
+			x, y := cnts.WorldToScreen(col, row)
+			tileCenterX := float64(x + cnts.TileSize/2)
+			tileCenterY := float64(y + cnts.TileSize/2)
 
 			if tileCenterX >= minX && tileCenterX <= maxX &&
 				tileCenterY >= minY && tileCenterY <= maxY {

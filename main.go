@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github/teohen/mgm-tto/constants"
+	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/game"
 	"github/teohen/mgm-tto/save"
 	"github/teohen/mgm-tto/spritebank"
@@ -23,7 +23,7 @@ func init() {
 	loadPath := flag.String("load", "", "start from a save file")
 	flag.Parse()
 
-	rl.InitWindow(constants.ScreenW, constants.ScreenH, "mgm-tto")
+	rl.InitWindow(cnts.ScreenW, cnts.ScreenH, "mgm-tto")
 	rl.SetExitKey(rl.KeyEscape)
 	rl.SetTargetFPS(60)
 

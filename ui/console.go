@@ -2,7 +2,7 @@ package ui
 
 import (
 	"fmt"
-	"github/teohen/mgm-tto/constants"
+	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/entity"
 	"github/teohen/mgm-tto/simulation"
 	"strconv"
@@ -147,7 +147,8 @@ func ExecuteCommand(sim *simulation.Simulation, cmd string) {
 			fmt.Println("unknown job type, use move or chop")
 			return
 		}
-		sim.PushJob(entity.Job{Type: jt, TargetX: x, TargetY: y})
+		p := cnts.Point{X: x, Y: y}
+		sim.PushJob(entity.Job{Type: jt, TargetPos: p})
 		fmt.Printf("added %s job at (%d,%d)\n", parts[1], x, y)
 
 	case "clearjobs":
@@ -161,8 +162,8 @@ func ExecuteCommand(sim *simulation.Simulation, cmd string) {
 
 func (c *Console) DrawConsole() {
 	const barH = 30
-	barY := constants.ScreenH - barH
-	rl.DrawRectangle(0, int32(barY), constants.ScreenW, barH, rl.NewColor(0, 0, 0, 200))
+	barY := cnts.ScreenH - barH
+	rl.DrawRectangle(0, int32(barY), cnts.ScreenW, barH, rl.NewColor(0, 0, 0, 200))
 	line := "> " + c.Input() + "|"
 	rl.DrawText(line, 8, int32(barY)+5, 18, rl.White)
 }

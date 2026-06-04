@@ -1,5 +1,7 @@
 package entity
 
+import "github/teohen/mgm-tto/events"
+
 const (
 	LUMBERJACK_HIT = 20
 )
@@ -27,21 +29,24 @@ func NewLumberjack() Lumberjack {
 
 func (lj *Lumberjack) Start(tree *Tree) {
 	lj.tree = tree
+	lj.state = StateLumberjackHitting
 }
 
 func (lj *Lumberjack) Update() (woodCollected int, done bool) {
-	if lj.state != StateLumberjackIdle || lj.tree == nil {
-		return 0, false
-	}
 
 	lj.tree.Health -= lj.hit
 
 	if lj.tree.Health <= 0 {
-		// emit the event
 		wood := lj.tree.WoodYield
-		// w.Vacate(lj.tree.X, lj.tree.Y)
-		// lj.tree.ID = ""
-		// lj.state = StateLumberjackIdle
+
+		lj.state = StateLumberjackIdle
+		events.Emit(events.GameEvent{
+			Type: events.EventTreeCut,
+			Payload: map[string]interface{}{
+				"pos": lj.tree.Pos(),
+			},
+		})
+		lj.tree = nil
 		return wood, true
 	}
 

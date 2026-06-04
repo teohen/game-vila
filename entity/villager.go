@@ -40,7 +40,7 @@ func NewVillager(id, name string, x, y int) *Villager {
 		ID:    id,
 		name:  name,
 		Type:  Human,
-		State: "Idle",
+		State: StateVillagerIdle,
 		Agent: NewAgent(x, y, nil),
 	}
 
@@ -62,7 +62,7 @@ func (v *Villager) Tick(entities *[]Entity, w *world.World) {
 	case StateVillagerBusy:
 		finalAction := v.Agent.ExecuteAction()
 		if finalAction {
-			v.State = "Idle"
+			v.State = StateVillagerIdle
 		}
 	}
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github/teohen/mgm-tto/constants"
+	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/entity"
 	"github/teohen/mgm-tto/save"
 	"github/teohen/mgm-tto/simulation"
@@ -28,8 +28,8 @@ func New() Game {
 	}
 
 	for i := 0; i < 1; i++ {
-		x := rand.Intn(constants.GridCols)
-		y := rand.Intn(constants.GridRows)
+		x := rand.Intn(cnts.GridCols)
+		y := rand.Intn(cnts.GridRows)
 		villager := entity.NewVillager(fmt.Sprintf("teo-%d", i), fmt.Sprintf("teo-%d", i), x, y)
 		g.sim.AddVillager(villager)
 	}

@@ -2,7 +2,6 @@ package entity
 
 import (
 	"fmt"
-	"github/teohen/mgm-tto/events"
 	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/world"
 	"log"
@@ -63,11 +62,11 @@ func (a *Agent) SetPlan(planType PlanType, entities *[]Entity, target Entity) {
 				trees = append(trees, *tree)
 			}
 		}
-		a.planChopTrees(trees, t)
+		a.planChopTrees(t)
 	}
 }
 
-func (a *Agent) planChopTrees(trees []Tree, tree *Tree) {
+func (a *Agent) planChopTrees(tree *Tree) {
 	a.StartPlanState.Add(fmt.Sprintf("%s_health=%d", tree.ID, tree.Health))
 	goapActions := append(a.Actions, NewAction("chop_tree", "near_tree", fmt.Sprintf("%s_health-20", tree.ID)))
 	goal := goap.StateOf(fmt.Sprintf("%s_health=0", tree.ID))
@@ -94,7 +93,11 @@ func (a *Agent) planChopTrees(trees []Tree, tree *Tree) {
 }
 
 func (a *Agent) ExecuteAction() bool {
+	if a.ActionIdx > len(a.plan.actions) {
+		return true
+	}
 	action := a.plan.actions[a.ActionIdx]
+
 	switch action.name {
 	case "move_to":
 		if a.Movement.MovementState == StateMovementIdle {
@@ -102,7 +105,7 @@ func (a *Agent) ExecuteAction() bool {
 		} else {
 			a.Movement.Update()
 			if a.Movement.MovementState == StateMovementArrived {
-				a.ActionIdx += 1
+				a.nextAction()
 			}
 		}
 	case "chop_tree":
@@ -114,16 +117,21 @@ func (a *Agent) ExecuteAction() bool {
 			a.Lumberjack.Start(t)
 		} else {
 			_, done := a.Lumberjack.Update()
+			a.nextAction()
 			if done {
-				events.Emit(events.GameEvent{
-					Type: events.EventTreeCut,
-					Payload: map[string]interface{}{
-						"treePos": t.Pos(),
-					},
-				})
-				a.ActionIdx += 1
+				a.clearPlan()
+				return true
 			}
 		}
 	}
-	return true
+
+	return false
+}
+
+func (a *Agent) nextAction() {
+	a.ActionIdx += 1
+}
+
+func (a *Agent) clearPlan() {
+	a.ActionIdx = 0
 }

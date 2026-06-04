@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github/teohen/mgm-tto/constants"
+	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/entity"
 	"github/teohen/mgm-tto/events"
 	"github/teohen/mgm-tto/goap"
@@ -39,7 +39,7 @@ const (
 
 func New() *Simulation {
 	seed := time.Now().UnixNano()
-	w := world.NewWorld(constants.GridRows, constants.GridCols)
+	w := world.NewWorld(cnts.GridRows, cnts.GridCols)
 	w.Generate(seed)
 
 	forestNoise := world.NewNoise(seed + 1)
@@ -79,7 +79,7 @@ func (s *Simulation) Tick() {
 	s.tickCount++
 }
 
-func (s *Simulation) GetEntityPosition(entityID string) (int, int) {
+func (s *Simulation) GetEntityPosition(entityID string) cnts.Point {
 	for _, v := range s.villagers {
 		if v.ID == entityID {
 			return v.Pos()
@@ -90,22 +90,28 @@ func (s *Simulation) GetEntityPosition(entityID string) (int, int) {
 			return t.Pos()
 		}
 	}
-	return -1, -1
+	return cnts.Point{X: -1, Y: -1}
 }
 
 func (s *Simulation) AddVillager(v *entity.Villager) {
 	s.villagers = append(s.villagers, v)
-	s.world.Occupy(v.X, v.Y)
+	v.Pos()
+	s.world.Occupy(v.Pos().X, v.Pos().Y)
 }
 
 func (s *Simulation) AddTree(tree *entity.Tree) {
 	s.trees = append(s.trees, tree)
-	s.world.Occupy(tree.X, tree.Y)
+	s.world.Occupy(tree.Pos().X, tree.Pos().Y)
 }
 
 func (s *Simulation) RemoveTree(x, y int) bool {
+	p := cnts.Point{
+		X: x,
+		Y: y,
+	}
+
 	for i, t := range s.trees {
-		if t.X == x && t.Y == y {
+		if t.Pos() == p {
 			s.world.Vacate(x, y)
 			s.trees = append(s.trees[:i], s.trees[i+1:]...)
 			return true
@@ -127,8 +133,7 @@ func (s *Simulation) ProcessAxeSelection(cells [][2]int) {
 		}
 		s.PushJob(entity.Job{
 			Type:       entity.JobTypeChopTrees,
-			TargetX:    tree.X,
-			TargetY:    tree.Y,
+			TargetPos:  tree.Pos(),
 			TargetID:   tree.ID,
 			WorldState: s.WorldState,
 		})
@@ -136,8 +141,11 @@ func (s *Simulation) ProcessAxeSelection(cells [][2]int) {
 }
 
 func (s *Simulation) TreeAt(x, y int) *entity.Tree {
+	p := cnts.Point{
+		X: x, Y: y,
+	}
 	for _, t := range s.trees {
-		if t.X == x && t.Y == y {
+		if t.Pos() == p {
 			return t
 		}
 	}
@@ -177,9 +185,8 @@ func (s *Simulation) processEvents() {
 		case evt := <-events.EventQueue:
 			switch evt.Type {
 			case events.EventTreeCut:
-				treeX := evt.Payload["treeX"].(int)
-				treeY := evt.Payload["treeY"].(int)
-				s.RemoveTree(treeX, treeY)
+				treePos := evt.Payload["pos"].(cnts.Point)
+				s.RemoveTree(treePos.X, treePos.Y)
 			default:
 				// Canal está vazio, sai do loop de eventos e segue o frame
 				return

@@ -1,6 +1,9 @@
 package entity
 
-import "github/teohen/mgm-tto/goap"
+import (
+	"github/teohen/mgm-tto/cnts"
+	"github/teohen/mgm-tto/goap"
+)
 
 type JobType int
 
@@ -11,8 +14,7 @@ const (
 
 type Job struct {
 	Type       JobType
-	TargetX    int
-	TargetY    int
+	TargetPos  cnts.Point
 	TargetID   string
 	WorldState *goap.State
 }
