@@ -73,7 +73,7 @@ func New() *Simulation {
 func (s *Simulation) Tick() {
 	all := s.Entities()
 	for _, v := range s.villagers {
-		v.Tick(all, s.world)
+		v.Tick(&all, s.world)
 	}
 	s.tickCount++
 }

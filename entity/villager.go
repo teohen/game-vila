@@ -65,7 +65,7 @@ func NewVillager(id, name string, x, y int) *Villager {
 	return v
 }
 
-func (v *Villager) Tick(entities []*Entity, w *world.World) {
+func (v *Villager) Tick(entities *[]Entity, w *world.World) {
 	v.World = w
 	switch v.State {
 	case "Idle":
@@ -74,7 +74,7 @@ func (v *Villager) Tick(entities []*Entity, w *world.World) {
 		fmt.Println("PLANNING")
 		v.State = "Executing"
 	case "Executing":
-		finalAction := v.executePlan()
+		finalAction := v.executePlan(entities)
 		if finalAction {
 			v.State = "Idle"
 		}
@@ -82,7 +82,7 @@ func (v *Villager) Tick(entities []*Entity, w *world.World) {
 
 }
 
-func (v *Villager) setPlan(entities []*Entity) {
+func (v *Villager) setPlan(entities *[]Entity) {
 	if len(GetJobQueue().jobs) > 0 {
 		job := GetJobQueue().Pop()
 		switch job.Type {
@@ -116,15 +116,15 @@ func (v *Villager) setPlan(entities []*Entity) {
 	}
 }
 
-func (v *Villager) executePlan() bool {
+func (v *Villager) executePlan(entities *[]Entity) bool {
 	if v.ActionIdx >= len(v.plan.actions) {
 		return true
 	}
-	v.executeAction()
+	v.executeAction(entities)
 	return false
 }
 
-func (v *Villager) executeAction() {
+func (v *Villager) executeAction(entities *[]Entity) {
 	action := v.plan.actions[v.ActionIdx]
 	switch action.name {
 	case "move_to":
