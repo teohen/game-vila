@@ -1,11 +1,14 @@
 package entity
 
-import "github/teohen/mgm-tto/world"
+import (
+	"github/teohen/mgm-tto/cnts"
+	"github/teohen/mgm-tto/world"
+)
 
 type Entity interface {
 	Tick(entities *[]Entity, w *world.World)
 	Draw()
-	Pos() (int, int)
+	Pos() cnts.Point
 	GetID() string
 }
 

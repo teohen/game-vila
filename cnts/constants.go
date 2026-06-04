@@ -1,4 +1,4 @@
-package constants
+package cnts
 
 const (
 	ScreenW  = 1200
@@ -27,4 +27,8 @@ func ScreenToWorld(mx, my int32) (int, int, bool) {
 		return 0, 0, false
 	}
 	return gx, gy, true
+}
+
+type Point struct {
+	X, Y int
 }

@@ -1,14 +1,9 @@
 package pathfinding
 
 import (
+	"github/teohen/mgm-tto/cnts"
 	"math"
-
-	"github/teohen/mgm-tto/constants"
 )
-
-type Point struct {
-	X, Y int
-}
 
 type WalkableGrid interface {
 	IsWalkable(col, row int) bool
@@ -19,7 +14,7 @@ type cellInfo struct {
 	g       int
 	h       int
 	f       int
-	parent  Point
+	parent  cnts.Point
 	visited bool
 	inOpen  bool
 }
@@ -31,19 +26,19 @@ func abs(x int) int {
 	return x
 }
 
-func heuristic(a, b Point) int {
+func heuristic(a, b cnts.Point) int {
 	return abs(a.X-b.X) + abs(a.Y-b.Y)
 }
 
-func FindPath(grid WalkableGrid, from, to Point) []Point {
+func FindPath(grid WalkableGrid, from, to cnts.Point) []cnts.Point {
 
 	if from == to {
 		return nil
 	}
 
-	var info [constants.GridRows][constants.GridCols]cellInfo
-	for r := 0; r < constants.GridRows; r++ {
-		for c := 0; c < constants.GridCols; c++ {
+	var info [cnts.GridRows][cnts.GridCols]cellInfo
+	for r := 0; r < cnts.GridRows; r++ {
+		for c := 0; c < cnts.GridCols; c++ {
 			info[r][c] = cellInfo{g: math.MaxInt32}
 		}
 	}
@@ -56,7 +51,7 @@ func FindPath(grid WalkableGrid, from, to Point) []Point {
 		inOpen: true,
 	}
 
-	openList := []Point{from}
+	openList := []cnts.Point{from}
 
 	for len(openList) > 0 {
 		bestIdx := 0
@@ -75,10 +70,10 @@ func FindPath(grid WalkableGrid, from, to Point) []Point {
 		info[current.Y][current.X].inOpen = false
 		info[current.Y][current.X].visited = true
 
-		dirs := []Point{{0, -1}, {0, 1}, {-1, 0}, {1, 0}}
+		dirs := []cnts.Point{{0, -1}, {0, 1}, {-1, 0}, {1, 0}}
 		for _, d := range dirs {
 			nx, ny := current.X+d.X, current.Y+d.Y
-			if nx < 0 || nx >= constants.GridRows || ny < 0 || ny >= constants.GridCols {
+			if nx < 0 || nx >= cnts.GridRows || ny < 0 || ny >= cnts.GridCols {
 				continue
 			}
 
@@ -98,10 +93,10 @@ func FindPath(grid WalkableGrid, from, to Point) []Point {
 			if !ni.inOpen {
 				ni.inOpen = true
 				ni.g = g
-				ni.h = heuristic(Point{nx, ny}, to)
+				ni.h = heuristic(cnts.Point{nx, ny}, to)
 				ni.f = g + ni.h
 				ni.parent = current
-				openList = append(openList, Point{nx, ny})
+				openList = append(openList, cnts.Point{nx, ny})
 			} else if g < ni.g {
 				ni.g = g
 				ni.f = g + ni.h
@@ -113,11 +108,11 @@ func FindPath(grid WalkableGrid, from, to Point) []Point {
 	return nil
 }
 
-func reconstructPath(info [constants.GridRows][constants.GridCols]cellInfo, from, to Point) []Point {
-	var path []Point
+func reconstructPath(info [cnts.GridRows][cnts.GridCols]cellInfo, from, to cnts.Point) []cnts.Point {
+	var path []cnts.Point
 	current := to
 	for current != from {
-		path = append([]Point{current}, path...)
+		path = append([]cnts.Point{current}, path...)
 		current = info[current.Y][current.X].parent
 	}
 	return path
