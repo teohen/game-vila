@@ -63,7 +63,9 @@ func (ui *UI) Draw() {
 	rl.BeginMode2D(cam)
 	ui.simulation.World().Draw()
 	for _, e := range ui.simulation.Entities() {
-		e.Draw()
+		if e.GetID() != "" {
+			e.Draw()
+		}
 	}
 
 	drawSelectionRectangle(ui)

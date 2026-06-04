@@ -6,6 +6,7 @@ type Entity interface {
 	Tick(entities *[]Entity, w *world.World)
 	Draw()
 	Pos() (int, int)
+	GetID() string
 }
 
 type MovementEvent int

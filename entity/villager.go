@@ -174,6 +174,10 @@ func (v *Villager) Pos() (int, int) {
 	return v.Movement.Pos()
 }
 
+func (v *Villager) GetID() string {
+	return v.ID
+}
+
 func getSource(v *Villager) (rl.Rectangle, rl.Rectangle) {
 	src := rl.NewRectangle(0, 0, 0, 0)
 	dst := rl.NewRectangle(0, 0, 0, 0)

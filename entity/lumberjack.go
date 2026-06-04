@@ -43,7 +43,7 @@ func (lj *Lumberjack) Update(w *world.World) (woodCollected int, done bool) {
 	if lj.tree.Health <= 0 {
 		wood := lj.tree.WoodYield
 		w.Vacate(lj.tree.X, lj.tree.Y)
-		lj.tree = nil
+		lj.tree.ID = ""
 		lj.state = LumberjackIdle
 		return wood, true
 	}

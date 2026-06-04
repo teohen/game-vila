@@ -38,3 +38,7 @@ func (t *Tree) Draw() {
 	dst := rl.NewRectangle(x, y, constants.TileSize, constants.TileSize)
 	rl.DrawTexturePro(spritebank.Terrain, src, dst, rl.NewVector2(0, 0), 0, rl.White)
 }
+
+func (t *Tree) GetID() string {
+	return t.ID
+}
