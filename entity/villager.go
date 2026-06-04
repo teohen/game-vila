@@ -5,7 +5,6 @@ import (
 	"github/teohen/mgm-tto/constants"
 	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/spritebank"
-	"github/teohen/mgm-tto/world"
 	"log"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -19,47 +18,81 @@ const (
 
 type Villager struct {
 	Movement
-	ID   string
-	name string
-	Type VillagerType
+	ID       string
+	name     string
+	Type     VillagerType
+	Goals    []goap.State
+	Actions  []goap.Action
+	plan     []goap.Action
+	VilState *goap.State
 }
 
 func NewVillager(id, name string, x, y int) *Villager {
-	return &Villager{
+	v := &Villager{
 		Movement: Movement{
 			X: x,
 			Y: y,
 		},
-		ID:   id,
-		name: name,
-		Type: Human,
+		ID:      id,
+		name:    name,
+		Type:    Human,
+		Goals:   make([]goap.State, 0),
+		Actions: make([]goap.Action, 0),
 	}
 
+	v.VilState = goap.StateOf("!near_tree")
+
+	v.Actions = append(
+		v.Actions,
+		NewAction("move_to", "!near_tree", "near_tree"),
+	)
+
+	return v
 }
 
-func (v *Villager) Tick(w *world.World) MovementEvent {
-	if len(GetJobQueue().jobs) > 0 {
-		moveAction := NewAction("move_to", "!near_tree", "near_tree")
-		job := GetJobQueue().Pop()
-		chopTreeAction := NewAction("chopTree", "near_tree", fmt.Sprintf("%s_health-20", job.TargetID))
-
-		goal := goap.StateOf(fmt.Sprintf("%s_health=0", job.TargetID))
-		fmt.Println(job.WorldState.String())
-		fmt.Println(goal.String())
-		fmt.Println(moveAction.outcome.String())
-		fmt.Println(chopTreeAction.outcome.String())
-
-		plan, err := goap.Plan(job.WorldState, goal, []goap.Action{moveAction, chopTreeAction})
-		if err != nil {
-			log.Fatal("ERRRO", err.Error())
+func (v *Villager) Tick(entities []Entity) {
+	if len(v.plan) < 1 {
+		v.setPlan(entities)
+	} else {
+		for _, act := range v.plan {
+			action := act.(*Action)
+			// TODO: now the villager should act on the plan that is already set
 		}
-
-		for i, action := range plan {
-			fmt.Printf("%2d. %s\n", i+1, action.(*Action).String())
-		}
-
 	}
-	return v.Movement.Update(w)
+}
+
+func (v *Villager) setPlan(entities []Entity) {
+	if len(GetJobQueue().jobs) > 0 {
+		job := GetJobQueue().Pop()
+		switch job.Type {
+		case JobTypeChopTrees:
+			t := getTreeFrom(job.TargetID, entities)
+			v.VilState.Add(fmt.Sprintf("%s_health=%d", t.ID, t.Health))
+			actions := append(v.Actions, NewAction("chopTree", "near_tree", fmt.Sprintf("%s_health-20", t.ID)))
+			goal := goap.StateOf(fmt.Sprintf("%s_health=0", t.ID))
+			plan, err := goap.Plan(v.VilState, goal, actions)
+
+			if err != nil {
+				log.Fatal("ERRRO", err.Error())
+			}
+
+			v.plan = plan
+		}
+	}
+}
+
+func getTreeFrom(id string, entities []Entity) *Tree {
+	for _, e := range entities {
+		tree, ok := e.(*Tree)
+		if !ok {
+			continue
+		}
+
+		if tree.ID == id {
+			return tree
+		}
+	}
+	return nil
 }
 
 func (v *Villager) Name() string {

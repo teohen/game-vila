@@ -1,9 +1,7 @@
 package entity
 
-import "github/teohen/mgm-tto/world"
-
 type Entity interface {
-	Tick(w *world.World) MovementEvent
+	Tick(entities []Entity)
 	Draw()
 	Pos() (int, int)
 }
