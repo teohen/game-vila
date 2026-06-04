@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github/teohen/mgm-tto/buildings"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/entity"
 	"github/teohen/mgm-tto/events"
@@ -23,6 +24,7 @@ type Simulation struct {
 	world     *world.World
 	villagers []*entity.Villager
 	trees     []*entity.Tree
+	buildings []*buildings.Storage
 
 	ActiveTool Tool
 	Selected   map[[2]int]bool
@@ -75,6 +77,7 @@ func (s *Simulation) Tick() {
 	for _, v := range s.villagers {
 		v.Tick(&all, s.world)
 	}
+
 	s.processEvents()
 	s.tickCount++
 }
@@ -95,7 +98,6 @@ func (s *Simulation) GetEntityPosition(entityID string) cnts.Point {
 
 func (s *Simulation) AddVillager(v *entity.Villager) {
 	s.villagers = append(s.villagers, v)
-	v.Pos()
 	s.world.Occupy(v.Pos().X, v.Pos().Y)
 }
 
@@ -118,6 +120,11 @@ func (s *Simulation) RemoveTree(x, y int) bool {
 		}
 	}
 	return false
+}
+
+func (s *Simulation) AddStorage(storage *buildings.Storage) {
+	s.buildings = append(s.buildings, storage)
+	s.World().Occupy(storage.Pos().X, storage.Pos().Y)
 }
 
 func (s *Simulation) PushJob(job entity.Job) {
@@ -166,6 +173,10 @@ func (s *Simulation) Entities() []entity.Entity {
 		all = append(all, t)
 	}
 	return all
+}
+
+func (s *Simulation) Buildings() []*buildings.Storage {
+	return s.buildings
 }
 
 func (s *Simulation) OnSelectionComplete() {

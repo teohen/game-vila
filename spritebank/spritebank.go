@@ -9,15 +9,18 @@ import (
 
 var Terrain rl.Texture2D
 var Human rl.Texture2D
+var Structures rl.Texture2D
 
 func LoadAll() {
 	Terrain = loadTexture("./res/assets/spr_terrains.png")
 	Human = loadTexture("./res/assets/player_anims.png")
+	Structures = loadTexture("./res/assets/spr_structures_exterior.png")
 }
 
 func UnloadAll() {
 	rl.UnloadTexture(Terrain)
 	rl.UnloadTexture(Human)
+	rl.UnloadTexture(Structures)
 }
 
 func loadTexture(path string) rl.Texture2D {

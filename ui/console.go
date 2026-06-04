@@ -87,7 +87,7 @@ func ExecuteCommand(sim *simulation.Simulation, cmd string) {
 			fmt.Println("invalid coordinates")
 			return
 		}
-		sim.AddVillager(entity.NewVillager(parts[1], parts[1], x, y))
+		sim.AddVillager(entity.NewVillager(x, y))
 		fmt.Printf("spawned villager %s at (%d,%d)\n", parts[1], x, y)
 
 	case "addtree":

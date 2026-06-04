@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"fmt"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/spritebank"
@@ -9,12 +10,7 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
-type VillagerType int
 type VillagerState string
-
-const (
-	Human VillagerType = 1
-)
 
 const (
 	StateVillagerIdle VillagerState = "idle"
@@ -30,16 +26,13 @@ type Plan struct {
 type Villager struct {
 	Agent
 	ID    string
-	name  string
-	Type  VillagerType
 	State VillagerState
 }
 
-func NewVillager(id, name string, x, y int) *Villager {
+func NewVillager(x, y int) *Villager {
+	id := fmt.Sprintf("villager_%d_%d", x, y)
 	v := &Villager{
 		ID:    id,
-		name:  name,
-		Type:  Human,
 		State: StateVillagerIdle,
 		Agent: NewAgent(x, y, nil),
 	}
@@ -68,10 +61,6 @@ func (v *Villager) Tick(entities *[]Entity, w *world.World) {
 
 }
 
-func (v *Villager) Name() string {
-	return v.name
-}
-
 func (v *Villager) Pos() cnts.Point {
 	return v.Agent.Movement.Pos()
 }
@@ -85,18 +74,15 @@ func getSource(v *Villager) (rl.Rectangle, rl.Rectangle) {
 	src := rl.NewRectangle(0, 0, 0, 0)
 	dst := rl.NewRectangle(0, 0, 0, 0)
 
-	switch v.Type {
-	case Human:
-		x, y := cnts.WorldToScreen(v.pos.X, v.pos.Y)
-		dst.X = x
-		dst.Y = y
-		dst.Width = cnts.TileSize
-		dst.Height = cnts.TileSize
-		src.X = 41
-		src.Y = 21
-		src.Width = 16
-		src.Height = 19
-	}
+	x, y := cnts.WorldToScreen(v.pos.X, v.pos.Y)
+	dst.X = x
+	dst.Y = y
+	dst.Width = cnts.TileSize
+	dst.Height = cnts.TileSize
+	src.X = 41
+	src.Y = 21
+	src.Width = 16
+	src.Height = 19
 
 	return src, dst
 }
