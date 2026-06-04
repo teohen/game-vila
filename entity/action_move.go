@@ -18,6 +18,7 @@ type Action struct {
 	cost    int
 	require *goap.State
 	outcome *goap.State
+	target  Entity
 }
 
 func (a *Action) Simulate(current *goap.State) (*goap.State, *goap.State) {

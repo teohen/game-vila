@@ -36,15 +36,6 @@ func New() Game {
 	return g
 }
 
-func NewFromSave(s save.Save) Game {
-	sim := simulation.NewFromSave(s)
-	return Game{
-		sim:   sim,
-		UI:    ui.NewFromSave(sim, s),
-		clock: newClock(),
-	}
-}
-
 func (g *Game) Update() {
 	dt := float64(rl.GetFrameTime()) * 1000.0
 	ticks := g.clock.Advance(dt)
@@ -61,16 +52,4 @@ func (g *Game) Save() {
 	}
 	*/
 	fmt.Printf("[SAVE] Game saved to %s\n", save.GetSavePath())
-}
-
-func (g *Game) Load() {
-	s, err := save.LoadFromFile(save.GetSavePath())
-	if err != nil {
-		fmt.Printf("[ERROR] Load failed: %v\n", err)
-		return
-	}
-
-	g.sim = simulation.NewFromSave(s)
-	g.sim.Selected = make(map[[2]int]bool)
-	fmt.Printf("[SAVE] Game loaded from %s\n", save.GetSavePath())
 }

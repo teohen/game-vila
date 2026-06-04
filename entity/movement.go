@@ -35,13 +35,13 @@ func (s MovementState) String() string {
 }
 
 type Movement struct {
-	X, Y      int
-	TargetX   int
-	TargetY   int
-	Waypoints []pathfinding.Point
-	State     MovementState
-	WaitTicks int
-	WaitCount int
+	X, Y          int
+	TargetX       int
+	TargetY       int
+	Waypoints     []pathfinding.Point
+	MovementState MovementState
+	WaitTicks     int
+	WaitCount     int
 }
 
 func (m *Movement) SetTarget(x, y int, w *world.World) {
@@ -55,24 +55,24 @@ func (m *Movement) SetTarget(x, y int, w *world.World) {
 		return
 	}
 	m.Waypoints = path
-	m.State = StateMoving
+	m.MovementState = StateMoving
 }
 
 func (m *Movement) Update(w *world.World) MovementEvent {
-	switch m.State {
+	switch m.MovementState {
 	case StateIdle:
 		return EventIdle
 
 	case StateMoving:
 		if len(m.Waypoints) == 0 {
-			m.State = StateArrived
+			m.MovementState = StateArrived
 			return EventArrived
 		}
 		next := m.Waypoints[0]
 		if next.X == m.TargetX && next.Y == m.TargetY {
 			if w.IsOccupied(m.TargetX, m.TargetY) {
 				m.Waypoints = m.Waypoints[1:]
-				m.State = StateArrived
+				m.MovementState = StateArrived
 				return EventArrived
 			}
 			w.Vacate(m.X, m.Y)
@@ -80,11 +80,11 @@ func (m *Movement) Update(w *world.World) MovementEvent {
 			m.Y = next.Y
 			w.Occupy(m.X, m.Y)
 			m.Waypoints = m.Waypoints[1:]
-			m.State = StateArrived
+			m.MovementState = StateArrived
 			return EventArrived
 		}
 		if w.IsOccupied(next.X, next.Y) {
-			m.State = StateWaiting
+			m.MovementState = StateWaiting
 			m.WaitTicks = 0
 			m.WaitCount++
 			return EventNone
@@ -101,7 +101,7 @@ func (m *Movement) Update(w *world.World) MovementEvent {
 		m.WaitTicks++
 		if m.WaitTicks >= WaitDuration {
 			if m.WaitCount >= MaxRetries {
-				m.State = StateIdle
+				m.MovementState = StateIdle
 				m.WaitCount = 0
 				m.TargetX = 0
 				m.TargetY = 0
@@ -112,17 +112,17 @@ func (m *Movement) Update(w *world.World) MovementEvent {
 			to := pathfinding.Point{X: m.TargetX, Y: m.TargetY}
 			path := pathfinding.FindPath(w, from, to)
 			if len(path) == 0 {
-				m.State = StateIdle
+				m.MovementState = StateIdle
 				m.WaitCount = 0
 				return EventStuck
 			}
 			m.Waypoints = path
-			m.State = StateMoving
+			m.MovementState = StateMoving
 		}
 		return EventNone
 
 	case StateArrived:
-		m.State = StateIdle
+		m.MovementState = StateIdle
 		m.WaitCount = 0
 		m.TargetX = 0
 		m.TargetY = 0

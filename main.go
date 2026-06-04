@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	"github/teohen/mgm-tto/constants"
@@ -29,12 +30,13 @@ func init() {
 	spritebank.LoadAll()
 
 	if *loadPath != "" {
-		s, err := save.LoadFromFile(*loadPath)
+		_, err := save.LoadFromFile(*loadPath)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error: %v\n", err)
 			os.Exit(1)
 		}
-		g = game.NewFromSave(s)
+		log.Fatal("LOAD FROM SAVE NOT IMPLEMENTED")
+		// g = game.NewFromSave(s)
 		return
 	}
 

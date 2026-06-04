@@ -37,51 +37,10 @@ const (
 	treeWoodYield   = 20
 )
 
-func NewFromSave(s save.Save) *Simulation {
-	cells := make([][]world.CellType, s.World.Rows)
-	for r := range cells {
-		cells[r] = make([]world.CellType, s.World.Cols)
-		for c := range cells[r] {
-			cells[r][c] = world.CellType(s.World.Cells[r][c])
-		}
-	}
-	w := world.NewWorldFromCells(cells)
-
-	villagers := make([]*entity.Villager, len(s.Villagers))
-	for i, vs := range s.Villagers {
-		v := entity.NewVillager(vs.ID, vs.Name, vs.X, vs.Y)
-		w.Occupy(vs.X, vs.Y)
-		if vs.TargetX != nil && vs.TargetY != nil {
-			v.SetTarget(*vs.TargetX, *vs.TargetY, w)
-		}
-		villagers[i] = v
-	}
-
-	trees := make([]*entity.Tree, len(s.Trees))
-	for i, ts := range s.Trees {
-		t := entity.NewTree(ts.ID, ts.X, ts.Y, ts.Health, ts.WoodYield)
-		w.Occupy(ts.X, ts.Y)
-		trees[i] = t
-	}
-
-	q := entity.NewJobQueue()
-	for _, js := range s.Jobs {
-		q.Push(entity.Job{Type: entity.JobType(js.Type), TargetX: js.TargetX, TargetY: js.TargetY})
-	}
-
-	return &Simulation{
-		world:     w,
-		villagers: villagers,
-		trees:     trees,
-	}
-}
-
 func New() *Simulation {
 	seed := time.Now().UnixNano()
 	w := world.NewWorld(constants.GridRows, constants.GridCols)
 	w.Generate(seed)
-
-	// state := goap.StateOf("near_tree=0")
 
 	forestNoise := world.NewNoise(seed + 1)
 	var trees []*entity.Tree
@@ -114,12 +73,8 @@ func New() *Simulation {
 func (s *Simulation) Tick() {
 	all := s.Entities()
 	for _, v := range s.villagers {
-		v.Tick(all)
+		v.Tick(all, s.world)
 	}
-	for _, t := range s.trees {
-		t.Tick(nil)
-	}
-
 	s.tickCount++
 }
 
@@ -229,10 +184,10 @@ func (s *Simulation) ToSave() save.Save {
 			X:    v.X,
 			Y:    v.Y,
 		}
-		if v.State != entity.StateIdle {
+		if v.MovementState != entity.StateIdle {
 			vs.TargetX = &v.TargetX
 			vs.TargetY = &v.TargetY
-			vs.State = v.State.String()
+			vs.State = v.MovementState.String()
 		}
 		villagers[i] = vs
 	}

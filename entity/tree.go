@@ -3,6 +3,7 @@ package entity
 import (
 	"github/teohen/mgm-tto/constants"
 	"github/teohen/mgm-tto/spritebank"
+	"github/teohen/mgm-tto/world"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
@@ -24,7 +25,7 @@ func NewTree(id string, x, y, health, woodYield int) *Tree {
 	}
 }
 
-func (t *Tree) Tick([]Entity) {
+func (t *Tree) Tick(ent *[]Entity, w *world.World) {
 }
 
 func (t *Tree) Pos() (int, int) {

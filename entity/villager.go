@@ -5,6 +5,7 @@ import (
 	"github/teohen/mgm-tto/constants"
 	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/spritebank"
+	"github/teohen/mgm-tto/world"
 	"log"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -16,15 +17,26 @@ const (
 	Human VillagerType = 1
 )
 
+type Plan struct {
+	goal    *goap.State
+	actions []*Action
+	TargetX *int
+	TargetY *int
+}
+
 type Villager struct {
 	Movement
-	ID       string
-	name     string
-	Type     VillagerType
-	Goals    []goap.State
-	Actions  []goap.Action
-	plan     []goap.Action
-	VilState *goap.State
+	Lumberjack
+	ID        string
+	name      string
+	Type      VillagerType
+	Goals     []goap.State
+	Actions   []goap.Action
+	plan      Plan
+	VilState  *goap.State
+	State     string
+	ActionIdx int
+	World     *world.World
 }
 
 func NewVillager(id, name string, x, y int) *Villager {
@@ -33,11 +45,14 @@ func NewVillager(id, name string, x, y int) *Villager {
 			X: x,
 			Y: y,
 		},
-		ID:      id,
-		name:    name,
-		Type:    Human,
-		Goals:   make([]goap.State, 0),
-		Actions: make([]goap.Action, 0),
+		ID:         id,
+		name:       name,
+		Type:       Human,
+		Goals:      make([]goap.State, 0),
+		Actions:    make([]goap.Action, 0),
+		ActionIdx:  0,
+		State:      "Idle",
+		Lumberjack: Lumberjack{hit: 20, state: LumberjackIdle},
 	}
 
 	v.VilState = goap.StateOf("!near_tree")
@@ -50,39 +65,95 @@ func NewVillager(id, name string, x, y int) *Villager {
 	return v
 }
 
-func (v *Villager) Tick(entities []Entity) {
-	if len(v.plan) < 1 {
+func (v *Villager) Tick(entities []*Entity, w *world.World) {
+	v.World = w
+	switch v.State {
+	case "Idle":
 		v.setPlan(entities)
-	} else {
-		for _, act := range v.plan {
-			action := act.(*Action)
-			// TODO: now the villager should act on the plan that is already set
+	case "Planning":
+		fmt.Println("PLANNING")
+		v.State = "Executing"
+	case "Executing":
+		finalAction := v.executePlan()
+		if finalAction {
+			v.State = "Idle"
 		}
 	}
+
 }
 
-func (v *Villager) setPlan(entities []Entity) {
+func (v *Villager) setPlan(entities []*Entity) {
 	if len(GetJobQueue().jobs) > 0 {
 		job := GetJobQueue().Pop()
 		switch job.Type {
 		case JobTypeChopTrees:
 			t := getTreeFrom(job.TargetID, entities)
 			v.VilState.Add(fmt.Sprintf("%s_health=%d", t.ID, t.Health))
-			actions := append(v.Actions, NewAction("chopTree", "near_tree", fmt.Sprintf("%s_health-20", t.ID)))
+			goapActions := append(v.Actions, NewAction("chop_tree", "near_tree", fmt.Sprintf("%s_health-20", t.ID)))
 			goal := goap.StateOf(fmt.Sprintf("%s_health=0", t.ID))
-			plan, err := goap.Plan(v.VilState, goal, actions)
+			plan, err := goap.Plan(v.VilState, goal, goapActions)
 
 			if err != nil {
 				log.Fatal("ERRRO", err.Error())
 			}
+			finalActions := make([]*Action, 0)
 
-			v.plan = plan
+			for _, act := range plan {
+				action := act.(*Action)
+				action.target = t
+				finalActions = append(finalActions, action)
+
+			}
+
+			v.plan = Plan{
+				goal:    goal,
+				actions: finalActions,
+				TargetX: &job.TargetX,
+				TargetY: &job.TargetY,
+			}
+			v.State = "Planning"
 		}
 	}
 }
 
-func getTreeFrom(id string, entities []Entity) *Tree {
-	for _, e := range entities {
+func (v *Villager) executePlan() bool {
+	if v.ActionIdx >= len(v.plan.actions) {
+		return true
+	}
+	v.executeAction()
+	return false
+}
+
+func (v *Villager) executeAction() {
+	action := v.plan.actions[v.ActionIdx]
+	switch action.name {
+	case "move_to":
+		if v.Movement.TargetX < 1 && v.Movement.TargetY < 1 {
+			v.Movement.SetTarget(*v.plan.TargetX, *v.plan.TargetY, v.World)
+		} else {
+			movState := v.Movement.Update(v.World)
+			if movState == EventArrived {
+				v.ActionIdx += 1
+			}
+		}
+	case "chop_tree":
+		t, ok := action.target.(*Tree)
+		if !ok {
+			log.Fatal("TREE CONVERTION NOT WOTK")
+		}
+		if !v.Lumberjack.IsHitting() {
+			v.Lumberjack.Start(t)
+		} else {
+			_, done := v.Lumberjack.Update(v.World)
+			if done {
+				v.ActionIdx += 1
+			}
+		}
+	}
+}
+
+func getTreeFrom(id string, entities *[]Entity) *Tree {
+	for _, e := range *entities {
 		tree, ok := e.(*Tree)
 		if !ok {
 			continue
