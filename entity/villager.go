@@ -3,7 +3,6 @@ package entity
 import (
 	"fmt"
 	"github/teohen/mgm-tto/cnts"
-	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/spritebank"
 	"github/teohen/mgm-tto/world"
 
@@ -17,43 +16,55 @@ const (
 	StateVillagerBusy VillagerState = "busy"
 )
 
-type Plan struct {
-	goal      *goap.State
-	actions   []*Action
-	TargetPos cnts.Point
-}
-
 type Villager struct {
-	Agent
+	IAgent
 	ID    string
 	State VillagerState
+	//TODO: transform inventory into a Trait
+	inventory      int
+	maxCarryWeight int
+	weight         int
 }
 
 func NewVillager(x, y int) *Villager {
 	id := fmt.Sprintf("villager_%d_%d", x, y)
-	v := &Villager{
-		ID:    id,
-		State: StateVillagerIdle,
-		Agent: NewAgent(x, y, nil),
-	}
+	v := Villager{}
 
-	return v
+	v.ID = id
+	v.State = StateVillagerIdle
+	v.IAgent = NewAgent(x, y, nil, v.incrementWood)
+	v.maxCarryWeight = 100
+	v.weight = 10
+
+	return &v
+}
+
+// TODO: this goes to the inventory Trait later
+func (v *Villager) incrementWood(amount int) {
+	v.inventory += amount
+	v.weight += amount * 5
 }
 
 func (v *Villager) Tick(entities *[]Entity, w *world.World) {
-	v.Agent.Movement.w = w
+	v.IAgent.Movement().w = w
+	// v.UpdateGoals(entities, w)
 	switch v.State {
 	case StateVillagerIdle:
-		if job := GetJobQueue().Pop(); job != nil {
+		if found := v.ChooseGoal(); found {
+			v.State = StateVillagerBusy
+		}
+
+		/*if job := GetJobQueue().Pop(); job != nil {
 			switch job.Type {
 			case JobTypeChopTrees:
 				v.SetPlan(PlanTypeChopTrees, entities, getEntityFrom(job.TargetID, entities))
 				v.State = StateVillagerBusy
 			}
 		}
+		*/
 
 	case StateVillagerBusy:
-		finalAction := v.Agent.ExecuteAction()
+		finalAction := v.ExecuteAction()
 		if finalAction {
 			v.State = StateVillagerIdle
 		}
@@ -62,7 +73,7 @@ func (v *Villager) Tick(entities *[]Entity, w *world.World) {
 }
 
 func (v *Villager) Pos() cnts.Point {
-	return v.Agent.Movement.Pos()
+	return v.IAgent.Movement().Pos()
 }
 
 func (v *Villager) GetID() string {
@@ -74,7 +85,7 @@ func getSource(v *Villager) (rl.Rectangle, rl.Rectangle) {
 	src := rl.NewRectangle(0, 0, 0, 0)
 	dst := rl.NewRectangle(0, 0, 0, 0)
 
-	x, y := cnts.WorldToScreen(v.pos.X, v.pos.Y)
+	x, y := cnts.WorldToScreen(v.Movement().pos.X, v.Movement().pos.Y)
 	dst.X = x
 	dst.Y = y
 	dst.Width = cnts.TileSize

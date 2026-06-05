@@ -2,109 +2,143 @@ package entity
 
 import (
 	"fmt"
+	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/world"
 	"log"
+	"sort"
 )
+
+type Plan struct {
+	goal      *goap.State
+	actions   []*Action
+	TargetPos cnts.Point
+}
 
 type PlanType string
 
-const (
-	PlanTypeChopTrees PlanType = "chop_tree"
-)
-
 type IAgent interface {
-	SetPlan(planType PlanType, entities *[]Entity, target *Entity)
-	ExecuteAction()
+	UpdateGoals(entities *[]Entity, w *world.World)
+	OrderGoals()
+	AddGoal(goal *Goal)
+	RemoveGoal(goal *Goal)
+	AddAction(action IAction)
+	ChooseGoal() bool
+	ExecuteAction() bool
+	Movement() *Movement
+	Lumberjack() *Lumberjack
 }
 
 type Agent struct {
-	Movement
-	Lumberjack
+	movement       Movement
+	lumberjack     Lumberjack
 	StartPlanState *goap.State
-	Goals          []goap.State
+	Goals          []*Goal
 	Actions        []goap.Action
 	plan           Plan
 	ActionIdx      int
+	CurrentGoal    *Goal
 }
 
-func NewAgent(x, y int, w *world.World) Agent {
+func NewAgent(x, y int, w *world.World, ic IncrementWood) IAgent {
 	a := Agent{
-		Goals:          make([]goap.State, 0),
+		Goals:          make([]*Goal, 0),
 		Actions:        make([]goap.Action, 0),
 		ActionIdx:      0,
 		StartPlanState: goap.StateOf("!near_tree"),
-		Movement:       NewMovement(x, y, w),
-		Lumberjack:     NewLumberjack(),
+		movement:       NewMovement(x, y, w),
+		lumberjack:     NewLumberjack(ic),
 	}
 
-	a.Actions = append(a.Actions, NewAction("move_to", "!near_tree", "near_tree"))
-
-	return a
+	return &a
 }
 
-func (a *Agent) SetPlan(planType PlanType, entities *[]Entity, target Entity) {
-	switch planType {
-	// TODO: fix this mess
-	case PlanTypeChopTrees:
-		trees := make([]Tree, 0)
-		t, ok := target.(*Tree)
+func (a *Agent) AddGoal(g *Goal) {
+	a.Goals = append(a.Goals, g)
+}
 
-		if !ok {
-			log.Fatal("target is not a tree")
+func (a *Agent) RemoveGoal(g *Goal) {
+	for i, v := range a.Goals {
+		if v == g {
+			a.Goals = append(a.Goals[:i], a.Goals[i+1:]...)
 		}
-		for _, ent := range *entities {
-			if ent.GetType() == EntityTypeTree {
-				tree, ok := target.(*Tree)
-				if !ok {
-					log.Fatal("target is not a tree")
-				}
-				trees = append(trees, *tree)
-			}
-		}
-		a.planChopTrees(t)
 	}
 }
 
-func (a *Agent) planChopTrees(tree *Tree) {
-	a.StartPlanState.Add(fmt.Sprintf("%s_health=%d", tree.ID, tree.Health))
-	goapActions := append(a.Actions, NewAction("chop_tree", "near_tree", fmt.Sprintf("%s_health-20", tree.ID)))
-	goal := goap.StateOf(fmt.Sprintf("%s_health=0", tree.ID))
+func (ag *Agent) AddAction(a IAction) {
+	ag.Actions = append(ag.Actions, a)
+}
 
-	plan, err := goap.Plan(a.StartPlanState, goal, goapActions)
+func (a *Agent) ChooseGoal() bool {
+	i := 1
+	a.plan = Plan{}
+	for len(a.Goals) > 0 && i <= len(a.Goals) {
+		goal := a.Goals[len(a.Goals)-i]
+		desired := goal.DesiredState()
+		a.StartPlanState.Add("walkable")
+		a.StartPlanState.Add(fmt.Sprintf("%s_health=%d", goal.Target().GetID(), 100))
+		actions, err := goap.Plan(a.StartPlanState, desired, a.Actions)
 
-	if err != nil {
-		log.Fatal("ERRRO", err.Error())
+		if err != nil {
+			i += 1
+			fmt.Println("not", err)
+			goal.priority -= 5
+			continue
+		}
+
+		for _, act := range actions {
+			action := act.(*Action)
+			action.target = goal.Target()
+			a.plan.actions = append(a.plan.actions, action)
+		}
+		a.CurrentGoal = goal
+		return true
 	}
-	finalActions := make([]*Action, 0)
+	return false
+}
 
-	for _, act := range plan {
-		action := act.(*Action)
-		action.target = tree
-		finalActions = append(finalActions, action)
-
+func (a *Agent) UpdateGoals(entities *[]Entity, w *world.World) {
+	job := GetJobQueue().Peek()
+	if job != nil {
+		switch job.Type {
+		case JobTypeChopTrees:
+			ent := getEntityFrom(job.TargetID, entities)
+			desired := fmt.Sprintf("%s_health=0", ent.GetID())
+			a.AddGoal(NewGoal("ChopTree", desired, 50, ent))
+			mv := NewAction("move_to", "walkable", "near_tree", &ent)
+			mv.from = a.Movement().pos
+			mv.world = w
+			cp := NewAction("chop_tree", "near_tree", fmt.Sprintf("%s_health=0", ent.GetID()), &ent)
+			a.AddAction(mv)
+			a.AddAction(cp)
+		}
 	}
+}
 
-	a.plan = Plan{
-		goal:      goal,
-		actions:   finalActions,
-		TargetPos: tree.Pos(),
-	}
+func (a *Agent) OrderGoals() {
+	sort.Slice(a.Goals, func(i, j int) bool {
+		gi := *a.Goals[i]
+		gj := *a.Goals[j]
+		return gi.Priority() > gj.Priority()
+	})
 }
 
 func (a *Agent) ExecuteAction() bool {
-	if a.ActionIdx > len(a.plan.actions) {
+	if a.ActionIdx >= len(a.plan.actions) {
+		//TODO: Remove job from the job queue
+		GetJobQueue().Remove()
+		a.clearPlan()
 		return true
 	}
 	action := a.plan.actions[a.ActionIdx]
 
-	switch action.name {
+	switch action.Name() {
 	case "move_to":
-		if a.Movement.MovementState == StateMovementIdle {
-			a.Movement.SetTarget(a.plan.TargetPos)
+		if a.Movement().State == StateMovementIdle {
+			a.Movement().SetTarget(action.Target().Pos())
 		} else {
-			a.Movement.Update()
-			if a.Movement.MovementState == StateMovementArrived {
+			a.Movement().Update()
+			if a.Movement().State == StateMovementArrived {
 				a.nextAction()
 			}
 		}
@@ -113,14 +147,13 @@ func (a *Agent) ExecuteAction() bool {
 		if !ok {
 			log.Fatal("TREE CONVERTION NOT WOTK")
 		}
-		if !a.Lumberjack.IsHitting() {
-			a.Lumberjack.Start(t)
+		if a.Lumberjack().State == StateLumberjackIdle {
+			a.Lumberjack().Start(t)
 		} else {
-			_, done := a.Lumberjack.Update()
-			a.nextAction()
-			if done {
-				a.clearPlan()
-				return true
+			if done := a.Lumberjack().Update(); done {
+				a.Actions = make([]goap.Action, 0)
+				a.RemoveGoal(a.CurrentGoal)
+				a.nextAction()
 			}
 		}
 	}
@@ -134,4 +167,12 @@ func (a *Agent) nextAction() {
 
 func (a *Agent) clearPlan() {
 	a.ActionIdx = 0
+}
+
+func (a *Agent) Movement() *Movement {
+	return &a.movement
+}
+
+func (a *Agent) Lumberjack() *Lumberjack {
+	return &a.lumberjack
 }

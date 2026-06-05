@@ -18,6 +18,7 @@ type GameEvent struct {
 // O canal global de eventos (pode ser buffered para não travar o loop)
 var EventQueue = make(chan GameEvent, 100)
 
+// TODO: create Lots of kind on events
 func Emit(evt GameEvent) {
 	EventQueue <- evt
 }

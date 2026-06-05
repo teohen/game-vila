@@ -36,6 +36,11 @@ func (q *JobQueue) Pop() *Job {
 	return &job
 }
 
+func (q *JobQueue) Peek() *Job {
+	job := q.Jobs[0]
+	return &job
+}
+
 var jobQueue = &JobQueue{}
 
 func GetJobQueue() *JobQueue {
