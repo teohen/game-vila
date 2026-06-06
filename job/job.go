@@ -1,16 +1,13 @@
-package entity
+package job
 
 import (
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
 )
 
-type JobType int
+type JobType string
 
-const (
-	JobTypeMove JobType = iota
-	JobTypeChopTrees
-)
+const JobChopTreeType JobType = "ChopTreeJob"
 
 type Job struct {
 	Type       JobType
@@ -41,8 +38,12 @@ func (q *JobQueue) Peek() *Job {
 	return &job
 }
 
-var jobQueue = &JobQueue{}
+func (q *JobQueue) Remove(j *Job) {
+
+}
 
 func GetJobQueue() *JobQueue {
 	return jobQueue
 }
+
+var jobQueue = &JobQueue{}

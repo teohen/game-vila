@@ -1,4 +1,4 @@
-package entity
+package agent
 
 import (
 	"github/teohen/mgm-tto/goap"
@@ -8,31 +8,27 @@ import (
 type Goal struct {
 	name         string
 	desiredState *goap.State
-	priority     int
+	actions      []IAction
 
-	target Entity
+	target Target
 }
 
 type IGoal interface {
-	Priority() int
 	EvaluatePriority() int
 	DesiredState() *goap.State
-	Target() Entity
+	AddActions(a ...IAction)
+	GetGoapActions() []goap.Action
+	Target() Target
 }
 
-func NewGoal(name, desired string, p int, t Entity) *Goal {
+func NewGoal(name, desired string, t Target) IGoal {
 	g := Goal{
 		name:         name,
 		desiredState: goap.StateOf(strings.Split(desired, ",")...),
-		priority:     p,
 		target:       t,
 	}
 
 	return &g
-}
-
-func (g *Goal) Priority() int {
-	return g.priority
 }
 
 func (g *Goal) DesiredState() *goap.State {
@@ -43,6 +39,17 @@ func (g *Goal) EvaluatePriority() int {
 	return 1
 }
 
-func (g *Goal) Target() Entity {
+func (g *Goal) Target() Target {
 	return g.target
+}
+
+func (g *Goal) AddActions(a ...IAction) {
+	g.actions = append(g.actions, a...)
+}
+func (g *Goal) GetGoapActions() []goap.Action {
+	a := make([]goap.Action, 0)
+	for _, act := range g.actions {
+		a = append(a, act)
+	}
+	return a
 }

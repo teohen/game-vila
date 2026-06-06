@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/entity"
+	"github/teohen/mgm-tto/job"
 	"github/teohen/mgm-tto/simulation"
 	"strconv"
 	"strings"
@@ -87,7 +88,7 @@ func ExecuteCommand(sim *simulation.Simulation, cmd string) {
 			fmt.Println("invalid coordinates")
 			return
 		}
-		sim.AddVillager(entity.NewVillager(x, y))
+		sim.AddVillager(entity.NewVillager(x, y, sim.World()))
 		fmt.Printf("spawned villager %s at (%d,%d)\n", parts[1], x, y)
 
 	case "addtree":
@@ -137,18 +138,16 @@ func ExecuteCommand(sim *simulation.Simulation, cmd string) {
 			fmt.Println("invalid coordinates")
 			return
 		}
-		var jt entity.JobType
+		var jt job.JobType
 		switch parts[1] {
-		case "move":
-			jt = entity.JobTypeMove
 		case "chop":
-			jt = entity.JobTypeChopTrees
+			jt = job.JobChopTreeType
 		default:
 			fmt.Println("unknown job type, use move or chop")
 			return
 		}
 		p := cnts.Point{X: x, Y: y}
-		sim.PushJob(entity.Job{Type: jt, TargetPos: p})
+		sim.PushJob(job.Job{Type: jt, TargetPos: p})
 		fmt.Printf("added %s job at (%d,%d)\n", parts[1], x, y)
 
 	case "clearjobs":

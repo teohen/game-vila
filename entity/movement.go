@@ -2,6 +2,8 @@ package entity
 
 import (
 	"fmt"
+
+	"github/teohen/mgm-tto/agent"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/pathfinding"
 	"github/teohen/mgm-tto/world"
@@ -29,6 +31,18 @@ type Movement struct {
 	WaitTicks int
 	WaitCount int
 	w         *world.World
+}
+
+func NewMovement(x, y int, w *world.World) *Movement {
+	return &Movement{
+		pos:       cnts.Point{X: x, Y: y},
+		TargetPos: cnts.Point{X: -1, Y: -1},
+		Waypoints: make([]cnts.Point, 0),
+		WaitTicks: 0,
+		WaitCount: 0,
+		w:         w,
+		State:     StateMovementIdle,
+	}
 }
 
 func (m *Movement) SetTarget(target cnts.Point) bool {
@@ -122,14 +136,14 @@ func (m *Movement) Pos() cnts.Point {
 	return m.pos
 }
 
-func NewMovement(x, y int, w *world.World) Movement {
-	return Movement{
-		pos:       cnts.Point{X: x, Y: y},
-		TargetPos: cnts.Point{X: -1, Y: -1},
-		Waypoints: make([]cnts.Point, 0),
-		WaitTicks: 0,
-		WaitCount: 0,
-		w:         w,
-		State:     StateMovementIdle,
+func (m *Movement) ExecuteAction(target agent.Target) bool {
+	if m.State == StateMovementIdle {
+		m.SetTarget(target.Pos())
+	} else {
+		m.Update()
+		if m.State == StateMovementArrived {
+			return true
+		}
 	}
+	return false
 }

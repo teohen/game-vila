@@ -36,7 +36,7 @@ func New() Game {
 		y := rand.Intn(cnts.GridRows)
 
 		if !sim.World().IsOccupied(x, y) {
-			villager = entity.NewVillager(x, y)
+			villager = entity.NewVillager(x, y, sim.World())
 			hit = true
 		}
 	}

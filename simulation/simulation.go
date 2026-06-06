@@ -9,6 +9,7 @@ import (
 	"github/teohen/mgm-tto/entity"
 	"github/teohen/mgm-tto/events"
 	"github/teohen/mgm-tto/goap"
+	"github/teohen/mgm-tto/job"
 	"github/teohen/mgm-tto/world"
 )
 
@@ -98,7 +99,7 @@ func (s *Simulation) GetEntityPosition(entityID string) cnts.Point {
 
 func (s *Simulation) AddVillager(v *entity.Villager) {
 	s.villagers = append(s.villagers, v)
-	s.world.Occupy(v.Pos().X, v.Pos().Y)
+	// s.world.Occupy(v.Pos().X, v.Pos().Y)
 }
 
 func (s *Simulation) AddTree(tree *entity.Tree) {
@@ -127,8 +128,8 @@ func (s *Simulation) AddStorage(storage *buildings.Storage) {
 	s.World().Occupy(storage.Pos().X, storage.Pos().Y)
 }
 
-func (s *Simulation) PushJob(job entity.Job) {
-	entity.GetJobQueue().Push(job)
+func (s *Simulation) PushJob(j job.Job) {
+	job.GetJobQueue().Push(j)
 }
 
 func (s *Simulation) ProcessAxeSelection(cells [][2]int) {
@@ -138,8 +139,8 @@ func (s *Simulation) ProcessAxeSelection(cells [][2]int) {
 		if tree == nil {
 			continue
 		}
-		s.PushJob(entity.Job{
-			Type:       entity.JobTypeChopTrees,
+		s.PushJob(job.Job{
+			Type:       job.JobChopTreeType,
 			TargetPos:  tree.Pos(),
 			TargetID:   tree.ID,
 			WorldState: s.WorldState,

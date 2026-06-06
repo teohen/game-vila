@@ -2,6 +2,7 @@ package entity
 
 import (
 	"fmt"
+	"github/teohen/mgm-tto/agent"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/spritebank"
 	"github/teohen/mgm-tto/world"
@@ -17,7 +18,9 @@ const (
 )
 
 type Villager struct {
-	IAgent
+	agent agent.IAgent
+	Movement
+	Lumberjack
 	ID    string
 	State VillagerState
 	//TODO: transform inventory into a Trait
@@ -26,13 +29,12 @@ type Villager struct {
 	weight         int
 }
 
-func NewVillager(x, y int) *Villager {
+func NewVillager(x, y int, w *world.World) *Villager {
 	id := fmt.Sprintf("villager_%d_%d", x, y)
 	v := Villager{}
-
 	v.ID = id
 	v.State = StateVillagerIdle
-	v.IAgent = NewAgent(x, y, nil, v.incrementWood)
+	v.agent = agent.NewAgent(x, y, nil, v.incrementWood, NewMovement(x, y, w), NewLumberjack(v.incrementWood))
 	v.maxCarryWeight = 100
 	v.weight = 10
 
@@ -46,26 +48,14 @@ func (v *Villager) incrementWood(amount int) {
 }
 
 func (v *Villager) Tick(entities *[]Entity, w *world.World) {
-	v.IAgent.Movement().w = w
-	// v.UpdateGoals(entities, w)
+	// v.IAgent.Movement().w = w
 	switch v.State {
 	case StateVillagerIdle:
-		if found := v.ChooseGoal(); found {
+		if found := v.agent.ChooseGoal(); found {
 			v.State = StateVillagerBusy
 		}
-
-		/*if job := GetJobQueue().Pop(); job != nil {
-			switch job.Type {
-			case JobTypeChopTrees:
-				v.SetPlan(PlanTypeChopTrees, entities, getEntityFrom(job.TargetID, entities))
-				v.State = StateVillagerBusy
-			}
-		}
-		*/
-
 	case StateVillagerBusy:
-		finalAction := v.ExecuteAction()
-		if finalAction {
+		if finalAction := v.agent.ExecutePlan(); finalAction {
 			v.State = StateVillagerIdle
 		}
 	}
@@ -73,7 +63,7 @@ func (v *Villager) Tick(entities *[]Entity, w *world.World) {
 }
 
 func (v *Villager) Pos() cnts.Point {
-	return v.IAgent.Movement().Pos()
+	return v.Movement.pos
 }
 
 func (v *Villager) GetID() string {
@@ -85,7 +75,7 @@ func getSource(v *Villager) (rl.Rectangle, rl.Rectangle) {
 	src := rl.NewRectangle(0, 0, 0, 0)
 	dst := rl.NewRectangle(0, 0, 0, 0)
 
-	x, y := cnts.WorldToScreen(v.Movement().pos.X, v.Movement().pos.Y)
+	x, y := cnts.WorldToScreen(v.Pos().X, v.Pos().Y)
 	dst.X = x
 	dst.Y = y
 	dst.Width = cnts.TileSize
@@ -107,7 +97,7 @@ func (v *Villager) GetType() EntityType {
 	return EntityTypeVillager
 }
 
-func getEntityFrom(id string, entities *[]Entity) Entity {
+func GetEntityFrom(id string, entities *[]Entity) Entity {
 	for _, e := range *entities {
 		if e.GetID() == id {
 			return e
