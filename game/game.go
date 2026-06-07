@@ -64,6 +64,7 @@ func (g *Game) Update() {
 
 	for i := 0; i < ticks; i++ {
 		g.sim.Tick()
+		g.UI.Draw()
 	}
 }
 

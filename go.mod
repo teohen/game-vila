@@ -9,6 +9,7 @@ require (
 
 require (
 	github.com/ebitengine/purego v0.10.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/jupiterrider/ffi v0.7.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	golang.org/x/exp v0.0.0-20260508232706-74f9aab9d74a // indirect

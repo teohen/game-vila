@@ -99,7 +99,7 @@ func (s *Simulation) GetEntityPosition(entityID string) cnts.Point {
 
 func (s *Simulation) AddVillager(v *entity.Villager) {
 	s.villagers = append(s.villagers, v)
-	// s.world.Occupy(v.Pos().X, v.Pos().Y)
+	s.world.Occupy(v.Pos().X, v.Pos().Y)
 }
 
 func (s *Simulation) AddTree(tree *entity.Tree) {
@@ -139,12 +139,7 @@ func (s *Simulation) ProcessAxeSelection(cells [][2]int) {
 		if tree == nil {
 			continue
 		}
-		s.PushJob(job.Job{
-			Type:       job.JobChopTreeType,
-			TargetPos:  tree.Pos(),
-			TargetID:   tree.ID,
-			WorldState: s.WorldState,
-		})
+		s.PushJob(*job.NewJob(job.JobChopTreeType, tree))
 	}
 }
 

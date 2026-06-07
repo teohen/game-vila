@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"fmt"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/pathfinding"
@@ -39,8 +40,12 @@ func (am *ActionMove) Simulate(current *goap.State) (*goap.State, *goap.State) {
 	path := pathfinding.FindPath(am.world, am.from, am.target.Pos())
 	if path == nil {
 		am.outcome = goap.StateOf("!near_tree")
+	} else {
+		am.outcome = goap.StateOf("near_tree")
 	}
 
+	fmt.Println(am.require.String())
+	fmt.Println(am.outcome.String())
 	return am.require, am.outcome
 }
 

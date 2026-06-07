@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github/teohen/mgm-tto/agent"
 	"github/teohen/mgm-tto/cnts"
+	"github/teohen/mgm-tto/job"
 	"github/teohen/mgm-tto/spritebank"
 	"github/teohen/mgm-tto/world"
 
@@ -18,25 +19,32 @@ const (
 )
 
 type Villager struct {
-	agent agent.IAgent
-	Movement
-	Lumberjack
-	ID    string
-	State VillagerState
+	agent      agent.IAgent
+	movement   *Movement
+	lumberjack *Lumberjack
+	ID         string
+	State      VillagerState
 	//TODO: transform inventory into a Trait
 	inventory      int
 	maxCarryWeight int
 	weight         int
+	w              *world.World
 }
 
 func NewVillager(x, y int, w *world.World) *Villager {
-	id := fmt.Sprintf("villager_%d_%d", x, y)
 	v := Villager{}
+	id := fmt.Sprintf("villager_%d_%d", x, y)
+	movement := NewMovement(x, y, w)
+	Lumberjack := NewLumberjack(v.incrementWood)
+
 	v.ID = id
 	v.State = StateVillagerIdle
-	v.agent = agent.NewAgent(x, y, nil, v.incrementWood, NewMovement(x, y, w), NewLumberjack(v.incrementWood))
+	v.movement = movement
+	v.lumberjack = Lumberjack
+	v.agent = agent.NewAgent(x, y, nil, v.incrementWood, movement, Lumberjack)
 	v.maxCarryWeight = 100
 	v.weight = 10
+	v.w = w
 
 	return &v
 }
@@ -48,10 +56,14 @@ func (v *Villager) incrementWood(amount int) {
 }
 
 func (v *Villager) Tick(entities *[]Entity, w *world.World) {
-	// v.IAgent.Movement().w = w
+	// TODO: zerar todos da fila
+	if j := job.GetJobQueue().Pop(); j != nil && v.State == StateVillagerIdle {
+		v.agent.UpdateGoals(v.w, v.movement.pos, j.Object, j.Name())
+	}
+
 	switch v.State {
 	case StateVillagerIdle:
-		if found := v.agent.ChooseGoal(); found {
+		if found := v.agent.ChooseGoal(v.w, v.Pos()); found {
 			v.State = StateVillagerBusy
 		}
 	case StateVillagerBusy:
@@ -63,7 +75,7 @@ func (v *Villager) Tick(entities *[]Entity, w *world.World) {
 }
 
 func (v *Villager) Pos() cnts.Point {
-	return v.Movement.pos
+	return v.movement.pos
 }
 
 func (v *Villager) GetID() string {

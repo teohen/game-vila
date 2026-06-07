@@ -2,48 +2,42 @@ package job
 
 import (
 	"github/teohen/mgm-tto/cnts"
-	"github/teohen/mgm-tto/goap"
 )
 
 type JobType string
 
 const JobChopTreeType JobType = "ChopTreeJob"
 
+type Object interface {
+	GetID() string
+	Pos() cnts.Point
+}
+
 type Job struct {
-	Type       JobType
-	TargetPos  cnts.Point
-	TargetID   string
-	WorldState *goap.State
+	ID      string
+	name    string
+	typeJob JobType
+	Object  Object
 }
 
-type JobQueue struct {
-	Jobs []Job
-}
-
-func (q *JobQueue) Push(job Job) {
-	q.Jobs = append(q.Jobs, job)
-}
-
-func (q *JobQueue) Pop() *Job {
-	if len(q.Jobs) == 0 {
-		return nil
+func NewJob(typeJob JobType, obj Object) *Job {
+	j := Job{
+		name:    string(typeJob),
+		typeJob: typeJob,
+		Object:  obj,
 	}
-	job := q.Jobs[0]
-	q.Jobs = q.Jobs[1:]
-	return &job
+
+	return &j
 }
 
-func (q *JobQueue) Peek() *Job {
-	job := q.Jobs[0]
-	return &job
+func (j *Job) Name() string {
+	return j.name
 }
 
-func (q *JobQueue) Remove(j *Job) {
-
+func (j *Job) Type() JobType {
+	return j.typeJob
 }
 
-func GetJobQueue() *JobQueue {
-	return jobQueue
+func (j *Job) GetJob() Object {
+	return j.Object
 }
-
-var jobQueue = &JobQueue{}

@@ -17,7 +17,10 @@ func NewPlan() *Plan {
 }
 
 func (p *Plan) Clear() {
-	p = nil
+	p.actions = nil
+	p.goal = nil
+	p.currAction = 0
+	p.job = nil
 }
 func (p *Plan) SetGoal(g IGoal) {
 	p.goal = g
@@ -40,5 +43,9 @@ func (p *Plan) nextAction() {
 }
 
 func (p *Plan) hasAction() bool {
-	return p.currAction >= len(p.actions)
+	return p.currAction < len(p.actions)
+}
+
+func (p *Plan) GetGoal() IGoal {
+	return p.goal
 }
