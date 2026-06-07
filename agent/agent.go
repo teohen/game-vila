@@ -24,7 +24,6 @@ type IAgent interface {
 }
 
 type Actor interface {
-	// TODO: the argument used to be a entity
 	ExecuteAction(target Target) bool
 }
 

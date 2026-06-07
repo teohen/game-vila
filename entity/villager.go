@@ -56,7 +56,6 @@ func (v *Villager) incrementWood(amount int) {
 }
 
 func (v *Villager) Tick(entities *[]Entity, w *world.World) {
-	// TODO: zerar todos da fila
 	if j := job.GetJobQueue().Pop(); j != nil && v.State == StateVillagerIdle {
 		v.agent.UpdateGoals(v.w, v.movement.pos, j.Object, j.Name())
 	}
