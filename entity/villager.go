@@ -3,8 +3,10 @@ package entity
 import (
 	"fmt"
 	"github/teohen/mgm-tto/agent"
+	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/job"
+	"github/teohen/mgm-tto/pathfinding"
 	"github/teohen/mgm-tto/spritebank"
 	"github/teohen/mgm-tto/world"
 
@@ -14,17 +16,19 @@ import (
 type VillagerState string
 
 const (
-	StateVillagerIdle VillagerState = "idle"
-	StateVillagerBusy VillagerState = "busy"
+	StateVillagerIdle         VillagerState = "idle"
+	StateVillagerBusy         VillagerState = "busy"
+	StateVillagerOverWeighted VillagerState = "pverweighted"
 )
 
+// TODO: create a villager Interface
 type Villager struct {
 	agent      agent.IAgent
 	movement   *Movement
 	lumberjack *Lumberjack
 	ID         string
 	State      VillagerState
-	//TODO: transform inventory into a Trait
+	// TODO: transform inventory into a Trait
 	inventory      int
 	maxCarryWeight int
 	weight         int
@@ -43,8 +47,9 @@ func NewVillager(x, y int, w *world.World) *Villager {
 	v.lumberjack = Lumberjack
 	v.agent = agent.NewAgent(x, y, nil, v.incrementWood, movement, Lumberjack)
 	v.maxCarryWeight = 100
-	v.weight = 10
+	v.weight = 80
 	v.w = w
+	v.inventory = 80
 
 	return &v
 }
@@ -55,9 +60,17 @@ func (v *Villager) incrementWood(amount int) {
 	v.weight += amount * 5
 }
 
-func (v *Villager) Tick(entities *[]Entity, w *world.World) {
+func (v *Villager) Tick(w *world.World, entities *[]Entity, buildings []*building.Storage) {
 	if j := job.GetJobQueue().Pop(); j != nil && v.State == StateVillagerIdle {
 		v.agent.UpdateGoals(v.w, v.movement.pos, j.Object, j.Name())
+	}
+
+	if v.weight >= v.maxCarryWeight {
+		storage := v.findNearestStorage(w, buildings)
+		desired := fmt.Sprintf("%s_wood=%d", storage.ID, (storage.Wood + v.inventory))
+		goal := agent.NewGoal("PutInto", desired, storage)
+		v.agent.AddGoal(goal)
+		// v.State = StateVillagerIdle
 	}
 
 	switch v.State {
@@ -65,10 +78,15 @@ func (v *Villager) Tick(entities *[]Entity, w *world.World) {
 		if found := v.agent.ChooseGoal(v.w, v.Pos()); found {
 			v.State = StateVillagerBusy
 		}
+		// CASE NOT IDLE PARA OS DOIS
 	case StateVillagerBusy:
 		if finalAction := v.agent.ExecutePlan(); finalAction {
 			v.State = StateVillagerIdle
 		}
+		// case StateVillagerOverWeighted:
+		// 	if finalAction := v.agent.ExecutePlan(); finalAction {
+		// 		v.State = StateVillagerIdle
+		// 	}
 	}
 
 }
@@ -115,4 +133,16 @@ func GetEntityFrom(id string, entities *[]Entity) Entity {
 		}
 	}
 	return nil
+}
+
+func (v *Villager) findNearestStorage(w *world.World, storages []*building.Storage) *building.Storage {
+	var storage *building.Storage
+	nearest := make([]cnts.Point, 10_000)
+	for _, b := range storages {
+		path := pathfinding.FindPath(w, v.movement.pos, b.Pos())
+		if len(path) > 0 && len(path) < len(nearest) {
+			storage = b
+		}
+	}
+	return storage
 }

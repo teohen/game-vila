@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github/teohen/mgm-tto/buildings"
+	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/entity"
 	"github/teohen/mgm-tto/events"
@@ -25,7 +25,7 @@ type Simulation struct {
 	world     *world.World
 	villagers []*entity.Villager
 	trees     []*entity.Tree
-	buildings []*buildings.Storage
+	buildings []*building.Storage
 
 	ActiveTool Tool
 	Selected   map[[2]int]bool
@@ -76,7 +76,7 @@ func New() *Simulation {
 func (s *Simulation) Tick() {
 	all := s.Entities()
 	for _, v := range s.villagers {
-		v.Tick(&all, s.world)
+		v.Tick(s.world, &all, s.buildings)
 	}
 
 	s.processEvents()
@@ -123,7 +123,7 @@ func (s *Simulation) RemoveTree(x, y int) bool {
 	return false
 }
 
-func (s *Simulation) AddStorage(storage *buildings.Storage) {
+func (s *Simulation) AddStorage(storage *building.Storage) {
 	s.buildings = append(s.buildings, storage)
 	s.World().Occupy(storage.Pos().X, storage.Pos().Y)
 }
@@ -171,7 +171,7 @@ func (s *Simulation) Entities() []entity.Entity {
 	return all
 }
 
-func (s *Simulation) Buildings() []*buildings.Storage {
+func (s *Simulation) Buildings() []*building.Storage {
 	return s.buildings
 }
 

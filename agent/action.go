@@ -18,4 +18,5 @@ type ActionType string
 const (
 	ActionMoveType     ActionType = "ActionMove"
 	ActionChopTreeType ActionType = "ChopTree"
+	ActionPutIntoType  ActionType = "PutInto"
 )

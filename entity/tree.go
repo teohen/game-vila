@@ -2,6 +2,7 @@ package entity
 
 import (
 	"fmt"
+	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/spritebank"
 	"github/teohen/mgm-tto/world"
@@ -25,7 +26,7 @@ func NewTree(id string, x, y, health, woodYield int) *Tree {
 	}
 }
 
-func (t *Tree) Tick(ent *[]Entity, w *world.World) {
+func (t *Tree) Tick(w *world.World, ent *[]Entity, buildings []*building.Storage) {
 }
 
 func (t *Tree) Pos() cnts.Point {

@@ -73,9 +73,14 @@ func (a *Agent) ChooseGoal(w *world.World, pos cnts.Point) bool {
 
 	for _, candidate := range a.Goals {
 		startPlan := a.StartPlanState
-		mv := NewActionMove("walkable", "near_tree", candidate.Target(), w, pos)
-		cp := NewActionChopTree("near_tree", candidate.Target())
-		candidate.AddActions(mv, cp)
+		mv := NewActionMove("walkable", "near", candidate.Target(), w, pos)
+		cp := NewActionChopTree("near", candidate.Target())
+		pi := NewActionPutInto("near", candidate.DesiredState(), candidate.Target())
+		candidate.AddActions(mv, cp, pi)
+
+		fmt.Println(candidate.DesiredState().String())
+		fmt.Println(startPlan.String())
+		fmt.Println(candidate.GetGoapActions())
 
 		actions, err := goap.Plan(startPlan, candidate.DesiredState(), candidate.GetGoapActions())
 		if err != nil {
@@ -109,7 +114,6 @@ func (a *Agent) UpdateGoals(w *world.World, pos cnts.Point, target Target, name 
 func (a *Agent) ExecutePlan() bool {
 	hasAct := a.plan.hasAction()
 	if !hasAct {
-
 		a.RemoveGoal(a.plan.goal.GetID())
 		a.Actions = make([]goap.Action, 0)
 		a.plan.Clear()
@@ -124,6 +128,11 @@ func (a *Agent) ExecutePlan() bool {
 			a.plan.nextAction()
 		}
 	case ActionChopTreeType:
+		if done := a.lumberjack.ExecuteAction(action.Target()); done {
+			a.plan.nextAction()
+		}
+		// TODO: implement the delivery trait
+	case ActionPutIntoType:
 		if done := a.lumberjack.ExecuteAction(action.Target()); done {
 			a.plan.nextAction()
 		}

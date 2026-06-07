@@ -39,9 +39,9 @@ func (am *ActionMove) Cost() float32 {
 func (am *ActionMove) Simulate(current *goap.State) (*goap.State, *goap.State) {
 	path := pathfinding.FindPath(am.world, am.from, am.target.Pos())
 	if path == nil {
-		am.outcome = goap.StateOf("!near_tree")
+		am.outcome = goap.StateOf("!near")
 	} else {
-		am.outcome = goap.StateOf("near_tree")
+		am.outcome = goap.StateOf("near")
 	}
 
 	fmt.Println(am.require.String())

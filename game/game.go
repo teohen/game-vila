@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github/teohen/mgm-tto/buildings"
+	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/entity"
 	"github/teohen/mgm-tto/save"
@@ -30,7 +30,7 @@ func New() Game {
 
 	hit := false
 	var villager *entity.Villager
-	var storage *buildings.Storage
+	var storage *building.Storage
 	for !hit {
 		x := rand.Intn(cnts.GridCols)
 		y := rand.Intn(cnts.GridRows)
@@ -48,7 +48,7 @@ func New() Game {
 		y := rand.Intn(cnts.GridRows)
 
 		if !sim.World().IsOccupied(x, y) {
-			storage = buildings.NewStorage(x, y)
+			storage = building.NewStorage(x, y)
 			hit = true
 		}
 	}

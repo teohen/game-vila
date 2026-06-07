@@ -1,7 +1,6 @@
-package buildings
+package building
 
 import (
-	"fmt"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/spritebank"
 
@@ -10,20 +9,19 @@ import (
 
 type Storage struct {
 	ID   string
-	wood int
+	Wood int
 	pos  cnts.Point
 }
 
 func NewStorage(x, y int) *Storage {
-	id := fmt.Sprintf("storage_%d_%d", x, y)
 	return &Storage{
-		ID:  id,
-		pos: cnts.Point{X: x, Y: y},
-	}
+		ID:   "dalskdjalskdls",
+		pos:  cnts.Point{X: x, Y: y},
+		Wood: 50}
 }
 
 func (s *Storage) Insert(amount int) {
-	s.wood += amount
+	s.Wood += amount
 }
 
 func (s *Storage) Draw() {
@@ -35,4 +33,8 @@ func (s *Storage) Draw() {
 
 func (s *Storage) Pos() cnts.Point {
 	return s.pos
+}
+
+func (s *Storage) GetID() string {
+	return s.ID
 }
