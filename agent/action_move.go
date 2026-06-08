@@ -1,7 +1,6 @@
 package agent
 
 import (
-	"fmt"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/pathfinding"
@@ -43,9 +42,6 @@ func (am *ActionMove) Simulate(current *goap.State) (*goap.State, *goap.State) {
 	} else {
 		am.outcome = goap.StateOf("near")
 	}
-
-	fmt.Println(am.require.String())
-	fmt.Println(am.outcome.String())
 	return am.require, am.outcome
 }
 

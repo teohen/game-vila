@@ -1,8 +1,6 @@
 package entity
 
 import (
-	"fmt"
-
 	"github/teohen/mgm-tto/agent"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/pathfinding"
@@ -83,11 +81,7 @@ func (m *Movement) Update() {
 			m.State = StateMovementArrived
 			return
 		}
-		isoc := m.w.IsOccupied(next.X, next.Y)
-		if isoc == true {
-			fmt.Println("sim")
-		}
-		if isoc {
+		if m.w.IsOccupied(next.X, next.Y) {
 			m.State = StateMovementWaiting
 			m.WaitTicks = 0
 			m.WaitCount++

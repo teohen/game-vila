@@ -1,7 +1,6 @@
 package agent
 
 import (
-	"fmt"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/world"
@@ -34,8 +33,6 @@ func (pi *ActionPutInto) Cost() float32 {
 }
 
 func (pi *ActionPutInto) Simulate(current *goap.State) (*goap.State, *goap.State) {
-	fmt.Println(pi.require.String())
-	fmt.Println(pi.outcome.String())
 	return pi.require, pi.outcome
 }
 

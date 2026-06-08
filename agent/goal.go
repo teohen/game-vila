@@ -2,13 +2,10 @@ package agent
 
 import (
 	"github/teohen/mgm-tto/goap"
-	"strings"
-
-	"github.com/google/uuid"
 )
 
 type Goal struct {
-	ID           uuid.UUID
+	ID           string
 	name         string
 	desiredState *goap.State
 	actions      []IAction
@@ -24,45 +21,53 @@ type IGoal interface {
 	Target() Target
 	Name() string
 	GetID() string
+	GetType() GoalType
 }
 
-func NewGoal(name, desired string, t Target) IGoal {
-	g := Goal{
-		ID:           uuid.New(),
-		name:         name,
-		desiredState: goap.StateOf(strings.Split(desired, ",")...),
-		target:       t,
-	}
+type GoalType string
 
-	return &g
-}
+const (
+	GoalCollectTreeType    GoalType = "CollectTree"
+	GoalStoreInventoryType GoalType = "StoreInventory"
+)
 
-func (g *Goal) DesiredState() *goap.State {
-	return g.desiredState
-}
+// func NewGoal(name, desired string, t Target) IGoal {
+// 	g := Goal{
+// 		ID:           strings.ReplaceAll(uuid.NewString(), "-", ""),
+// 		name:         name,
+// 		desiredState: goap.StateOf(strings.Split(desired, ",")...),
+// 		target:       t,
+// 	}
 
-func (g *Goal) EvaluatePriority() int {
-	return 1
-}
+// 	return &g
+// }
 
-func (g *Goal) Target() Target {
-	return g.target
-}
+// func (g *Goal) DesiredState() *goap.State {
+// 	return g.desiredState
+// }
 
-func (g *Goal) AddActions(a ...IAction) {
-	g.actions = append(g.actions, a...)
-}
-func (g *Goal) GetGoapActions() []goap.Action {
-	a := make([]goap.Action, 0)
-	for _, act := range g.actions {
-		a = append(a, act)
-	}
-	return a
-}
-func (g *Goal) Name() string {
-	return g.name
-}
+// func (g *Goal) EvaluatePriority() int {
+// 	return 1
+// }
 
-func (g *Goal) GetID() string {
-	return g.ID.String()
-}
+// func (g *Goal) Target() Target {
+// 	return g.target
+// }
+
+// func (g *Goal) AddActions(a ...IAction) {
+// 	g.actions = append(g.actions, a...)
+// }
+// func (g *Goal) GetGoapActions() []goap.Action {
+// 	a := make([]goap.Action, 0)
+// 	for _, act := range g.actions {
+// 		a = append(a, act)
+// 	}
+// 	return a
+// }
+// func (g *Goal) Name() string {
+// 	return g.name
+// }
+
+// func (g *Goal) GetID() string {
+// 	return g.ID
+// }

@@ -1,12 +1,9 @@
 package agent
 
-import "github/teohen/mgm-tto/job"
-
 type Plan struct {
 	goal       IGoal
 	actions    []IAction
 	currAction int
-	job        *job.Job
 }
 
 func NewPlan() *Plan {
@@ -20,7 +17,6 @@ func (p *Plan) Clear() {
 	p.actions = nil
 	p.goal = nil
 	p.currAction = 0
-	p.job = nil
 }
 func (p *Plan) SetGoal(g IGoal) {
 	p.goal = g

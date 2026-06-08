@@ -26,67 +26,68 @@ type Villager struct {
 	agent      agent.IAgent
 	movement   *Movement
 	lumberjack *Lumberjack
+	storager   *Storager
 	ID         string
 	State      VillagerState
-	// TODO: transform inventory into a Trait
-	inventory      int
-	maxCarryWeight int
-	weight         int
-	w              *world.World
+	w          *world.World
 }
 
 func NewVillager(x, y int, w *world.World) *Villager {
 	v := Villager{}
 	id := fmt.Sprintf("villager_%d_%d", x, y)
 	movement := NewMovement(x, y, w)
-	Lumberjack := NewLumberjack(v.incrementWood)
+	storager := NewStorager(100)
+	lumberjack := NewLumberjack(storager.incrementWood)
 
 	v.ID = id
 	v.State = StateVillagerIdle
 	v.movement = movement
-	v.lumberjack = Lumberjack
-	v.agent = agent.NewAgent(x, y, nil, v.incrementWood, movement, Lumberjack)
-	v.maxCarryWeight = 100
-	v.weight = 80
+	v.storager = storager
+	v.lumberjack = lumberjack
+	v.agent = agent.NewAgent(x, y, nil, movement, lumberjack, storager)
 	v.w = w
-	v.inventory = 80
-
 	return &v
-}
-
-// TODO: this goes to the inventory Trait later
-func (v *Villager) incrementWood(amount int) {
-	v.inventory += amount
-	v.weight += amount * 5
 }
 
 func (v *Villager) Tick(w *world.World, entities *[]Entity, buildings []*building.Storage) {
 	if j := job.GetJobQueue().Pop(); j != nil && v.State == StateVillagerIdle {
-		v.agent.UpdateGoals(v.w, v.movement.pos, j.Object, j.Name())
+		v.agent.AddGoal(agent.NewGoalCollectTree(fmt.Sprintf("%s_health=0", j.Object.GetID()), j.Object))
+		job.GetJobQueue().Remove(j.Name(), j.Object.GetID())
 	}
 
-	if v.weight >= v.maxCarryWeight {
-		storage := v.findNearestStorage(w, buildings)
-		desired := fmt.Sprintf("%s_wood=%d", storage.ID, (storage.Wood + v.inventory))
-		goal := agent.NewGoal("PutInto", desired, storage)
-		v.agent.AddGoal(goal)
-		// v.State = StateVillagerIdle
-	}
+	// over := v.storager.isOverweighted()
+	// if over {
+	// 	// fmt.Println("is overweighted", v.storager.inventory)
+	// } else {
+	// 	// fmt.Println("is light", v.storager.weight)
+	// }
+
+	// if over {
+
+	// 	storage := v.findNearestStorage(w, buildings)
+	// 	hasGoal := false
+	// 	for _, g := range v.agent.GetGoals() {
+	// 		if g.GetType() == agent.GoalStoreInventoryType && g.Target().GetID() == storage.ID {
+	// 			hasGoal = true
+	// 		}
+	// 	}
+
+	// 	if !hasGoal {
+	// 		desired := fmt.Sprintf("%s_wood=%d", storage.ID, (storage.Wood + v.storager.inventory))
+	// 		v.agent.AddGoal(agent.NewGoalStoreInventory(desired, storage))
+	// 	}
+	// }
 
 	switch v.State {
 	case StateVillagerIdle:
 		if found := v.agent.ChooseGoal(v.w, v.Pos()); found {
 			v.State = StateVillagerBusy
 		}
-		// CASE NOT IDLE PARA OS DOIS
+
 	case StateVillagerBusy:
 		if finalAction := v.agent.ExecutePlan(); finalAction {
 			v.State = StateVillagerIdle
 		}
-		// case StateVillagerOverWeighted:
-		// 	if finalAction := v.agent.ExecutePlan(); finalAction {
-		// 		v.State = StateVillagerIdle
-		// 	}
 	}
 
 }

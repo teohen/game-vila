@@ -126,29 +126,6 @@ func ExecuteCommand(sim *simulation.Simulation, cmd string) {
 		// sim.ClearTrees()
 		fmt.Println("all trees removed")
 
-	case "addjob":
-		// if len(parts) < 4 {
-		// 	fmt.Println("usage: addjob <move|chop> <x> <y>")
-		// 	return
-		// }
-		// x, err1 := strconv.Atoi(parts[2])
-		// y, err2 := strconv.Atoi(parts[3])
-		// if err1 != nil || err2 != nil {
-		// 	fmt.Println("invalid coordinates")
-		// 	return
-		// }
-		// var jt job.JobType
-		// switch parts[1] {
-		// case "chop":
-		// 	jt = job.JobChopTreeType
-		// default:
-		// 	fmt.Println("unknown job type, use move or chop")
-		// 	return
-		// }
-		// // p := cnts.Point{X: x, Y: y}
-		// // sim.PushJob(job.Job{Type: jt, TargetPos: p})
-		// // fmt.Printf("added %s job at (%d,%d)\n", parts[1], x, y)
-
 	case "clearjobs":
 		// sim.ClearJobs()
 		fmt.Println("all jobs cleared")

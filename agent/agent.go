@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
-	"github/teohen/mgm-tto/job"
 	"github/teohen/mgm-tto/world"
 )
 
@@ -16,11 +15,11 @@ type Target interface {
 }
 
 type IAgent interface {
-	UpdateGoals(w *world.World, pos cnts.Point, target Target, name string)
 	AddGoal(goal IGoal)
 	RemoveGoal(ID string)
 	ChooseGoal(w *world.World, pos cnts.Point) bool
 	ExecutePlan() bool
+	GetGoals() []IGoal
 }
 
 type Actor interface {
@@ -30,6 +29,7 @@ type Actor interface {
 type Agent struct {
 	movement       Actor
 	lumberjack     Actor
+	storager       Actor
 	StartPlanState *goap.State
 	Goals          []IGoal
 	Actions        []goap.Action
@@ -39,7 +39,7 @@ type Agent struct {
 }
 
 // TODO: REMOVE movement and lumberjack dependencies
-func NewAgent(x, y int, w *world.World, ic IncrementWood, movement, lumberjack Actor) IAgent {
+func NewAgent(x, y int, w *world.World, movement, lumberjack, storager Actor) IAgent {
 	a := Agent{
 		Goals:          make([]IGoal, 0),
 		Actions:        make([]goap.Action, 0),
@@ -47,6 +47,7 @@ func NewAgent(x, y int, w *world.World, ic IncrementWood, movement, lumberjack A
 		StartPlanState: goap.StateOf("walkable"),
 		movement:       movement,
 		lumberjack:     lumberjack,
+		storager:       storager,
 	}
 
 	return &a
@@ -60,6 +61,7 @@ func (a *Agent) RemoveGoal(id string) {
 	for i, goal := range a.Goals {
 		if id == goal.GetID() {
 			a.Goals = append(a.Goals[:i], a.Goals[i+1:]...)
+			fmt.Println("job removed", goal.GetID())
 		}
 	}
 }
@@ -77,10 +79,6 @@ func (a *Agent) ChooseGoal(w *world.World, pos cnts.Point) bool {
 		cp := NewActionChopTree("near", candidate.Target())
 		pi := NewActionPutInto("near", candidate.DesiredState(), candidate.Target())
 		candidate.AddActions(mv, cp, pi)
-
-		fmt.Println(candidate.DesiredState().String())
-		fmt.Println(startPlan.String())
-		fmt.Println(candidate.GetGoapActions())
 
 		actions, err := goap.Plan(startPlan, candidate.DesiredState(), candidate.GetGoapActions())
 		if err != nil {
@@ -101,14 +99,6 @@ func (a *Agent) ChooseGoal(w *world.World, pos cnts.Point) bool {
 	}
 
 	return false
-}
-
-// TODO: UpdateAllJobsAsAPossibility
-func (a *Agent) UpdateGoals(w *world.World, pos cnts.Point, target Target, name string) {
-	g := NewGoal(name, fmt.Sprintf("%s_health=0", target.GetID()), target)
-	a.AddGoal(g)
-	job.GetJobQueue().Remove(name, target.GetID())
-
 }
 
 func (a *Agent) ExecutePlan() bool {
@@ -133,10 +123,14 @@ func (a *Agent) ExecutePlan() bool {
 		}
 		// TODO: implement the delivery trait
 	case ActionPutIntoType:
-		if done := a.lumberjack.ExecuteAction(action.Target()); done {
+		if done := a.storager.ExecuteAction(action.Target()); done {
 			a.plan.nextAction()
 		}
 	}
 
 	return false
+}
+
+func (a *Agent) GetGoals() []IGoal {
+	return a.Goals
 }
