@@ -5,7 +5,6 @@ import (
 	"github/teohen/mgm-tto/agent"
 	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
-	"github/teohen/mgm-tto/job"
 	"github/teohen/mgm-tto/spritebank"
 	"github/teohen/mgm-tto/world"
 
@@ -49,12 +48,10 @@ func NewVillager(x, y int, w *world.World) *Villager {
 
 func (v *Villager) Tick(w *world.World, entities *[]Entity, buildings *building.BuildingsList) {
 	if v.State == StateVillagerIdle {
-		if j := job.GetJobQueue().Pop(); j != nil {
-			v.agent.AddGoal(agent.NewGoalCollectTree(fmt.Sprintf("%s_health=0", j.Object.ID()), j.Object))
-			job.GetJobQueue().Remove(j.Name(), j.Object.ID())
-		}
+		v.agent.AddCollectTreeGoal(w, v.movement.pos)
 	}
 
+	// TODO: villager is collecting all the wood from the jobs and not going towards the deposit when overweighted
 	if v.storager.isOverweighted() {
 		v.agent.AddStorageGoal(w, v.Pos(), v.storager.inventory)
 	}

@@ -179,6 +179,10 @@ func (a *Agent) AddStorageGoal(w *world.World, from cnts.Point, inventory int) {
 }
 
 func (a *Agent) AddCollectTreeGoal(w *world.World, from cnts.Point) {
+	if len(job.GetJobQueue().Jobs) < 1 {
+		return
+	}
+
 	targets := make([]Target, 0)
 	for _, j := range job.GetJobQueue().Jobs {
 		targets = append(targets, j.GetObject())

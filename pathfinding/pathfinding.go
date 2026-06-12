@@ -124,11 +124,12 @@ func reconstructPath(info [cnts.GridRows][cnts.GridCols]cellInfo, from, to cnts.
 
 func FindClosest[T Positioner](w WalkableGrid, from cnts.Point, options []T) cnts.Point {
 	closest := cnts.Point{X: -1, Y: -1}
-	nearest := 10_000
+	pathLen := 10_000
 	for _, o := range options {
 		path := FindPath(w, from, o.Pos())
-		if len(path) > 0 && len(path) < nearest {
+		if len(path) > 0 && len(path) < pathLen {
 			closest = o.Pos()
+			pathLen = len(path)
 		}
 	}
 	return closest
