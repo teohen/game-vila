@@ -4,6 +4,7 @@ type Plan struct {
 	goal       IGoal
 	actions    []IAction
 	currAction int
+	cost       float32
 }
 
 func NewPlan() *Plan {
@@ -22,8 +23,8 @@ func (p *Plan) SetGoal(g IGoal) {
 	p.goal = g
 }
 
-func (p *Plan) AppendActions(a ...IAction) {
-	p.actions = append(p.actions, a...)
+func (p *Plan) SetActions(actions []IAction) {
+	p.actions = actions
 }
 
 func (p *Plan) IsSet() bool {
@@ -44,4 +45,8 @@ func (p *Plan) hasAction() bool {
 
 func (p *Plan) GetGoal() IGoal {
 	return p.goal
+}
+
+func (p *Plan) IncrementCost(value float32) {
+	p.cost += value
 }

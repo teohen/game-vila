@@ -38,6 +38,6 @@ func (j *Job) Type() JobType {
 	return j.typeJob
 }
 
-func (j *Job) GetJob() Object {
+func (j *Job) GetObject() Object {
 	return j.Object
 }

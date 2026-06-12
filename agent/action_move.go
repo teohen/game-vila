@@ -5,12 +5,13 @@ import (
 	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/pathfinding"
 	"github/teohen/mgm-tto/world"
+	"math"
 	"strings"
 )
 
 type ActionMove struct {
 	name    string
-	cost    int32
+	cost    float32
 	require *goap.State
 	outcome *goap.State
 	target  Target
@@ -28,20 +29,24 @@ func NewActionMove(r, o string, t Target, w *world.World, from cnts.Point) IActi
 		world:   w,
 		from:    from,
 	}
+
+	path := pathfinding.FindPath(am.world, am.from, am.target.Pos())
+	if path == nil {
+		am.outcome = goap.StateOf("!near")
+		am.cost = math.MaxFloat32
+	} else {
+		am.cost = float32(len(path))
+		am.outcome = goap.StateOf("near")
+	}
+
 	return &am
 }
 
 func (am *ActionMove) Cost() float32 {
-	return 1
+	return am.cost
 }
 
 func (am *ActionMove) Simulate(current *goap.State) (*goap.State, *goap.State) {
-	path := pathfinding.FindPath(am.world, am.from, am.target.Pos())
-	if path == nil {
-		am.outcome = goap.StateOf("!near")
-	} else {
-		am.outcome = goap.StateOf("near")
-	}
 	return am.require, am.outcome
 }
 

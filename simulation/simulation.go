@@ -137,6 +137,7 @@ func (s *Simulation) ProcessAxeSelection(cells [][2]int) {
 		if tree == nil {
 			continue
 		}
+		tree.Mark(true)
 		s.PushJob(*job.NewJob(job.JobChopTreeType, tree))
 	}
 }

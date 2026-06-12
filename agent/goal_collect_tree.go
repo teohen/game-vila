@@ -40,9 +40,10 @@ func (g *GoalCollectTree) Target() Target {
 	return g.target
 }
 
-func (g *GoalCollectTree) AddActions(a ...IAction) {
-	g.actions = append(g.actions, a...)
+func (g *GoalCollectTree) SetActions(a ...IAction) {
+	g.actions = a
 }
+
 func (g *GoalCollectTree) GetGoapActions() []goap.Action {
 	a := make([]goap.Action, 0)
 	for _, act := range g.actions {

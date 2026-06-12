@@ -7,7 +7,7 @@ import (
 type IGoal interface {
 	EvaluatePriority() int
 	DesiredState() *goap.State
-	AddActions(a ...IAction)
+	SetActions(a ...IAction)
 	GetGoapActions() []goap.Action
 	Target() Target
 	Name() string

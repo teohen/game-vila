@@ -5,6 +5,7 @@ import (
 	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
+	"github/teohen/mgm-tto/job"
 	"github/teohen/mgm-tto/pathfinding"
 	"github/teohen/mgm-tto/world"
 	"log"
@@ -24,6 +25,7 @@ type IAgent interface {
 	ExecutePlan() bool
 	GetGoals() []IGoal
 	AddStorageGoal(w *world.World, from cnts.Point, inventory int)
+	AddCollectTreeGoal(w *world.World, from cnts.Point)
 }
 
 type Actor interface {
@@ -65,7 +67,6 @@ func (a *Agent) RemoveGoal(id string) {
 	for i, goal := range a.Goals {
 		if id == goal.ID() {
 			a.Goals = append(a.Goals[:i], a.Goals[i+1:]...)
-			fmt.Println("job removed", goal.ID())
 		}
 	}
 }
@@ -76,25 +77,36 @@ func (ag *Agent) AddAction(a IAction) {
 
 func (a *Agent) ChooseGoal(w *world.World, pos cnts.Point) bool {
 	a.plan = NewPlan()
+	cheapest := float32(10_000)
 
-	for _, candidate := range a.Goals {
+	for _, goal := range a.Goals {
 		startPlan := a.StartPlanState
-		mv := NewActionMove("walkable", "near", candidate.Target(), w, pos)
-		cp := NewActionChopTree("near", candidate.Target())
-		pi := NewActionPutInto("near", candidate.DesiredState(), candidate.Target())
-		candidate.AddActions(mv, cp, pi)
+		mv := NewActionMove("walkable", "near", goal.Target(), w, pos)
+		cp := NewActionChopTree("near", goal.Target())
+		pi := NewActionPutInto("near", goal.DesiredState(), goal.Target())
+		goal.SetActions(mv, cp, pi)
 
-		actions, err := goap.Plan(startPlan, candidate.DesiredState(), candidate.GetGoapActions())
+		actions, err := goap.Plan(startPlan, goal.DesiredState(), goal.GetGoapActions())
 		if err != nil {
-			fmt.Println("not possible", err.Error())
+			if cnts.DEBUGGING {
+				fmt.Println(err.Error())
+			}
 			continue
 		}
-		a.plan.goal = candidate
 
+		canditateCost := float32(0)
+		candidateActions := make([]IAction, 0)
 		for _, act := range actions {
 			action := act.(IAction)
 			action.SetTarget(action.Target())
-			a.plan.AppendActions(action)
+			candidateActions = append(candidateActions, action)
+			canditateCost += action.Cost()
+		}
+
+		if canditateCost < cheapest {
+			a.plan.goal = goal
+			a.plan.SetActions(candidateActions)
+			cheapest = canditateCost
 		}
 	}
 
@@ -163,6 +175,20 @@ func (a *Agent) AddStorageGoal(w *world.World, from cnts.Point, inventory int) {
 
 		desired := fmt.Sprintf("%s_wood=%d", storage.ID(), (storage.Wood + inventory))
 		a.AddGoal(NewGoalStoreInventory(desired, storage))
-		fmt.Println("StorageGoal added", near, storage.Wood, inventory)
+	}
+}
+
+func (a *Agent) AddCollectTreeGoal(w *world.World, from cnts.Point) {
+	targets := make([]Target, 0)
+	for _, j := range job.GetJobQueue().Jobs {
+		targets = append(targets, j.GetObject())
+	}
+
+	closest := pathfinding.FindClosest(w, from, targets)
+	for _, j := range job.GetJobQueue().Jobs {
+		if j.GetObject().Pos() == closest {
+			a.AddGoal(NewGoalCollectTree(fmt.Sprintf("%s_health=0", j.Object.ID()), j.Object))
+			job.GetJobQueue().Remove(j.Name(), j.Object.ID())
+		}
 	}
 }

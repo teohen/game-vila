@@ -17,6 +17,7 @@ type Tree struct {
 	pos       cnts.Point
 	Health    int
 	WoodYield int
+	marked    bool
 }
 
 func NewTree(x, y, health, woodYield int) *Tree {
@@ -38,10 +39,13 @@ func (t *Tree) Pos() cnts.Point {
 func (t *Tree) Draw() {
 	x, y := cnts.WorldToScreen(t.pos.X, t.pos.Y)
 	src := rl.NewRectangle(448, 192, 32, 32)
-	dst := rl.NewRectangle(x, y, cnts.TileSize-8, cnts.TileSize-8)
+	dst := rl.NewRectangle(x, y, cnts.TileSize, cnts.TileSize)
 	rl.DrawTexturePro(spritebank.Terrain, src, dst, rl.NewVector2(0, 0), 0, rl.White)
+	if t.marked {
+		rl.DrawText("X", dst.ToInt32().X+16, dst.ToInt32().Y+8, 20, rl.Red)
+	}
 	if cnts.DEBUGGING {
-		rl.DrawText(fmt.Sprintf("%s", t.ID()), dst.ToInt32().X+8, dst.ToInt32().Y+8, 10, rl.Black)
+		rl.DrawText(fmt.Sprintf("%s", t.ID()[27:]), dst.ToInt32().X+8, dst.ToInt32().Y+8, 10, rl.Black)
 	}
 }
 
@@ -51,4 +55,8 @@ func (t *Tree) ID() string {
 
 func (t *Tree) Type() EntityType {
 	return EntityTypeTree
+}
+
+func (t *Tree) Mark(v bool) {
+	t.marked = v
 }
