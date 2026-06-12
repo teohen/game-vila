@@ -6,7 +6,6 @@ import (
 	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/job"
-	"github/teohen/mgm-tto/pathfinding"
 	"github/teohen/mgm-tto/spritebank"
 	"github/teohen/mgm-tto/world"
 
@@ -37,7 +36,7 @@ func NewVillager(x, y int, w *world.World) *Villager {
 	id := fmt.Sprintf("villager_%d_%d", x, y)
 	movement := NewMovement(x, y, w)
 	storager := NewStorager(100)
-	lumberjack := NewLumberjack(storager.incrementWood)
+	lumberjack := NewLumberjack(storager.IncrementWood)
 
 	v.ID = id
 	v.State = StateVillagerIdle
@@ -49,10 +48,16 @@ func NewVillager(x, y int, w *world.World) *Villager {
 	return &v
 }
 
-func (v *Villager) Tick(w *world.World, entities *[]Entity, buildings []*building.Storage) {
-	if j := job.GetJobQueue().Pop(); j != nil && v.State == StateVillagerIdle {
-		v.agent.AddGoal(agent.NewGoalCollectTree(fmt.Sprintf("%s_health=0", j.Object.GetID()), j.Object))
-		job.GetJobQueue().Remove(j.Name(), j.Object.GetID())
+func (v *Villager) Tick(w *world.World, entities *[]Entity, buildings *building.BuildingsList) {
+	if v.State == StateVillagerIdle {
+		if j := job.GetJobQueue().Pop(); j != nil {
+			v.agent.AddGoal(agent.NewGoalCollectTree(fmt.Sprintf("%s_health=0", j.Object.GetID()), j.Object))
+			job.GetJobQueue().Remove(j.Name(), j.Object.GetID())
+		}
+	}
+
+	if v.storager.isOverweighted() {
+		v.agent.AddStorageGoal(w, v.Pos(), v.storager.inventory)
 	}
 
 	// over := v.storager.isOverweighted()
@@ -134,16 +139,4 @@ func GetEntityFrom(id string, entities *[]Entity) Entity {
 		}
 	}
 	return nil
-}
-
-func (v *Villager) findNearestStorage(w *world.World, storages []*building.Storage) *building.Storage {
-	var storage *building.Storage
-	nearest := make([]cnts.Point, 10_000)
-	for _, b := range storages {
-		path := pathfinding.FindPath(w, v.movement.pos, b.Pos())
-		if len(path) > 0 && len(path) < len(nearest) {
-			storage = b
-		}
-	}
-	return storage
 }

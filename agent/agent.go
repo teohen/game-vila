@@ -2,9 +2,12 @@ package agent
 
 import (
 	"fmt"
+	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
+	"github/teohen/mgm-tto/pathfinding"
 	"github/teohen/mgm-tto/world"
+	"log"
 )
 
 type IncrementWood func(amount int)
@@ -20,6 +23,7 @@ type IAgent interface {
 	ChooseGoal(w *world.World, pos cnts.Point) bool
 	ExecutePlan() bool
 	GetGoals() []IGoal
+	AddStorageGoal(w *world.World, from cnts.Point, inventory int)
 }
 
 type Actor interface {
@@ -121,7 +125,7 @@ func (a *Agent) ExecutePlan() bool {
 		if done := a.lumberjack.ExecuteAction(action.Target()); done {
 			a.plan.nextAction()
 		}
-		// TODO: implement the delivery trait
+
 	case ActionPutIntoType:
 		if done := a.storager.ExecuteAction(action.Target()); done {
 			a.plan.nextAction()
@@ -133,4 +137,32 @@ func (a *Agent) ExecutePlan() bool {
 
 func (a *Agent) GetGoals() []IGoal {
 	return a.Goals
+}
+
+func (a *Agent) GetGoalsOf(goalType GoalType) []IGoal {
+	goals := make([]IGoal, 0)
+	for _, g := range a.Goals {
+		if g.GetType() == goalType {
+			goals = append(goals, g)
+		}
+	}
+	return goals
+}
+
+func (a *Agent) AddStorageGoal(w *world.World, from cnts.Point, inventory int) {
+	if len(a.GetGoalsOf(GoalStoreInventoryType)) > 0 {
+		return
+	}
+
+	if near := pathfinding.FindClosest(w, from, building.Get().GetBuildingsOf(building.StorageType)); near.X != -1 {
+		b := building.Get().GetBuildingAt(near)
+		storage, ok := b.(*building.Storage)
+		if !ok {
+			log.Fatal("FOUND A BUILDING DIFERENT THAN A STORAGE")
+		}
+
+		desired := fmt.Sprintf("%s_wood=%d", storage.GetID(), (storage.Wood + inventory))
+		a.AddGoal(NewGoalStoreInventory(desired, storage))
+		fmt.Println("StorageGoal added", near, storage.Wood, inventory)
+	}
 }

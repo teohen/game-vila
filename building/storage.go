@@ -7,17 +7,26 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
+type BuildingType string
+
+const (
+	StorageType BuildingType = "Storage"
+)
+
 type Storage struct {
 	ID   string
 	Wood int
 	pos  cnts.Point
+	Type BuildingType
 }
 
 func NewStorage(x, y int) *Storage {
 	return &Storage{
 		ID:   "dalskdjalskdls",
 		pos:  cnts.Point{X: x, Y: y},
-		Wood: 50}
+		Wood: 50,
+		Type: StorageType,
+	}
 }
 
 func (s *Storage) Insert(amount int) {
@@ -37,4 +46,8 @@ func (s *Storage) Pos() cnts.Point {
 
 func (s *Storage) GetID() string {
 	return s.ID
+}
+
+func (s *Storage) GetType() BuildingType {
+	return StorageType
 }

@@ -5,6 +5,10 @@ import (
 	"math"
 )
 
+type Positioner interface {
+	Pos() cnts.Point
+}
+
 type WalkableGrid interface {
 	IsWalkable(col, row int) bool
 	IsOccupied(col, row int) bool
@@ -116,4 +120,16 @@ func reconstructPath(info [cnts.GridRows][cnts.GridCols]cellInfo, from, to cnts.
 		current = info[current.Y][current.X].parent
 	}
 	return path
+}
+
+func FindClosest[T Positioner](w WalkableGrid, from cnts.Point, options []T) cnts.Point {
+	closest := cnts.Point{X: -1, Y: -1}
+	nearest := 10_000
+	for _, o := range options {
+		path := FindPath(w, from, o.Pos())
+		if len(path) > 0 && len(path) < nearest {
+			closest = o.Pos()
+		}
+	}
+	return closest
 }

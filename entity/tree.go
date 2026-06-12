@@ -26,7 +26,7 @@ func NewTree(id string, x, y, health, woodYield int) *Tree {
 	}
 }
 
-func (t *Tree) Tick(w *world.World, ent *[]Entity, buildings []*building.Storage) {
+func (t *Tree) Tick(w *world.World, ent *[]Entity, buildings *building.BuildingsList) {
 }
 
 func (t *Tree) Pos() cnts.Point {
@@ -38,7 +38,9 @@ func (t *Tree) Draw() {
 	src := rl.NewRectangle(448, 192, 32, 32)
 	dst := rl.NewRectangle(x, y, cnts.TileSize-8, cnts.TileSize-8)
 	rl.DrawTexturePro(spritebank.Terrain, src, dst, rl.NewVector2(0, 0), 0, rl.White)
-	rl.DrawText(fmt.Sprintf("%s", t.ID), dst.ToInt32().X+8, dst.ToInt32().Y+8, 10, rl.Black)
+	if cnts.DEBUGGING {
+		rl.DrawText(fmt.Sprintf("%s", t.ID), dst.ToInt32().X+8, dst.ToInt32().Y+8, 10, rl.Black)
+	}
 }
 
 func (t *Tree) GetID() string {

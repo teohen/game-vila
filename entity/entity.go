@@ -14,7 +14,7 @@ const (
 )
 
 type Entity interface {
-	Tick(w *world.World, entities *[]Entity, buildings []*building.Storage)
+	Tick(w *world.World, entities *[]Entity, buildings *building.BuildingsList)
 	Draw()
 	Pos() cnts.Point
 	GetID() string

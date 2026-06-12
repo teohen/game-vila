@@ -25,7 +25,7 @@ type Simulation struct {
 	world     *world.World
 	villagers []*entity.Villager
 	trees     []*entity.Tree
-	buildings []*building.Storage
+	buildings *building.BuildingsList
 
 	ActiveTool Tool
 	Selected   map[[2]int]bool
@@ -70,6 +70,7 @@ func New() *Simulation {
 		world:     &w,
 		villagers: nil,
 		trees:     trees,
+		buildings: building.NewBuildingsList(),
 	}
 }
 
@@ -124,7 +125,7 @@ func (s *Simulation) RemoveTree(x, y int) bool {
 }
 
 func (s *Simulation) AddStorage(storage *building.Storage) {
-	s.buildings = append(s.buildings, storage)
+	s.buildings.AddBuilding(storage)
 	s.World().Occupy(storage.Pos().X, storage.Pos().Y)
 }
 
@@ -171,8 +172,8 @@ func (s *Simulation) Entities() []entity.Entity {
 	return all
 }
 
-func (s *Simulation) Buildings() []*building.Storage {
-	return s.buildings
+func (s *Simulation) Buildings() []building.Building {
+	return s.buildings.Buldings()
 }
 
 func (s *Simulation) OnSelectionComplete() {

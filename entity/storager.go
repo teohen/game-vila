@@ -35,7 +35,7 @@ func (sto *Storager) ExecuteAction(target agent.Target) bool {
 	return true
 }
 
-func (sto *Storager) incrementWood(amount int) {
+func (sto *Storager) IncrementWood(amount int) {
 	sto.inventory += amount
 	sto.weight += amount * 2
 }

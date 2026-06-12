@@ -21,6 +21,7 @@ var (
 
 func init() {
 	loadPath := flag.String("load", "", "start from a save file")
+	debug := flag.Bool("debug", false, "toggle debug info")
 	flag.Parse()
 
 	rl.InitWindow(cnts.ScreenW, cnts.ScreenH, "mgm-tto")
@@ -37,6 +38,10 @@ func init() {
 		}
 		log.Fatal("LOAD FROM SAVE NOT IMPLEMENTED")
 		return
+	}
+
+	if *debug == true {
+		cnts.DEBUGGING = true
 	}
 
 	g = game.New()

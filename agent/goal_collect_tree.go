@@ -1,9 +1,10 @@
 package agent
 
 import (
-	"fmt"
 	"github/teohen/mgm-tto/goap"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 type GoalCollectTree struct {
@@ -19,7 +20,7 @@ type GoalCollectTree struct {
 func NewGoalCollectTree(desired string, t Target) IGoal {
 	name := "CollectTree"
 	g := GoalCollectTree{
-		ID:           fmt.Sprintf("%s_%s", name, t.GetID()),
+		ID:           strings.ReplaceAll(uuid.NewString(), "-", ""),
 		name:         name,
 		desiredState: goap.StateOf(strings.Split(desired, ",")...),
 		target:       t,
