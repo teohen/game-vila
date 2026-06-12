@@ -1,79 +1,104 @@
 package entity
 
 import (
+	"fmt"
+	"github/teohen/mgm-tto/agent"
+	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
-	"github/teohen/mgm-tto/goap"
+	"github/teohen/mgm-tto/job"
 	"github/teohen/mgm-tto/spritebank"
 	"github/teohen/mgm-tto/world"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
-type VillagerType int
 type VillagerState string
 
 const (
-	Human VillagerType = 1
+	StateVillagerIdle         VillagerState = "idle"
+	StateVillagerBusy         VillagerState = "busy"
+	StateVillagerOverWeighted VillagerState = "pverweighted"
 )
 
-const (
-	StateVillagerIdle VillagerState = "idle"
-	StateVillagerBusy VillagerState = "busy"
-)
-
-type Plan struct {
-	goal      *goap.State
-	actions   []*Action
-	TargetPos cnts.Point
-}
-
+// TODO: create a villager Interface
 type Villager struct {
-	Agent
-	ID    string
-	name  string
-	Type  VillagerType
-	State VillagerState
+	agent      agent.IAgent
+	movement   *Movement
+	lumberjack *Lumberjack
+	storager   *Storager
+	ID         string
+	State      VillagerState
+	w          *world.World
 }
 
-func NewVillager(id, name string, x, y int) *Villager {
-	v := &Villager{
-		ID:    id,
-		name:  name,
-		Type:  Human,
-		State: StateVillagerIdle,
-		Agent: NewAgent(x, y, nil),
+func NewVillager(x, y int, w *world.World) *Villager {
+	v := Villager{}
+	id := fmt.Sprintf("villager_%d_%d", x, y)
+	movement := NewMovement(x, y, w)
+	storager := NewStorager(100)
+	lumberjack := NewLumberjack(storager.IncrementWood)
+
+	v.ID = id
+	v.State = StateVillagerIdle
+	v.movement = movement
+	v.storager = storager
+	v.lumberjack = lumberjack
+	v.agent = agent.NewAgent(x, y, nil, movement, lumberjack, storager)
+	v.w = w
+	return &v
+}
+
+func (v *Villager) Tick(w *world.World, entities *[]Entity, buildings *building.BuildingsList) {
+	if v.State == StateVillagerIdle {
+		if j := job.GetJobQueue().Pop(); j != nil {
+			v.agent.AddGoal(agent.NewGoalCollectTree(fmt.Sprintf("%s_health=0", j.Object.GetID()), j.Object))
+			job.GetJobQueue().Remove(j.Name(), j.Object.GetID())
+		}
 	}
 
-	return v
-}
+	if v.storager.isOverweighted() {
+		v.agent.AddStorageGoal(w, v.Pos(), v.storager.inventory)
+	}
 
-func (v *Villager) Tick(entities *[]Entity, w *world.World) {
-	v.Agent.Movement.w = w
+	// over := v.storager.isOverweighted()
+	// if over {
+	// 	// fmt.Println("is overweighted", v.storager.inventory)
+	// } else {
+	// 	// fmt.Println("is light", v.storager.weight)
+	// }
+
+	// if over {
+
+	// 	storage := v.findNearestStorage(w, buildings)
+	// 	hasGoal := false
+	// 	for _, g := range v.agent.GetGoals() {
+	// 		if g.GetType() == agent.GoalStoreInventoryType && g.Target().GetID() == storage.ID {
+	// 			hasGoal = true
+	// 		}
+	// 	}
+
+	// 	if !hasGoal {
+	// 		desired := fmt.Sprintf("%s_wood=%d", storage.ID, (storage.Wood + v.storager.inventory))
+	// 		v.agent.AddGoal(agent.NewGoalStoreInventory(desired, storage))
+	// 	}
+	// }
+
 	switch v.State {
 	case StateVillagerIdle:
-		if job := GetJobQueue().Pop(); job != nil {
-			switch job.Type {
-			case JobTypeChopTrees:
-				v.SetPlan(PlanTypeChopTrees, entities, getEntityFrom(job.TargetID, entities))
-				v.State = StateVillagerBusy
-			}
+		if found := v.agent.ChooseGoal(v.w, v.Pos()); found {
+			v.State = StateVillagerBusy
 		}
 
 	case StateVillagerBusy:
-		finalAction := v.Agent.ExecuteAction()
-		if finalAction {
+		if finalAction := v.agent.ExecutePlan(); finalAction {
 			v.State = StateVillagerIdle
 		}
 	}
 
 }
 
-func (v *Villager) Name() string {
-	return v.name
-}
-
 func (v *Villager) Pos() cnts.Point {
-	return v.Agent.Movement.Pos()
+	return v.movement.pos
 }
 
 func (v *Villager) GetID() string {
@@ -85,18 +110,15 @@ func getSource(v *Villager) (rl.Rectangle, rl.Rectangle) {
 	src := rl.NewRectangle(0, 0, 0, 0)
 	dst := rl.NewRectangle(0, 0, 0, 0)
 
-	switch v.Type {
-	case Human:
-		x, y := cnts.WorldToScreen(v.pos.X, v.pos.Y)
-		dst.X = x
-		dst.Y = y
-		dst.Width = cnts.TileSize
-		dst.Height = cnts.TileSize
-		src.X = 41
-		src.Y = 21
-		src.Width = 16
-		src.Height = 19
-	}
+	x, y := cnts.WorldToScreen(v.Pos().X, v.Pos().Y)
+	dst.X = x
+	dst.Y = y
+	dst.Width = cnts.TileSize
+	dst.Height = cnts.TileSize
+	src.X = 41
+	src.Y = 21
+	src.Width = 16
+	src.Height = 19
 
 	return src, dst
 }
@@ -110,7 +132,7 @@ func (v *Villager) GetType() EntityType {
 	return EntityTypeVillager
 }
 
-func getEntityFrom(id string, entities *[]Entity) Entity {
+func GetEntityFrom(id string, entities *[]Entity) Entity {
 	for _, e := range *entities {
 		if e.GetID() == id {
 			return e

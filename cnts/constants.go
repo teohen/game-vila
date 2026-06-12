@@ -16,6 +16,8 @@ const (
 	TickInterval = 200 // milliseconds between ticks (5 ticks/sec)
 )
 
+var DEBUGGING = false
+
 func WorldToScreen(col, row int) (x, y float32) {
 	return float32(col)*TileSize + GridOffsetX, float32(row)*TileSize + GridOffsetY
 }

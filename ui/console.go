@@ -87,7 +87,7 @@ func ExecuteCommand(sim *simulation.Simulation, cmd string) {
 			fmt.Println("invalid coordinates")
 			return
 		}
-		sim.AddVillager(entity.NewVillager(parts[1], parts[1], x, y))
+		sim.AddVillager(entity.NewVillager(x, y, sim.World()))
 		fmt.Printf("spawned villager %s at (%d,%d)\n", parts[1], x, y)
 
 	case "addtree":
@@ -125,31 +125,6 @@ func ExecuteCommand(sim *simulation.Simulation, cmd string) {
 	case "cleartrees":
 		// sim.ClearTrees()
 		fmt.Println("all trees removed")
-
-	case "addjob":
-		if len(parts) < 4 {
-			fmt.Println("usage: addjob <move|chop> <x> <y>")
-			return
-		}
-		x, err1 := strconv.Atoi(parts[2])
-		y, err2 := strconv.Atoi(parts[3])
-		if err1 != nil || err2 != nil {
-			fmt.Println("invalid coordinates")
-			return
-		}
-		var jt entity.JobType
-		switch parts[1] {
-		case "move":
-			jt = entity.JobTypeMove
-		case "chop":
-			jt = entity.JobTypeChopTrees
-		default:
-			fmt.Println("unknown job type, use move or chop")
-			return
-		}
-		p := cnts.Point{X: x, Y: y}
-		sim.PushJob(entity.Job{Type: jt, TargetPos: p})
-		fmt.Printf("added %s job at (%d,%d)\n", parts[1], x, y)
 
 	case "clearjobs":
 		// sim.ClearJobs()

@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"time"
 
+	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/entity"
 	"github/teohen/mgm-tto/events"
 	"github/teohen/mgm-tto/goap"
+	"github/teohen/mgm-tto/job"
 	"github/teohen/mgm-tto/world"
 )
 
@@ -23,6 +25,7 @@ type Simulation struct {
 	world     *world.World
 	villagers []*entity.Villager
 	trees     []*entity.Tree
+	buildings *building.BuildingsList
 
 	ActiveTool Tool
 	Selected   map[[2]int]bool
@@ -67,14 +70,16 @@ func New() *Simulation {
 		world:     &w,
 		villagers: nil,
 		trees:     trees,
+		buildings: building.NewBuildingsList(),
 	}
 }
 
 func (s *Simulation) Tick() {
 	all := s.Entities()
 	for _, v := range s.villagers {
-		v.Tick(&all, s.world)
+		v.Tick(s.world, &all, s.buildings)
 	}
+
 	s.processEvents()
 	s.tickCount++
 }
@@ -95,7 +100,6 @@ func (s *Simulation) GetEntityPosition(entityID string) cnts.Point {
 
 func (s *Simulation) AddVillager(v *entity.Villager) {
 	s.villagers = append(s.villagers, v)
-	v.Pos()
 	s.world.Occupy(v.Pos().X, v.Pos().Y)
 }
 
@@ -120,8 +124,13 @@ func (s *Simulation) RemoveTree(x, y int) bool {
 	return false
 }
 
-func (s *Simulation) PushJob(job entity.Job) {
-	entity.GetJobQueue().Push(job)
+func (s *Simulation) AddStorage(storage *building.Storage) {
+	s.buildings.AddBuilding(storage)
+	s.World().Occupy(storage.Pos().X, storage.Pos().Y)
+}
+
+func (s *Simulation) PushJob(j job.Job) {
+	job.GetJobQueue().Push(j)
 }
 
 func (s *Simulation) ProcessAxeSelection(cells [][2]int) {
@@ -131,12 +140,7 @@ func (s *Simulation) ProcessAxeSelection(cells [][2]int) {
 		if tree == nil {
 			continue
 		}
-		s.PushJob(entity.Job{
-			Type:       entity.JobTypeChopTrees,
-			TargetPos:  tree.Pos(),
-			TargetID:   tree.ID,
-			WorldState: s.WorldState,
-		})
+		s.PushJob(*job.NewJob(job.JobChopTreeType, tree))
 	}
 }
 
@@ -166,6 +170,10 @@ func (s *Simulation) Entities() []entity.Entity {
 		all = append(all, t)
 	}
 	return all
+}
+
+func (s *Simulation) Buildings() []building.Building {
+	return s.buildings.Buldings()
 }
 
 func (s *Simulation) OnSelectionComplete() {

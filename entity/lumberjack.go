@@ -1,6 +1,10 @@
 package entity
 
-import "github/teohen/mgm-tto/events"
+import (
+	"github/teohen/mgm-tto/agent"
+	"github/teohen/mgm-tto/events"
+	"log"
+)
 
 const (
 	LUMBERJACK_HIT = 20
@@ -13,46 +17,65 @@ const (
 	StateLumberjackHitting LumberjackState = "hitting"
 )
 
+type IncrementWood func(amount int)
+
 type Lumberjack struct {
-	state LumberjackState
-	tree  *Tree
-	hit   int
+	State         LumberjackState
+	tree          *Tree
+	hit           int
+	incrementWood IncrementWood
 }
 
-func NewLumberjack() Lumberjack {
-	return Lumberjack{
-		state: StateLumberjackIdle,
-		tree:  nil,
-		hit:   LUMBERJACK_HIT,
+func NewLumberjack(iw IncrementWood) *Lumberjack {
+	return &Lumberjack{
+		incrementWood: iw,
+		State:         StateLumberjackIdle,
+		tree:          nil,
+		hit:           LUMBERJACK_HIT,
 	}
 }
 
 func (lj *Lumberjack) Start(tree *Tree) {
 	lj.tree = tree
-	lj.state = StateLumberjackHitting
+	lj.State = StateLumberjackHitting
 }
 
-func (lj *Lumberjack) Update() (woodCollected int, done bool) {
+func (lj *Lumberjack) Update() bool {
 
 	lj.tree.Health -= lj.hit
 
 	if lj.tree.Health <= 0 {
-		wood := lj.tree.WoodYield
-
-		lj.state = StateLumberjackIdle
+		lj.State = StateLumberjackIdle
 		events.Emit(events.GameEvent{
 			Type: events.EventTreeCut,
 			Payload: map[string]interface{}{
 				"pos": lj.tree.Pos(),
 			},
 		})
+
+		lj.incrementWood(lj.tree.WoodYield)
 		lj.tree = nil
-		return wood, true
+		return true
 	}
 
-	return 0, false
+	return false
 }
 
 func (lj *Lumberjack) IsHitting() bool {
-	return lj.state == StateLumberjackHitting && lj.tree != nil
+	return lj.State == StateLumberjackHitting && lj.tree != nil
+}
+
+func (lj *Lumberjack) ExecuteAction(target agent.Target) bool {
+	t, ok := target.(*Tree)
+	if !ok {
+		log.Fatal("TREE CONVERTION NOT WOTK")
+	}
+	if lj.State == StateLumberjackIdle {
+		lj.Start(t)
+	} else {
+		if done := lj.Update(); done {
+			return true
+		}
+	}
+	return false
 }

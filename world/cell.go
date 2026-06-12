@@ -1,6 +1,7 @@
 package world
 
 import (
+	"fmt"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/spritebank"
 
@@ -72,6 +73,9 @@ func (t *Cell) Draw() {
 	rl.DrawRectangleRec(dst, t.bgColor())
 	rl.DrawTexturePro(spritebank.Terrain, src, dst, rl.NewVector2(0, 0), 0, rl.White)
 	rl.DrawRectangleLinesEx(dst, t.BorderWidth, t.BorderColor)
+	if cnts.DEBUGGING {
+		rl.DrawText(fmt.Sprintf("%d, %d", t.row, t.col), dst.ToInt32().X, dst.ToInt32().Y, 8, rl.Black)
+	}
 }
 
 func (t *Cell) bgColor() rl.Color {

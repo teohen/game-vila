@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 
+	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/entity"
 	"github/teohen/mgm-tto/save"
@@ -27,12 +28,33 @@ func New() Game {
 		clock: newClock(),
 	}
 
-	for i := 0; i < 1; i++ {
+	hit := false
+	var villager *entity.Villager
+	var storage *building.Storage
+	for !hit {
 		x := rand.Intn(cnts.GridCols)
 		y := rand.Intn(cnts.GridRows)
-		villager := entity.NewVillager(fmt.Sprintf("teo-%d", i), fmt.Sprintf("teo-%d", i), x, y)
-		g.sim.AddVillager(villager)
+
+		if !sim.World().IsOccupied(x, y) {
+			villager = entity.NewVillager(x, y, sim.World())
+			hit = true
+		}
 	}
+
+	hit = false
+
+	for !hit {
+		x := rand.Intn(cnts.GridCols)
+		y := rand.Intn(cnts.GridRows)
+
+		if !sim.World().IsOccupied(x, y) {
+			storage = building.NewStorage(x, y)
+			hit = true
+		}
+	}
+
+	g.sim.AddVillager(villager)
+	g.sim.AddStorage(storage)
 	return g
 }
 
@@ -42,6 +64,7 @@ func (g *Game) Update() {
 
 	for i := 0; i < ticks; i++ {
 		g.sim.Tick()
+		g.UI.Draw()
 	}
 }
 

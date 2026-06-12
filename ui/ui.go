@@ -54,6 +54,10 @@ func (ui *UI) Draw() {
 		// }
 	}
 
+	for _, b := range ui.simulation.Buildings() {
+		b.Draw()
+	}
+
 	drawSelectionRectangle(ui)
 	drawSelectedCells(ui)
 	rl.EndMode2D()
