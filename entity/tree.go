@@ -6,20 +6,22 @@ import (
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/spritebank"
 	"github/teohen/mgm-tto/world"
+	"strings"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
+	"github.com/google/uuid"
 )
 
 type Tree struct {
-	ID        string
+	id        string
 	pos       cnts.Point
 	Health    int
 	WoodYield int
 }
 
-func NewTree(id string, x, y, health, woodYield int) *Tree {
+func NewTree(x, y, health, woodYield int) *Tree {
 	return &Tree{
-		ID:        id,
+		id:        strings.ReplaceAll(uuid.NewString(), "-", ""),
 		pos:       cnts.Point{X: x, Y: y},
 		Health:    health,
 		WoodYield: woodYield,
@@ -39,14 +41,14 @@ func (t *Tree) Draw() {
 	dst := rl.NewRectangle(x, y, cnts.TileSize-8, cnts.TileSize-8)
 	rl.DrawTexturePro(spritebank.Terrain, src, dst, rl.NewVector2(0, 0), 0, rl.White)
 	if cnts.DEBUGGING {
-		rl.DrawText(fmt.Sprintf("%s", t.ID), dst.ToInt32().X+8, dst.ToInt32().Y+8, 10, rl.Black)
+		rl.DrawText(fmt.Sprintf("%s", t.ID()), dst.ToInt32().X+8, dst.ToInt32().Y+8, 10, rl.Black)
 	}
 }
 
-func (t *Tree) GetID() string {
-	return t.ID
+func (t *Tree) ID() string {
+	return t.id
 }
 
-func (t *Tree) GetType() EntityType {
+func (t *Tree) Type() EntityType {
 	return EntityTypeTree
 }

@@ -8,11 +8,10 @@ import (
 )
 
 type GoalCollectTree struct {
-	ID           string
+	id           string
 	name         string
 	desiredState *goap.State
 	actions      []IAction
-	Type         GoalType
 
 	target Target
 }
@@ -20,11 +19,10 @@ type GoalCollectTree struct {
 func NewGoalCollectTree(desired string, t Target) IGoal {
 	name := "CollectTree"
 	g := GoalCollectTree{
-		ID:           strings.ReplaceAll(uuid.NewString(), "-", ""),
+		id:           strings.ReplaceAll(uuid.NewString(), "-", ""),
 		name:         name,
 		desiredState: goap.StateOf(strings.Split(desired, ",")...),
 		target:       t,
-		Type:         GoalCollectTreeType,
 	}
 
 	return &g
@@ -56,10 +54,10 @@ func (g *GoalCollectTree) Name() string {
 	return g.name
 }
 
-func (g *GoalCollectTree) GetID() string {
-	return g.ID
+func (g *GoalCollectTree) ID() string {
+	return g.id
 }
 
-func (g *GoalCollectTree) GetType() GoalType {
+func (g *GoalCollectTree) Type() GoalType {
 	return GoalCollectTreeType
 }

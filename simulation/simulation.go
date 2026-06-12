@@ -1,7 +1,6 @@
 package simulation
 
 import (
-	"fmt"
 	"time"
 
 	"github/teohen/mgm-tto/building"
@@ -58,9 +57,7 @@ func New() *Simulation {
 				continue
 			}
 			treeCount++
-			id := fmt.Sprintf("tree_%d", treeCount)
-
-			t := entity.NewTree(id, c, r, treeHealth, treeWoodYield)
+			t := entity.NewTree(c, r, treeHealth, treeWoodYield)
 			w.Occupy(c, r)
 			trees = append(trees, t)
 		}
@@ -86,12 +83,12 @@ func (s *Simulation) Tick() {
 
 func (s *Simulation) GetEntityPosition(entityID string) cnts.Point {
 	for _, v := range s.villagers {
-		if v.ID == entityID {
+		if v.ID() == entityID {
 			return v.Pos()
 		}
 	}
 	for _, t := range s.trees {
-		if t.ID == entityID {
+		if t.ID() == entityID {
 			return t.Pos()
 		}
 	}

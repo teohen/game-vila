@@ -101,8 +101,7 @@ func ExecuteCommand(sim *simulation.Simulation, cmd string) {
 			fmt.Println("invalid coordinates")
 			return
 		}
-		id := fmt.Sprintf("tree-%d-%d", x, y)
-		sim.AddTree(entity.NewTree(id, x, y, 3, 5))
+		sim.AddTree(entity.NewTree(x, y, 3, 5))
 		fmt.Printf("added tree at (%d,%d)\n", x, y)
 
 	case "removetree":

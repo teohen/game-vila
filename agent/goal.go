@@ -4,15 +4,6 @@ import (
 	"github/teohen/mgm-tto/goap"
 )
 
-type Goal struct {
-	ID           string
-	name         string
-	desiredState *goap.State
-	actions      []IAction
-
-	target Target
-}
-
 type IGoal interface {
 	EvaluatePriority() int
 	DesiredState() *goap.State
@@ -20,8 +11,8 @@ type IGoal interface {
 	GetGoapActions() []goap.Action
 	Target() Target
 	Name() string
-	GetID() string
-	GetType() GoalType
+	ID() string
+	Type() GoalType
 }
 
 type GoalType string

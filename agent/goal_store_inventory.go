@@ -1,17 +1,17 @@
 package agent
 
 import (
-	"fmt"
 	"github/teohen/mgm-tto/goap"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 type GoalStoreInventory struct {
-	ID           string
+	id           string
 	name         string
 	desiredState *goap.State
 	actions      []IAction
-	Type         GoalType
 
 	target Target
 }
@@ -19,11 +19,10 @@ type GoalStoreInventory struct {
 func NewGoalStoreInventory(desired string, t Target) IGoal {
 	name := "StoreInventory"
 	g := GoalStoreInventory{
-		ID:           fmt.Sprintf("%s_%s", name, t.GetID()),
+		id:           strings.ReplaceAll(uuid.NewString(), "-", ""),
 		name:         name,
 		desiredState: goap.StateOf(strings.Split(desired, ",")...),
 		target:       t,
-		Type:         GoalStoreInventoryType,
 	}
 
 	return &g
@@ -55,10 +54,10 @@ func (gsi *GoalStoreInventory) Name() string {
 	return gsi.name
 }
 
-func (gsi *GoalStoreInventory) GetID() string {
-	return gsi.ID
+func (gsi *GoalStoreInventory) ID() string {
+	return gsi.id
 }
 
-func (gsi *GoalStoreInventory) GetType() GoalType {
+func (gsi *GoalStoreInventory) Type() GoalType {
 	return GoalStoreInventoryType
 }

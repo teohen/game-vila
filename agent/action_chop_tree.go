@@ -23,7 +23,7 @@ func NewActionChopTree(r string, t Target) IAction {
 		name:    "chop_tree",
 		cost:    1,
 		require: goap.StateOf(strings.Split(r, ",")...),
-		outcome: goap.StateOf(fmt.Sprintf("%s_health=0", t.GetID())),
+		outcome: goap.StateOf(fmt.Sprintf("%s_health=0", t.ID())),
 		target:  t,
 	}
 	return &cp

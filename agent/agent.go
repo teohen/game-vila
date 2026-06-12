@@ -14,7 +14,7 @@ type IncrementWood func(amount int)
 
 type Target interface {
 	Pos() cnts.Point
-	GetID() string
+	ID() string
 }
 
 type IAgent interface {
@@ -39,7 +39,7 @@ type Agent struct {
 	Actions        []goap.Action
 	plan           *Plan
 	ActionIdx      int
-	CurrentGoal    *Goal
+	CurrentGoal    IGoal
 }
 
 // TODO: REMOVE movement and lumberjack dependencies
@@ -63,9 +63,9 @@ func (a *Agent) AddGoal(g IGoal) {
 
 func (a *Agent) RemoveGoal(id string) {
 	for i, goal := range a.Goals {
-		if id == goal.GetID() {
+		if id == goal.ID() {
 			a.Goals = append(a.Goals[:i], a.Goals[i+1:]...)
-			fmt.Println("job removed", goal.GetID())
+			fmt.Println("job removed", goal.ID())
 		}
 	}
 }
@@ -108,7 +108,7 @@ func (a *Agent) ChooseGoal(w *world.World, pos cnts.Point) bool {
 func (a *Agent) ExecutePlan() bool {
 	hasAct := a.plan.hasAction()
 	if !hasAct {
-		a.RemoveGoal(a.plan.goal.GetID())
+		a.RemoveGoal(a.plan.goal.ID())
 		a.Actions = make([]goap.Action, 0)
 		a.plan.Clear()
 		return true
@@ -142,7 +142,7 @@ func (a *Agent) GetGoals() []IGoal {
 func (a *Agent) GetGoalsOf(goalType GoalType) []IGoal {
 	goals := make([]IGoal, 0)
 	for _, g := range a.Goals {
-		if g.GetType() == goalType {
+		if g.Type() == goalType {
 			goals = append(goals, g)
 		}
 	}
@@ -161,7 +161,7 @@ func (a *Agent) AddStorageGoal(w *world.World, from cnts.Point, inventory int) {
 			log.Fatal("FOUND A BUILDING DIFERENT THAN A STORAGE")
 		}
 
-		desired := fmt.Sprintf("%s_wood=%d", storage.GetID(), (storage.Wood + inventory))
+		desired := fmt.Sprintf("%s_wood=%d", storage.ID(), (storage.Wood + inventory))
 		a.AddGoal(NewGoalStoreInventory(desired, storage))
 		fmt.Println("StorageGoal added", near, storage.Wood, inventory)
 	}

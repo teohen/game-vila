@@ -3,8 +3,10 @@ package building
 import (
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/spritebank"
+	"strings"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
+	"github.com/google/uuid"
 )
 
 type BuildingType string
@@ -14,18 +16,18 @@ const (
 )
 
 type Storage struct {
-	ID   string
-	Wood int
-	pos  cnts.Point
-	Type BuildingType
+	id        string
+	Wood      int
+	pos       cnts.Point
+	typeBuild BuildingType
 }
 
 func NewStorage(x, y int) *Storage {
 	return &Storage{
-		ID:   "dalskdjalskdls",
-		pos:  cnts.Point{X: x, Y: y},
-		Wood: 50,
-		Type: StorageType,
+		id:        strings.ReplaceAll(uuid.NewString(), "-", ""),
+		pos:       cnts.Point{X: x, Y: y},
+		Wood:      50,
+		typeBuild: StorageType,
 	}
 }
 
@@ -44,10 +46,10 @@ func (s *Storage) Pos() cnts.Point {
 	return s.pos
 }
 
-func (s *Storage) GetID() string {
-	return s.ID
+func (s *Storage) ID() string {
+	return s.id
 }
 
-func (s *Storage) GetType() BuildingType {
+func (s *Storage) Type() BuildingType {
 	return StorageType
 }

@@ -17,16 +17,15 @@ type VillagerState string
 const (
 	StateVillagerIdle         VillagerState = "idle"
 	StateVillagerBusy         VillagerState = "busy"
-	StateVillagerOverWeighted VillagerState = "pverweighted"
+	StateVillagerOverWeighted VillagerState = "overweighted"
 )
 
-// TODO: create a villager Interface
 type Villager struct {
 	agent      agent.IAgent
 	movement   *Movement
 	lumberjack *Lumberjack
 	storager   *Storager
-	ID         string
+	id         string
 	State      VillagerState
 	w          *world.World
 }
@@ -38,7 +37,7 @@ func NewVillager(x, y int, w *world.World) *Villager {
 	storager := NewStorager(100)
 	lumberjack := NewLumberjack(storager.IncrementWood)
 
-	v.ID = id
+	v.id = id
 	v.State = StateVillagerIdle
 	v.movement = movement
 	v.storager = storager
@@ -51,37 +50,14 @@ func NewVillager(x, y int, w *world.World) *Villager {
 func (v *Villager) Tick(w *world.World, entities *[]Entity, buildings *building.BuildingsList) {
 	if v.State == StateVillagerIdle {
 		if j := job.GetJobQueue().Pop(); j != nil {
-			v.agent.AddGoal(agent.NewGoalCollectTree(fmt.Sprintf("%s_health=0", j.Object.GetID()), j.Object))
-			job.GetJobQueue().Remove(j.Name(), j.Object.GetID())
+			v.agent.AddGoal(agent.NewGoalCollectTree(fmt.Sprintf("%s_health=0", j.Object.ID()), j.Object))
+			job.GetJobQueue().Remove(j.Name(), j.Object.ID())
 		}
 	}
 
 	if v.storager.isOverweighted() {
 		v.agent.AddStorageGoal(w, v.Pos(), v.storager.inventory)
 	}
-
-	// over := v.storager.isOverweighted()
-	// if over {
-	// 	// fmt.Println("is overweighted", v.storager.inventory)
-	// } else {
-	// 	// fmt.Println("is light", v.storager.weight)
-	// }
-
-	// if over {
-
-	// 	storage := v.findNearestStorage(w, buildings)
-	// 	hasGoal := false
-	// 	for _, g := range v.agent.GetGoals() {
-	// 		if g.GetType() == agent.GoalStoreInventoryType && g.Target().GetID() == storage.ID {
-	// 			hasGoal = true
-	// 		}
-	// 	}
-
-	// 	if !hasGoal {
-	// 		desired := fmt.Sprintf("%s_wood=%d", storage.ID, (storage.Wood + v.storager.inventory))
-	// 		v.agent.AddGoal(agent.NewGoalStoreInventory(desired, storage))
-	// 	}
-	// }
 
 	switch v.State {
 	case StateVillagerIdle:
@@ -101,42 +77,18 @@ func (v *Villager) Pos() cnts.Point {
 	return v.movement.pos
 }
 
-func (v *Villager) GetID() string {
-	return v.ID
-}
-
-// TODO: move to Renderer
-func getSource(v *Villager) (rl.Rectangle, rl.Rectangle) {
-	src := rl.NewRectangle(0, 0, 0, 0)
-	dst := rl.NewRectangle(0, 0, 0, 0)
-
-	x, y := cnts.WorldToScreen(v.Pos().X, v.Pos().Y)
-	dst.X = x
-	dst.Y = y
-	dst.Width = cnts.TileSize
-	dst.Height = cnts.TileSize
-	src.X = 41
-	src.Y = 21
-	src.Width = 16
-	src.Height = 19
-
-	return src, dst
+func (v *Villager) ID() string {
+	return v.id
 }
 
 func (v *Villager) Draw() {
-	src, dst := getSource(v)
+	x, y := cnts.WorldToScreen(v.Pos().X, v.Pos().Y)
+	src := rl.NewRectangle(41, 21, 16, 19)
+	dst := rl.NewRectangle(x, y, cnts.TileSize, cnts.TileSize)
+
 	rl.DrawTexturePro(spritebank.Human, src, dst, rl.NewVector2(0, 0), 0, rl.White)
 }
 
-func (v *Villager) GetType() EntityType {
+func (v *Villager) Type() EntityType {
 	return EntityTypeVillager
-}
-
-func GetEntityFrom(id string, entities *[]Entity) Entity {
-	for _, e := range *entities {
-		if e.GetID() == id {
-			return e
-		}
-	}
-	return nil
 }

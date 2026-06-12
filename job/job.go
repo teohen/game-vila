@@ -9,7 +9,7 @@ type JobType string
 const JobChopTreeType JobType = "ChopTreeJob"
 
 type Object interface {
-	GetID() string
+	ID() string
 	Pos() cnts.Point
 }
 

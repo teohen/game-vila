@@ -27,7 +27,7 @@ func (q *JobQueue) Peek() *Job {
 
 func (q *JobQueue) Remove(jobName, objectId string) {
 	for i, job := range q.Jobs {
-		if jobName == job.name && objectId == job.Object.GetID() {
+		if jobName == job.name && objectId == job.Object.ID() {
 			q.Jobs = append(q.Jobs[:i], q.Jobs[i+1:]...)
 		}
 	}

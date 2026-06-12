@@ -17,6 +17,6 @@ type Entity interface {
 	Tick(w *world.World, entities *[]Entity, buildings *building.BuildingsList)
 	Draw()
 	Pos() cnts.Point
-	GetID() string
-	GetType() EntityType
+	ID() string
+	Type() EntityType
 }

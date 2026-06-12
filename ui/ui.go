@@ -49,9 +49,7 @@ func (ui *UI) Draw() {
 	rl.BeginMode2D(cam)
 	ui.simulation.World().Draw()
 	for _, e := range ui.simulation.Entities() {
-		// if e.GetID() != "" {
 		e.Draw()
-		// }
 	}
 
 	for _, b := range ui.simulation.Buildings() {

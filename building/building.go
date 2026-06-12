@@ -5,8 +5,8 @@ import "github/teohen/mgm-tto/cnts"
 type Building interface {
 	Draw()
 	Pos() cnts.Point
-	GetID() string
-	GetType() BuildingType
+	ID() string
+	Type() BuildingType
 }
 
 type BuildingsList struct {
@@ -43,7 +43,7 @@ func (bl *BuildingsList) Buldings() []Building {
 
 func (bl *BuildingsList) GetBuild(id string) *Building {
 	for _, building := range bl.list {
-		if building.GetID() == id {
+		if building.ID() == id {
 			return &building
 		}
 	}
@@ -53,7 +53,7 @@ func (bl *BuildingsList) GetBuild(id string) *Building {
 func (bl *BuildingsList) GetBuildingsOf(typ BuildingType) []Building {
 	buildings := make([]Building, 0)
 	for _, b := range bl.list {
-		if b.GetType() == typ {
+		if b.Type() == typ {
 			buildings = append(buildings, b)
 		}
 	}
