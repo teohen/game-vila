@@ -5,7 +5,6 @@ import (
 )
 
 type IGoal interface {
-	EvaluatePriority() int
 	DesiredState() *goap.State
 	SetActions(a ...IAction)
 	GetGoapActions() []goap.Action
@@ -13,6 +12,7 @@ type IGoal interface {
 	Name() string
 	ID() string
 	Type() GoalType
+	IsRelevant(state *goap.State) bool
 }
 
 type GoalType string

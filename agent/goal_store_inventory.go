@@ -2,6 +2,7 @@ package agent
 
 import (
 	"github/teohen/mgm-tto/goap"
+	"log"
 	"strings"
 
 	"github.com/google/uuid"
@@ -12,7 +13,6 @@ type GoalStoreInventory struct {
 	name         string
 	desiredState *goap.State
 	actions      []IAction
-	possible     bool
 
 	target Target
 }
@@ -24,7 +24,6 @@ func NewGoalStoreInventory(desired string, t Target) IGoal {
 		name:         name,
 		desiredState: goap.StateOf(strings.Split(desired, ",")...),
 		target:       t,
-		possible:     false,
 	}
 
 	return &g
@@ -62,5 +61,13 @@ func (gsi *GoalStoreInventory) ID() string {
 }
 
 func (gsi *GoalStoreInventory) Type() GoalType {
-	return GoalStoreInventoryType
+	return GoalCollectTreeType
+}
+
+func (gsi *GoalStoreInventory) IsRelevant(state *goap.State) bool {
+	match, err := state.Match(goap.StateOf("has_storage"))
+	if err != nil {
+		log.Fatal("invalid state passed to match", err.Error())
+	}
+	return match
 }

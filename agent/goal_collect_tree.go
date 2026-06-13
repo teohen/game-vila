@@ -2,6 +2,7 @@ package agent
 
 import (
 	"github/teohen/mgm-tto/goap"
+	"log"
 	"strings"
 
 	"github.com/google/uuid"
@@ -12,8 +13,7 @@ type GoalCollectTree struct {
 	name         string
 	desiredState *goap.State
 	actions      []IAction
-
-	target Target
+	target       Target
 }
 
 func NewGoalCollectTree(desired string, t Target) IGoal {
@@ -30,10 +30,6 @@ func NewGoalCollectTree(desired string, t Target) IGoal {
 
 func (g *GoalCollectTree) DesiredState() *goap.State {
 	return g.desiredState
-}
-
-func (g *GoalCollectTree) EvaluatePriority() int {
-	return 1
 }
 
 func (g *GoalCollectTree) Target() Target {
@@ -61,4 +57,12 @@ func (g *GoalCollectTree) ID() string {
 
 func (g *GoalCollectTree) Type() GoalType {
 	return GoalCollectTreeType
+}
+
+func (g *GoalCollectTree) IsRelevant(state *goap.State) bool {
+	ok, err := state.Match(goap.StateOf("overweighted"))
+	if err != nil {
+		log.Fatal("invalid state passed to match", err.Error())
+	}
+	return ok
 }

@@ -26,6 +26,7 @@ type IAgent interface {
 	GetGoals() []IGoal
 	AddStorageGoal(w *world.World, from cnts.Point, inventory int)
 	AddCollectTreeGoal(w *world.World, from cnts.Point)
+	UpdateState(storage, overweighted bool)
 }
 
 type Actor interface {
@@ -33,27 +34,24 @@ type Actor interface {
 }
 
 type Agent struct {
-	movement       Actor
-	lumberjack     Actor
-	storager       Actor
-	StartPlanState *goap.State
-	Goals          []IGoal
-	Actions        []goap.Action
-	plan           *Plan
-	ActionIdx      int
-	CurrentGoal    IGoal
+	movement   Actor
+	lumberjack Actor
+	storager   Actor
+	State      *goap.State
+	Goals      []IGoal
+	Actions    []goap.Action
+	plan       *Plan
 }
 
 // TODO: REMOVE movement and lumberjack dependencies
 func NewAgent(x, y int, w *world.World, movement, lumberjack, storager Actor) IAgent {
 	a := Agent{
-		Goals:          make([]IGoal, 0),
-		Actions:        make([]goap.Action, 0),
-		ActionIdx:      0,
-		StartPlanState: goap.StateOf("walkable"),
-		movement:       movement,
-		lumberjack:     lumberjack,
-		storager:       storager,
+		Goals:      make([]IGoal, 0),
+		Actions:    make([]goap.Action, 0),
+		State:      goap.StateOf("walkable", "!has_storage", "!overweighted"),
+		movement:   movement,
+		lumberjack: lumberjack,
+		storager:   storager,
 	}
 
 	return &a
@@ -75,17 +73,30 @@ func (ag *Agent) AddAction(a IAction) {
 	ag.Actions = append(ag.Actions, a)
 }
 
+func (a *Agent) UpdateState(storage, overweighted bool) {
+	a.State = goap.StateOf("walkable", "!overweighted", "!has_storage")
+	if storage {
+		a.State.Apply(goap.StateOf("has_storage"))
+	}
+	if overweighted {
+		a.State.Apply(goap.StateOf("overweighted"))
+	}
+}
+
 func (a *Agent) ChooseGoal(w *world.World, pos cnts.Point) bool {
 	a.plan = NewPlan()
 	cheapest := float32(10_000)
 
 	for _, goal := range a.Goals {
-		startPlan := a.StartPlanState
+		startPlan := a.State
+		if !goal.IsRelevant(a.State) {
+			continue
+		}
+
 		mv := NewActionMove("walkable", "near", goal.Target(), w, pos)
 		cp := NewActionChopTree("near", goal.Target())
 		pi := NewActionPutInto("near", goal.DesiredState(), goal.Target())
 		goal.SetActions(mv, cp, pi)
-
 		actions, err := goap.Plan(startPlan, goal.DesiredState(), goal.GetGoapActions())
 		if err != nil {
 			if cnts.DEBUGGING {
