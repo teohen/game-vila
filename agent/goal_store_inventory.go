@@ -61,7 +61,7 @@ func (gsi *GoalStoreInventory) ID() string {
 }
 
 func (gsi *GoalStoreInventory) Type() GoalType {
-	return GoalCollectTreeType
+	return GoalStoreInventoryType
 }
 
 func (gsi *GoalStoreInventory) IsRelevant(state *goap.State) bool {

@@ -26,7 +26,6 @@ type IAgent interface {
 	GetGoals() []IGoal
 	AddStorageGoal(w *world.World, from cnts.Point, inventory int)
 	AddCollectTreeGoal(w *world.World, from cnts.Point)
-	UpdateState(storage, overweighted bool)
 }
 
 type Actor interface {
@@ -43,7 +42,6 @@ type Agent struct {
 	plan       *Plan
 }
 
-// TODO: REMOVE movement and lumberjack dependencies
 func NewAgent(x, y int, w *world.World, movement, lumberjack, storager Actor) IAgent {
 	a := Agent{
 		Goals:      make([]IGoal, 0),
@@ -71,16 +69,6 @@ func (a *Agent) RemoveGoal(id string) {
 
 func (ag *Agent) AddAction(a IAction) {
 	ag.Actions = append(ag.Actions, a)
-}
-
-func (a *Agent) UpdateState(storage, overweighted bool) {
-	a.State = goap.StateOf("walkable", "!overweighted", "!has_storage")
-	if storage {
-		a.State.Apply(goap.StateOf("has_storage"))
-	}
-	if overweighted {
-		a.State.Apply(goap.StateOf("overweighted"))
-	}
 }
 
 func (a *Agent) ChooseGoal(w *world.World, pos cnts.Point) bool {
@@ -151,6 +139,7 @@ func (a *Agent) ExecutePlan() bool {
 
 	case ActionPutIntoType:
 		if done := a.storager.ExecuteAction(action.Target()); done {
+			a.State.Apply(goap.StateOf("!overweighted"))
 			a.plan.nextAction()
 		}
 	}
@@ -173,11 +162,13 @@ func (a *Agent) GetGoalsOf(goalType GoalType) []IGoal {
 }
 
 func (a *Agent) AddStorageGoal(w *world.World, from cnts.Point, inventory int) {
+	a.State.Apply(goap.StateOf("overweighted"))
 	if len(a.GetGoalsOf(GoalStoreInventoryType)) > 0 {
 		return
 	}
 
 	if near := pathfinding.FindClosest(w, from, building.Get().GetBuildingsOf(building.StorageType)); near.X != -1 {
+		a.State.Apply(goap.StateOf("has_storage"))
 		b := building.Get().GetBuildingAt(near)
 		storage, ok := b.(*building.Storage)
 		if !ok {
@@ -187,6 +178,7 @@ func (a *Agent) AddStorageGoal(w *world.World, from cnts.Point, inventory int) {
 		desired := fmt.Sprintf("%s_wood=%d", storage.ID(), (storage.Wood + inventory))
 		a.AddGoal(NewGoalStoreInventory(desired, storage))
 	}
+	// a.State.Apply(goap.StateOf("!has_storage"))
 }
 
 func (a *Agent) AddCollectTreeGoal(w *world.World, from cnts.Point) {

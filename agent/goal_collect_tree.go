@@ -16,6 +16,7 @@ type GoalCollectTree struct {
 	target       Target
 }
 
+// TODO: change the desiredState to only accept a tree reference
 func NewGoalCollectTree(desired string, t Target) IGoal {
 	name := "CollectTree"
 	g := GoalCollectTree{
@@ -60,7 +61,7 @@ func (g *GoalCollectTree) Type() GoalType {
 }
 
 func (g *GoalCollectTree) IsRelevant(state *goap.State) bool {
-	ok, err := state.Match(goap.StateOf("overweighted"))
+	ok, err := state.Match(goap.StateOf("!overweighted"))
 	if err != nil {
 		log.Fatal("invalid state passed to match", err.Error())
 	}
