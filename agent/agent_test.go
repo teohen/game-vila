@@ -253,11 +253,12 @@ func TestShouldAddCollectTreeGoal(t *testing.T) {
 	a.RegisterActor(ActionPutIntoType, &sto)
 	a.RegisterActor(ActionChopTreeType, &lj)
 
+	target := TargetTest{id: "TREE_ID"}
 	job.GetJobQueue().Push(*job.NewJob(
-		job.JobChopTreeType, &TargetTest{id: "TREE_ID"},
+		job.JobChopTreeType, &target,
 	))
 
-	a.AddCollectTreeGoal(&w, cnts.Point{X: 0, Y: 0})
+	a.AddGoal(NewGoalCollectTree(&w, &target, cnts.Point{X: 0, Y: 0}))
 
 	if len(a.Goals) != 1 {
 		t.Fatalf("expect len(a.Goal) to be %d. got=%d", 1, len(a.Goals))
@@ -265,10 +266,6 @@ func TestShouldAddCollectTreeGoal(t *testing.T) {
 
 	if !testGoal(t, a.Goals[0], GoalCollectTreeType, "{TREE_ID_health=0}") {
 		return
-	}
-
-	if len(job.GetJobQueue().Jobs) != 0 {
-		t.Fatalf("expect job.GetJobQueue().Jobs to be %d. got=%d", 0, len(job.GetJobQueue().Jobs))
 	}
 }
 
@@ -284,7 +281,9 @@ func TestShouldAddStorageGoal(t *testing.T) {
 	a.RegisterActor(ActionPutIntoType, &sto)
 	a.RegisterActor(ActionChopTreeType, &lj)
 
-	a.AddStorageGoal(&w, cnts.Point{X: 0, Y: 0}, 100)
+	target := TargetTest{id: "TREE_ID"}
+
+	a.AddGoal(NewGoalStoreInventory(&w, &target, cnts.Point{X: 0, Y: 0}))
 
 	if len(a.Goals) != 1 {
 		t.Fatalf("expect len(a.Goals) to be %d. got=%d", 1, len(a.Goals))
@@ -292,26 +291,6 @@ func TestShouldAddStorageGoal(t *testing.T) {
 
 	if !testGoal(t, a.Goals[0], GoalStoreInventoryType, "") {
 		return
-	}
-}
-
-func TestShouldNotAddDuplicateStorageGoal(t *testing.T) {
-	w := world.NewWorld(10, 10)
-	mv := ActorTest{}
-	lj := ActorTest{}
-	sto := ActorTest{}
-	a := Agent{
-		Actors: make(map[ActionType]Actor),
-	}
-	a.RegisterActor(ActionMoveType, &mv)
-	a.RegisterActor(ActionPutIntoType, &sto)
-	a.RegisterActor(ActionChopTreeType, &lj)
-
-	a.AddStorageGoal(&w, cnts.Point{X: 0, Y: 0}, 100)
-	a.AddStorageGoal(&w, cnts.Point{X: 0, Y: 0}, 100)
-
-	if len(a.Goals) != 1 {
-		t.Fatalf("expect len(a.Goals) to be %d. got=%d", 1, len(a.Goals))
 	}
 }
 

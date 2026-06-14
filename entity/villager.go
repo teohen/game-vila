@@ -3,7 +3,6 @@ package entity
 import (
 	"fmt"
 	"github/teohen/mgm-tto/agent"
-	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/job"
 	"github/teohen/mgm-tto/pathfinding"
@@ -51,7 +50,7 @@ func NewVillager(x, y int, w *world.World) *Villager {
 	return &v
 }
 
-func (v *Villager) Tick(entities *[]Entity, buildings *building.BuildingsList) {
+func (v *Villager) Tick() {
 	if v.State == StateVillagerIdle {
 		v.AddCollectTreeGoal()
 	}

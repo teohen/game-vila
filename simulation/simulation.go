@@ -74,13 +74,12 @@ func New() *Simulation {
 }
 
 func (s *Simulation) Tick() {
-	all := s.Entities()
 	for _, v := range s.villagers {
-		v.Tick(s.world, &all, s.buildings)
+		v.Tick()
 	}
 
 	for _, a := range s.animals {
-		a.Tick(s.world, &all, s.buildings)
+		a.Tick()
 	}
 
 	s.processEvents()

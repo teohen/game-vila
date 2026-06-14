@@ -2,7 +2,6 @@ package entity
 
 import (
 	"github/teohen/mgm-tto/agent"
-	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/spritebank"
 	"github/teohen/mgm-tto/world"
@@ -38,9 +37,9 @@ func NewDeer(x, y int, w *world.World) *Deer {
 	return &d
 }
 
-func (d *Deer) Tick(w *world.World, entities *[]Entity, buildings *building.BuildingsList) {
+func (d *Deer) Tick() {
 	if d.State == StateIdle {
-		d.AddRoamGoal(w, entities)
+		d.AddRoamGoal()
 	}
 
 	switch d.State {
@@ -75,12 +74,12 @@ func (d *Deer) Type() EntityType {
 	return EntityTypeVillager
 }
 
-func (d *Deer) AddRoamGoal(w *world.World, entities *[]Entity) {
+func (d *Deer) AddRoamGoal() {
 	newX := RandomIntRangeFast(d.Pos().X-5, d.Pos().X+5)
 	newY := RandomIntRangeFast(d.Pos().Y-5, d.Pos().Y+5)
 
 	pin := cnts.Pin{Id: cnts.NewID(), Position: cnts.Point{X: newX, Y: newY}}
-	g := agent.NewGoalRoam(w, &pin, d.movement.pos)
+	g := agent.NewGoalRoam(d.w, &pin, d.movement.pos)
 	d.agent.AddGoal(g)
 }
 

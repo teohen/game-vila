@@ -1,9 +1,7 @@
 package entity
 
 import (
-	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
-	"github/teohen/mgm-tto/world"
 )
 
 type EntityType string
@@ -14,7 +12,7 @@ const (
 )
 
 type Entity interface {
-	Tick(w *world.World, entities *[]Entity, buildings *building.BuildingsList)
+	Tick()
 	Draw()
 	Pos() cnts.Point
 	ID() string
