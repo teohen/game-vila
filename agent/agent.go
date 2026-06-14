@@ -9,8 +9,6 @@ import (
 	"github/teohen/mgm-tto/world"
 )
 
-type IncrementWood func(amount int)
-
 type Target interface {
 	Pos() cnts.Point
 	ID() string
@@ -185,7 +183,7 @@ func (a *Agent) AddCollectTreeGoal(w *world.World, from cnts.Point) {
 	closest := pathfinding.FindClosest(w, from, targets)
 	for _, j := range job.GetJobQueue().Jobs {
 		if j.GetObject().Pos() == closest {
-			a.AddGoal(NewGoalCollectTree(fmt.Sprintf("%s_health=0", j.Object.ID()), j.Object))
+			a.AddGoal(NewGoalCollectTree(j.Object))
 			job.GetJobQueue().Remove(j.Name(), j.Object.ID())
 		}
 	}

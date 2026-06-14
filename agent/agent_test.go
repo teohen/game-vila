@@ -1,7 +1,6 @@
 package agent
 
 import (
-	"fmt"
 	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
@@ -74,7 +73,7 @@ func TestShouldStorageIfOverweighted(t *testing.T) {
 		lumberjack: &lj,
 	}
 
-	collectGoal := NewGoalCollectTree(fmt.Sprintf("%s_health=0", "ID_TREE"), &TargetTest{})
+	collectGoal := NewGoalCollectTree(&TargetTest{id: "ID_TREE"})
 	storeGoal := NewGoalStoreInventory(100)
 	a.State = goap.StateOf("walkable", "overweighted")
 
@@ -96,8 +95,8 @@ func TestGetGoals(t *testing.T) {
 		storager:   &ActorTest{},
 		lumberjack: &ActorTest{},
 	}
-	g1 := NewGoalCollectTree(fmt.Sprintf("%s_health=0", "T1"), &TargetTest{id: "T1"})
-	g2 := NewGoalCollectTree(fmt.Sprintf("%s_health=0", "T2"), &TargetTest{id: "T2"})
+	g1 := NewGoalCollectTree(&TargetTest{id: "T1"})
+	g2 := NewGoalCollectTree(&TargetTest{id: "T2"})
 	g3 := NewGoalStoreInventory(100)
 
 	a.AddGoal(g1)
@@ -125,8 +124,8 @@ func TestRemoveGoal(t *testing.T) {
 		storager:   &ActorTest{},
 		lumberjack: &ActorTest{},
 	}
-	g1 := NewGoalCollectTree(fmt.Sprintf("%s_health=0", "T1"), &TargetTest{id: "T1"})
-	g2 := NewGoalCollectTree(fmt.Sprintf("%s_health=0", "T2"), &TargetTest{id: "T2"})
+	g1 := NewGoalCollectTree(&TargetTest{id: "T1"})
+	g2 := NewGoalCollectTree(&TargetTest{id: "T2"})
 	g3 := NewGoalStoreInventory(100)
 
 	a.AddGoal(g1)
@@ -153,7 +152,7 @@ func TestRemoveGoalNotInList(t *testing.T) {
 		storager:   &ActorTest{},
 		lumberjack: &ActorTest{},
 	}
-	g := NewGoalCollectTree(fmt.Sprintf("%s_health=0", "T1"), &TargetTest{id: "T1"})
+	g := NewGoalCollectTree(&TargetTest{id: "T1"})
 	a.AddGoal(g)
 
 	a.RemoveGoal("non-existent-id")
@@ -175,7 +174,7 @@ func TestChooseGoalReturnsFalseWhenNoGoalRelevant(t *testing.T) {
 		lumberjack: &ActorTest{},
 		State:      goap.StateOf("walkable", "overweighted"),
 	}
-	g := NewGoalCollectTree(fmt.Sprintf("%s_health=0", "T1"), &TargetTest{})
+	g := NewGoalCollectTree(&TargetTest{id: "T1"})
 	a.AddGoal(g)
 
 	if a.ChooseGoal(&w, cnts.Point{X: 0, Y: 0}) {
@@ -194,7 +193,7 @@ func TestShouldExecuteCollectTreePlan(t *testing.T) {
 		lumberjack: &lj,
 	}
 
-	collectGoal := NewGoalCollectTree(fmt.Sprintf("%s_health=0", "ID_TREE"), &TargetTest{})
+	collectGoal := NewGoalCollectTree(&TargetTest{id: "ID_TREE"})
 	a.State = goap.StateOf("walkable", "!overweighted")
 
 	a.AddGoal(collectGoal)

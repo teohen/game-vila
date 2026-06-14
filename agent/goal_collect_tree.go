@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"fmt"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/world"
@@ -18,13 +19,12 @@ type GoalCollectTree struct {
 	target       Target
 }
 
-// TODO: change the desiredState to only accept a tree reference
-func NewGoalCollectTree(desired string, t Target) IGoal {
+func NewGoalCollectTree(t Target) IGoal {
 	name := "CollectTree"
 	g := GoalCollectTree{
 		id:           strings.ReplaceAll(uuid.NewString(), "-", ""),
 		name:         name,
-		desiredState: goap.StateOf(strings.Split(desired, ",")...),
+		desiredState: goap.StateOf(fmt.Sprintf("%s_health=0", t.ID())),
 		target:       t,
 	}
 
