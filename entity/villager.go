@@ -53,6 +53,7 @@ func (v *Villager) Tick(w *world.World, entities *[]Entity, buildings *building.
 
 	// TODO: villager is collecting all the wood from the jobs and not going towards the deposit when overweighted
 	if v.storager.isOverweighted() {
+		v.agent.SetState("overweighted")
 		v.agent.AddStorageGoal(w, v.Pos(), v.storager.inventory)
 	}
 

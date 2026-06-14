@@ -24,6 +24,7 @@ type IAgent interface {
 	GetGoals() []IGoal
 	AddStorageGoal(w *world.World, from cnts.Point, inventory int)
 	AddCollectTreeGoal(w *world.World, from cnts.Point)
+	SetState(state string)
 }
 
 type Actor interface {
@@ -159,8 +160,11 @@ func (a *Agent) GetGoalsOf(goalType GoalType) []IGoal {
 	return goals
 }
 
+func (a *Agent) SetState(state string) {
+	a.State.Apply(goap.StateOf(state))
+}
+
 func (a *Agent) AddStorageGoal(w *world.World, from cnts.Point, inventory int) {
-	a.State.Apply(goap.StateOf("overweighted"))
 	if len(a.GetGoalsOf(GoalStoreInventoryType)) > 0 {
 		return
 	}

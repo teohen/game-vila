@@ -248,6 +248,43 @@ func TestShouldAddCollectTreeGoal(t *testing.T) {
 	}
 }
 
+func TestShouldAddStorageGoal(t *testing.T) {
+	w := world.NewWorld(10, 10)
+	a := Agent{
+		movement:   &ActorTest{},
+		storager:   &ActorTest{},
+		lumberjack: &ActorTest{},
+		State:      goap.StateOf("walkable", "!overweighted"),
+	}
+
+	a.AddStorageGoal(&w, cnts.Point{X: 0, Y: 0}, 100)
+
+	if len(a.Goals) != 1 {
+		t.Fatalf("expect len(a.Goals) to be %d. got=%d", 1, len(a.Goals))
+	}
+
+	if !testGoal(t, a.Goals[0], GoalStoreInventoryType, "") {
+		return
+	}
+}
+
+func TestShouldNotAddDuplicateStorageGoal(t *testing.T) {
+	w := world.NewWorld(10, 10)
+	a := Agent{
+		movement:   &ActorTest{},
+		storager:   &ActorTest{},
+		lumberjack: &ActorTest{},
+		State:      goap.StateOf("walkable", "!overweighted"),
+	}
+
+	a.AddStorageGoal(&w, cnts.Point{X: 0, Y: 0}, 100)
+	a.AddStorageGoal(&w, cnts.Point{X: 0, Y: 0}, 100)
+
+	if len(a.Goals) != 1 {
+		t.Fatalf("expect len(a.Goals) to be %d. got=%d", 1, len(a.Goals))
+	}
+}
+
 func TestExecutePlanPutIntoAppliesNotOverweighted(t *testing.T) {
 	w := world.NewWorld(10, 10)
 	building.NewBuildingsList()
