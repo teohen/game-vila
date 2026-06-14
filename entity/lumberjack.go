@@ -61,10 +61,6 @@ func (lj *Lumberjack) Update() bool {
 	return false
 }
 
-func (lj *Lumberjack) IsHitting() bool {
-	return lj.State == StateLumberjackHitting && lj.tree != nil
-}
-
 func (lj *Lumberjack) ExecuteAction(target agent.Target) bool {
 	t, ok := target.(*Tree)
 	if !ok {

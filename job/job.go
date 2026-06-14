@@ -2,6 +2,9 @@ package job
 
 import (
 	"github/teohen/mgm-tto/cnts"
+	"strings"
+
+	"github.com/google/uuid"
 )
 
 type JobType string
@@ -14,7 +17,7 @@ type Object interface {
 }
 
 type Job struct {
-	ID      string
+	id      string
 	name    string
 	typeJob JobType
 	Object  Object
@@ -22,6 +25,7 @@ type Job struct {
 
 func NewJob(typeJob JobType, obj Object) *Job {
 	j := Job{
+		id:      strings.ReplaceAll(uuid.NewString(), "-", ""),
 		name:    string(typeJob),
 		typeJob: typeJob,
 		Object:  obj,
@@ -40,4 +44,8 @@ func (j *Job) Type() JobType {
 
 func (j *Job) GetObject() Object {
 	return j.Object
+}
+
+func (j *Job) ID() string {
+	return j.id
 }

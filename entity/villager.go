@@ -34,7 +34,7 @@ func NewVillager(x, y int, w *world.World) *Villager {
 	id := fmt.Sprintf("villager_%d_%d", x, y)
 	movement := NewMovement(x, y, w)
 	storager := NewStorager(100)
-	lumberjack := NewLumberjack(storager.IncrementWood)
+	lumberjack := NewLumberjack(storager.IncrementInventory)
 
 	v.id = id
 	v.State = StateVillagerIdle
@@ -50,9 +50,8 @@ func (v *Villager) Tick(w *world.World, entities *[]Entity, buildings *building.
 	if v.State == StateVillagerIdle {
 		v.agent.AddCollectTreeGoal(w, v.movement.pos)
 	}
-
-	// TODO: villager is collecting all the wood from the jobs and not going towards the deposit when overweighted
 	if v.storager.isOverweighted() {
+		v.agent.SetState("overweighted")
 		v.agent.AddStorageGoal(w, v.Pos(), v.storager.inventory)
 	}
 

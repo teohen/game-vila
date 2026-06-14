@@ -2,16 +2,12 @@ package agent
 
 import (
 	"fmt"
-	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/job"
 	"github/teohen/mgm-tto/pathfinding"
 	"github/teohen/mgm-tto/world"
-	"log"
 )
-
-type IncrementWood func(amount int)
 
 type Target interface {
 	Pos() cnts.Point
@@ -26,6 +22,7 @@ type IAgent interface {
 	GetGoals() []IGoal
 	AddStorageGoal(w *world.World, from cnts.Point, inventory int)
 	AddCollectTreeGoal(w *world.World, from cnts.Point)
+	SetState(state string)
 }
 
 type Actor interface {
@@ -33,27 +30,23 @@ type Actor interface {
 }
 
 type Agent struct {
-	movement       Actor
-	lumberjack     Actor
-	storager       Actor
-	StartPlanState *goap.State
-	Goals          []IGoal
-	Actions        []goap.Action
-	plan           *Plan
-	ActionIdx      int
-	CurrentGoal    IGoal
+	movement   Actor
+	lumberjack Actor
+	storager   Actor
+	State      *goap.State
+	Goals      []IGoal
+	Actions    []goap.Action
+	plan       *Plan
 }
 
-// TODO: REMOVE movement and lumberjack dependencies
 func NewAgent(x, y int, w *world.World, movement, lumberjack, storager Actor) IAgent {
 	a := Agent{
-		Goals:          make([]IGoal, 0),
-		Actions:        make([]goap.Action, 0),
-		ActionIdx:      0,
-		StartPlanState: goap.StateOf("walkable"),
-		movement:       movement,
-		lumberjack:     lumberjack,
-		storager:       storager,
+		Goals:      make([]IGoal, 0),
+		Actions:    make([]goap.Action, 0),
+		State:      goap.StateOf("walkable", "!overweighted"),
+		movement:   movement,
+		lumberjack: lumberjack,
+		storager:   storager,
 	}
 
 	return &a
@@ -80,12 +73,15 @@ func (a *Agent) ChooseGoal(w *world.World, pos cnts.Point) bool {
 	cheapest := float32(10_000)
 
 	for _, goal := range a.Goals {
-		startPlan := a.StartPlanState
+		startPlan := a.State
+		if !goal.IsRelevant(w, pos, a.State) {
+			continue
+		}
+
 		mv := NewActionMove("walkable", "near", goal.Target(), w, pos)
 		cp := NewActionChopTree("near", goal.Target())
 		pi := NewActionPutInto("near", goal.DesiredState(), goal.Target())
 		goal.SetActions(mv, cp, pi)
-
 		actions, err := goap.Plan(startPlan, goal.DesiredState(), goal.GetGoapActions())
 		if err != nil {
 			if cnts.DEBUGGING {
@@ -140,6 +136,7 @@ func (a *Agent) ExecutePlan() bool {
 
 	case ActionPutIntoType:
 		if done := a.storager.ExecuteAction(action.Target()); done {
+			a.State.Apply(goap.StateOf("!overweighted"))
 			a.plan.nextAction()
 		}
 	}
@@ -161,21 +158,16 @@ func (a *Agent) GetGoalsOf(goalType GoalType) []IGoal {
 	return goals
 }
 
+func (a *Agent) SetState(state string) {
+	a.State.Apply(goap.StateOf(state))
+}
+
 func (a *Agent) AddStorageGoal(w *world.World, from cnts.Point, inventory int) {
 	if len(a.GetGoalsOf(GoalStoreInventoryType)) > 0 {
 		return
 	}
 
-	if near := pathfinding.FindClosest(w, from, building.Get().GetBuildingsOf(building.StorageType)); near.X != -1 {
-		b := building.Get().GetBuildingAt(near)
-		storage, ok := b.(*building.Storage)
-		if !ok {
-			log.Fatal("FOUND A BUILDING DIFERENT THAN A STORAGE")
-		}
-
-		desired := fmt.Sprintf("%s_wood=%d", storage.ID(), (storage.Wood + inventory))
-		a.AddGoal(NewGoalStoreInventory(desired, storage))
-	}
+	a.AddGoal(NewGoalStoreInventory(inventory))
 }
 
 func (a *Agent) AddCollectTreeGoal(w *world.World, from cnts.Point) {
@@ -191,7 +183,7 @@ func (a *Agent) AddCollectTreeGoal(w *world.World, from cnts.Point) {
 	closest := pathfinding.FindClosest(w, from, targets)
 	for _, j := range job.GetJobQueue().Jobs {
 		if j.GetObject().Pos() == closest {
-			a.AddGoal(NewGoalCollectTree(fmt.Sprintf("%s_health=0", j.Object.ID()), j.Object))
+			a.AddGoal(NewGoalCollectTree(j.Object))
 			job.GetJobQueue().Remove(j.Name(), j.Object.ID())
 		}
 	}
