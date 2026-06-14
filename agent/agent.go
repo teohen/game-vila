@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
-	"github/teohen/mgm-tto/job"
-	"github/teohen/mgm-tto/pathfinding"
 	"github/teohen/mgm-tto/world"
 	"strings"
 )
@@ -21,10 +19,9 @@ type IAgent interface {
 	ChooseGoal(w *world.World, pos cnts.Point) bool
 	ExecutePlan() bool
 	GetGoals() []IGoal
-	AddStorageGoal(w *world.World, from cnts.Point, inventory int)
-	AddCollectTreeGoal(w *world.World, from cnts.Point)
 	SetState(state string)
 	RegisterActor(typeAction ActionType, actor Actor)
+	GetGoalsOf(goalType GoalType) []IGoal
 }
 
 type Actor interface {
@@ -163,38 +160,6 @@ func (a *Agent) GetGoalsOf(goalType GoalType) []IGoal {
 
 func (a *Agent) SetState(state string) {
 	a.State.Apply(goap.StateOf(state))
-}
-
-// TODO: remover essa função e adicionar na entity e remover essa logica do Agent
-func (a *Agent) AddStorageGoal(w *world.World, from cnts.Point, inventory int) {
-	if len(a.GetGoalsOf(GoalStoreInventoryType)) > 0 {
-		return
-	}
-
-	g := NewGoalStoreInventory(w, nil, from)
-
-	a.AddGoal(g)
-}
-
-// TODO: remover essa função e adicionar na entity e remover essa logica do Agent
-func (a *Agent) AddCollectTreeGoal(w *world.World, from cnts.Point) {
-	if len(job.GetJobQueue().Jobs) < 1 {
-		return
-	}
-
-	targets := make([]Target, 0)
-	for _, j := range job.GetJobQueue().Jobs {
-		targets = append(targets, j.GetObject())
-	}
-
-	closest := pathfinding.FindClosest(w, from, targets)
-	for _, j := range job.GetJobQueue().Jobs {
-		if j.GetObject().Pos() == closest {
-			g := NewGoalCollectTree(w, j.Object, from)
-			a.AddGoal(g)
-			job.GetJobQueue().Remove(j.Name(), j.Object.ID())
-		}
-	}
 }
 
 func (a *Agent) RegisterActor(typeAction ActionType, actor Actor) {

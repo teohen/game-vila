@@ -5,6 +5,8 @@ import (
 	"github/teohen/mgm-tto/agent"
 	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
+	"github/teohen/mgm-tto/job"
+	"github/teohen/mgm-tto/pathfinding"
 	"github/teohen/mgm-tto/spritebank"
 	"github/teohen/mgm-tto/world"
 
@@ -49,13 +51,12 @@ func NewVillager(x, y int, w *world.World) *Villager {
 	return &v
 }
 
-func (v *Villager) Tick(w *world.World, entities *[]Entity, buildings *building.BuildingsList) {
+func (v *Villager) Tick(entities *[]Entity, buildings *building.BuildingsList) {
 	if v.State == StateVillagerIdle {
-		v.agent.AddCollectTreeGoal(w, v.movement.pos)
+		v.AddCollectTreeGoal()
 	}
 	if v.storager.isOverweighted() {
-		v.agent.SetState("overweighted")
-		v.agent.AddStorageGoal(w, v.Pos(), v.storager.inventory)
+		v.AddStorageGoal()
 	}
 
 	switch v.State {
@@ -89,4 +90,32 @@ func (v *Villager) Draw() {
 
 func (v *Villager) Type() EntityType {
 	return EntityTypeVillager
+}
+
+func (v *Villager) AddStorageGoal() {
+	if len(v.agent.GetGoalsOf(agent.GoalStoreInventoryType)) > 0 {
+		return
+	}
+
+	v.agent.AddGoal(agent.NewGoalStoreInventory(v.w, nil, v.movement.pos))
+	v.agent.SetState("overweighted")
+}
+
+func (v *Villager) AddCollectTreeGoal() {
+	if len(job.GetJobQueue().Jobs) < 1 {
+		return
+	}
+
+	targets := make([]agent.Target, 0)
+	for _, j := range job.GetJobQueue().Jobs {
+		targets = append(targets, j.GetObject())
+	}
+
+	closest := pathfinding.FindClosest(v.w, v.movement.pos, targets)
+	for _, j := range job.GetJobQueue().Jobs {
+		if j.GetObject().Pos() == closest {
+			v.agent.AddGoal(agent.NewGoalCollectTree(v.w, j.Object, v.movement.pos))
+			job.GetJobQueue().Remove(j.Name(), j.Object.ID())
+		}
+	}
 }
