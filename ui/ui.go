@@ -56,6 +56,10 @@ func (ui *UI) Draw() {
 		b.Draw()
 	}
 
+	for _, a := range ui.simulation.Animals() {
+		a.Draw()
+	}
+
 	drawSelectionRectangle(ui)
 	drawSelectedCells(ui)
 	rl.EndMode2D()

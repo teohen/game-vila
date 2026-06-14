@@ -62,6 +62,20 @@ func (g *GoalCollectTree) Type() GoalType {
 	return GoalCollectTreeType
 }
 
+func (g *GoalCollectTree) UpdateActions(t Target, desired *goap.State, w *world.World, pos cnts.Point) {
+	newActions := make([]IAction, 0)
+	for _, action := range g.actions {
+		switch action.Type() {
+		case ActionMoveType:
+			newActions = append(newActions, NewActionMove("walkable", "near", t, w, pos))
+		case ActionChopTreeType:
+			newActions = append(newActions, NewActionChopTree("near", t))
+		case ActionPutIntoType:
+			newActions = append(newActions, NewActionPutInto("near", desired, t))
+		}
+	}
+}
+
 func (g *GoalCollectTree) IsRelevant(w *world.World, from cnts.Point, state *goap.State) bool {
 	ok, err := state.Match(goap.StateOf("!overweighted"))
 	if err != nil {

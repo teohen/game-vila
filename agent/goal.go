@@ -9,6 +9,7 @@ import (
 type IGoal interface {
 	DesiredState() *goap.State
 	SetActions(a ...IAction)
+	UpdateActions(t Target, desired *goap.State, w *world.World, pos cnts.Point)
 	GetGoapActions() []goap.Action
 	Target() Target
 	Name() string
@@ -22,4 +23,5 @@ type GoalType string
 const (
 	GoalCollectTreeType    GoalType = "CollectTree"
 	GoalStoreInventoryType GoalType = "StoreInventory"
+	GoalRoamType           GoalType = "Roam"
 )

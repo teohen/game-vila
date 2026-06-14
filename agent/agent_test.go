@@ -67,11 +67,10 @@ func TestShouldStorageIfOverweighted(t *testing.T) {
 	mv := ActorTest{}
 	lj := ActorTest{}
 	sto := ActorTest{}
-	a := Agent{
-		movement:   &mv,
-		storager:   &sto,
-		lumberjack: &lj,
-	}
+	a := Agent{}
+	a.RegisterActor(ActionMoveType, &mv)
+	a.RegisterActor(ActionPutIntoType, &sto)
+	a.RegisterActor(ActionChopTreeType, &lj)
 
 	collectGoal := NewGoalCollectTree(&TargetTest{id: "ID_TREE"})
 	storeGoal := NewGoalStoreInventory(100)
@@ -90,11 +89,14 @@ func TestShouldStorageIfOverweighted(t *testing.T) {
 }
 
 func TestGetGoals(t *testing.T) {
-	a := Agent{
-		movement:   &ActorTest{},
-		storager:   &ActorTest{},
-		lumberjack: &ActorTest{},
-	}
+	mv := ActorTest{}
+	lj := ActorTest{}
+	sto := ActorTest{}
+	a := Agent{}
+	a.RegisterActor(ActionMoveType, &mv)
+	a.RegisterActor(ActionPutIntoType, &sto)
+	a.RegisterActor(ActionChopTreeType, &lj)
+
 	g1 := NewGoalCollectTree(&TargetTest{id: "T1"})
 	g2 := NewGoalCollectTree(&TargetTest{id: "T2"})
 	g3 := NewGoalStoreInventory(100)
@@ -119,11 +121,13 @@ func TestGetGoals(t *testing.T) {
 }
 
 func TestRemoveGoal(t *testing.T) {
-	a := Agent{
-		movement:   &ActorTest{},
-		storager:   &ActorTest{},
-		lumberjack: &ActorTest{},
-	}
+	mv := ActorTest{}
+	lj := ActorTest{}
+	sto := ActorTest{}
+	a := Agent{}
+	a.RegisterActor(ActionMoveType, &mv)
+	a.RegisterActor(ActionPutIntoType, &sto)
+	a.RegisterActor(ActionChopTreeType, &lj)
 	g1 := NewGoalCollectTree(&TargetTest{id: "T1"})
 	g2 := NewGoalCollectTree(&TargetTest{id: "T2"})
 	g3 := NewGoalStoreInventory(100)
@@ -147,11 +151,13 @@ func TestRemoveGoal(t *testing.T) {
 }
 
 func TestRemoveGoalNotInList(t *testing.T) {
-	a := Agent{
-		movement:   &ActorTest{},
-		storager:   &ActorTest{},
-		lumberjack: &ActorTest{},
-	}
+	mv := ActorTest{}
+	lj := ActorTest{}
+	sto := ActorTest{}
+	a := Agent{}
+	a.RegisterActor(ActionMoveType, &mv)
+	a.RegisterActor(ActionPutIntoType, &sto)
+	a.RegisterActor(ActionChopTreeType, &lj)
 	g := NewGoalCollectTree(&TargetTest{id: "T1"})
 	a.AddGoal(g)
 
@@ -168,12 +174,13 @@ func TestRemoveGoalNotInList(t *testing.T) {
 
 func TestChooseGoalReturnsFalseWhenNoGoalRelevant(t *testing.T) {
 	w := world.NewWorld(10, 10)
-	a := Agent{
-		movement:   &ActorTest{},
-		storager:   &ActorTest{},
-		lumberjack: &ActorTest{},
-		State:      goap.StateOf("walkable", "overweighted"),
-	}
+	mv := ActorTest{}
+	lj := ActorTest{}
+	sto := ActorTest{}
+	a := Agent{}
+	a.RegisterActor(ActionMoveType, &mv)
+	a.RegisterActor(ActionPutIntoType, &sto)
+	a.RegisterActor(ActionChopTreeType, &lj)
 	g := NewGoalCollectTree(&TargetTest{id: "T1"})
 	a.AddGoal(g)
 
@@ -187,11 +194,11 @@ func TestShouldExecuteCollectTreePlan(t *testing.T) {
 	mv := ActorTest{}
 	lj := ActorTest{}
 	sto := ActorTest{}
-	a := Agent{
-		movement:   &mv,
-		storager:   &sto,
-		lumberjack: &lj,
-	}
+
+	a := Agent{}
+	a.RegisterActor(ActionMoveType, &mv)
+	a.RegisterActor(ActionPutIntoType, &sto)
+	a.RegisterActor(ActionChopTreeType, &lj)
 
 	collectGoal := NewGoalCollectTree(&TargetTest{id: "ID_TREE"})
 	a.State = goap.StateOf("walkable", "!overweighted")
@@ -222,11 +229,11 @@ func TestShouldAddCollectTreeGoal(t *testing.T) {
 	mv := ActorTest{}
 	lj := ActorTest{}
 	sto := ActorTest{}
-	a := Agent{
-		movement:   &mv,
-		storager:   &sto,
-		lumberjack: &lj,
-	}
+
+	a := Agent{}
+	a.RegisterActor(ActionMoveType, &mv)
+	a.RegisterActor(ActionPutIntoType, &sto)
+	a.RegisterActor(ActionChopTreeType, &lj)
 
 	job.GetJobQueue().Push(*job.NewJob(
 		job.JobChopTreeType, &TargetTest{id: "TREE_ID"},
@@ -249,12 +256,13 @@ func TestShouldAddCollectTreeGoal(t *testing.T) {
 
 func TestShouldAddStorageGoal(t *testing.T) {
 	w := world.NewWorld(10, 10)
-	a := Agent{
-		movement:   &ActorTest{},
-		storager:   &ActorTest{},
-		lumberjack: &ActorTest{},
-		State:      goap.StateOf("walkable", "!overweighted"),
-	}
+	mv := ActorTest{}
+	lj := ActorTest{}
+	sto := ActorTest{}
+	a := Agent{}
+	a.RegisterActor(ActionMoveType, &mv)
+	a.RegisterActor(ActionPutIntoType, &sto)
+	a.RegisterActor(ActionChopTreeType, &lj)
 
 	a.AddStorageGoal(&w, cnts.Point{X: 0, Y: 0}, 100)
 
@@ -269,12 +277,13 @@ func TestShouldAddStorageGoal(t *testing.T) {
 
 func TestShouldNotAddDuplicateStorageGoal(t *testing.T) {
 	w := world.NewWorld(10, 10)
-	a := Agent{
-		movement:   &ActorTest{},
-		storager:   &ActorTest{},
-		lumberjack: &ActorTest{},
-		State:      goap.StateOf("walkable", "!overweighted"),
-	}
+	mv := ActorTest{}
+	lj := ActorTest{}
+	sto := ActorTest{}
+	a := Agent{}
+	a.RegisterActor(ActionMoveType, &mv)
+	a.RegisterActor(ActionPutIntoType, &sto)
+	a.RegisterActor(ActionChopTreeType, &lj)
 
 	a.AddStorageGoal(&w, cnts.Point{X: 0, Y: 0}, 100)
 	a.AddStorageGoal(&w, cnts.Point{X: 0, Y: 0}, 100)
@@ -291,12 +300,11 @@ func TestExecutePlanPutIntoAppliesNotOverweighted(t *testing.T) {
 	mv := ActorTest{}
 	lj := ActorTest{}
 	sto := ActorTest{}
-	a := Agent{
-		movement:   &mv,
-		storager:   &sto,
-		lumberjack: &lj,
-		State:      goap.StateOf("walkable", "overweighted"),
-	}
+
+	a := Agent{}
+	a.RegisterActor(ActionMoveType, &mv)
+	a.RegisterActor(ActionPutIntoType, &sto)
+	a.RegisterActor(ActionChopTreeType, &lj)
 
 	storeGoal := NewGoalStoreInventory(100)
 	a.AddGoal(storeGoal)

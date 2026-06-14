@@ -7,6 +7,7 @@ import (
 	"github/teohen/mgm-tto/job"
 	"github/teohen/mgm-tto/pathfinding"
 	"github/teohen/mgm-tto/world"
+	"strings"
 )
 
 type Target interface {
@@ -23,6 +24,7 @@ type IAgent interface {
 	AddStorageGoal(w *world.World, from cnts.Point, inventory int)
 	AddCollectTreeGoal(w *world.World, from cnts.Point)
 	SetState(state string)
+	RegisterActor(typeAction ActionType, actor Actor)
 }
 
 type Actor interface {
@@ -30,23 +32,21 @@ type Actor interface {
 }
 
 type Agent struct {
-	movement   Actor
-	lumberjack Actor
-	storager   Actor
-	State      *goap.State
-	Goals      []IGoal
-	Actions    []goap.Action
-	plan       *Plan
+	Owner   string
+	Actors  map[ActionType]Actor
+	State   *goap.State
+	Goals   []IGoal
+	Actions []goap.Action
+	plan    *Plan
 }
 
-func NewAgent(x, y int, w *world.World, movement, lumberjack, storager Actor) IAgent {
+func NewAgent(x, y int, w *world.World, own string, initialState string) IAgent {
 	a := Agent{
-		Goals:      make([]IGoal, 0),
-		Actions:    make([]goap.Action, 0),
-		State:      goap.StateOf("walkable", "!overweighted"),
-		movement:   movement,
-		lumberjack: lumberjack,
-		storager:   storager,
+		Owner:   own,
+		Goals:   make([]IGoal, 0),
+		Actions: make([]goap.Action, 0),
+		State:   goap.StateOf(strings.Split(initialState, ",")...),
+		Actors:  make(map[ActionType]Actor),
 	}
 
 	return &a
@@ -78,10 +78,7 @@ func (a *Agent) ChooseGoal(w *world.World, pos cnts.Point) bool {
 			continue
 		}
 
-		mv := NewActionMove("walkable", "near", goal.Target(), w, pos)
-		cp := NewActionChopTree("near", goal.Target())
-		pi := NewActionPutInto("near", goal.DesiredState(), goal.Target())
-		goal.SetActions(mv, cp, pi)
+		goal.UpdateActions(goal.Target(), goal.DesiredState(), w, pos)
 		actions, err := goap.Plan(startPlan, goal.DesiredState(), goal.GetGoapActions())
 		if err != nil {
 			if cnts.DEBUGGING {
@@ -126,16 +123,19 @@ func (a *Agent) ExecutePlan() bool {
 	typACt := action.Type()
 	switch typACt {
 	case ActionMoveType:
-		if done := a.movement.ExecuteAction(action.Target()); done {
+		actor := a.Actors[ActionMoveType]
+		if done := actor.ExecuteAction(action.Target()); done {
 			a.plan.nextAction()
 		}
 	case ActionChopTreeType:
-		if done := a.lumberjack.ExecuteAction(action.Target()); done {
+		actor := a.Actors[ActionChopTreeType]
+		if done := actor.ExecuteAction(action.Target()); done {
 			a.plan.nextAction()
 		}
 
 	case ActionPutIntoType:
-		if done := a.storager.ExecuteAction(action.Target()); done {
+		actor := a.Actors[ActionPutIntoType]
+		if done := actor.ExecuteAction(action.Target()); done {
 			a.State.Apply(goap.StateOf("!overweighted"))
 			a.plan.nextAction()
 		}
@@ -162,14 +162,25 @@ func (a *Agent) SetState(state string) {
 	a.State.Apply(goap.StateOf(state))
 }
 
+// TODO: remover essa função e adicionar na entity e remover essa logica do Agent
 func (a *Agent) AddStorageGoal(w *world.World, from cnts.Point, inventory int) {
 	if len(a.GetGoalsOf(GoalStoreInventoryType)) > 0 {
 		return
 	}
 
-	a.AddGoal(NewGoalStoreInventory(inventory))
+	mv := NewActionMove("walkable", "near", j.Object, w, from)
+	pi := NewActionPutInto("near", goal.DesiredState(), goal.Target())
+
+	// TODO: Resolver isso depois
+	// na hora de validar o plan, é preciso ter em mãos apenas quais são as ações necessárias para realizá-lo
+	actions := make([]IAction, 0)
+	actions = append(actions, mv, pi)
+	g := NewGoalStoreInventory(inventory, actions)
+
+	a.AddGoal(g)
 }
 
+// TODO: remover essa função e adicionar na entity e remover essa logica do Agent
 func (a *Agent) AddCollectTreeGoal(w *world.World, from cnts.Point) {
 	if len(job.GetJobQueue().Jobs) < 1 {
 		return
@@ -183,8 +194,18 @@ func (a *Agent) AddCollectTreeGoal(w *world.World, from cnts.Point) {
 	closest := pathfinding.FindClosest(w, from, targets)
 	for _, j := range job.GetJobQueue().Jobs {
 		if j.GetObject().Pos() == closest {
-			a.AddGoal(NewGoalCollectTree(j.Object))
+			mv := NewActionMove("walkable", "near", j.Object, w, from)
+			cp := NewActionChopTree("near", j.Object)
+
+			actions := make([]IAction, 0)
+			actions = append(actions, mv, cp)
+			g := NewGoalCollectTree(j.Object, actions)
+			a.AddGoal(g)
 			job.GetJobQueue().Remove(j.Name(), j.Object.ID())
 		}
 	}
+}
+
+func (a *Agent) RegisterActor(typeAction ActionType, actor Actor) {
+	a.Actors[typeAction] = actor
 }
