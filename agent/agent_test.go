@@ -244,3 +244,39 @@ func TestShouldAddCollectTreeGoal(t *testing.T) {
 		t.Fatalf("expect job.GetJobQueue().Jobs to be %d. got=%d", 0, len(job.GetJobQueue().Jobs))
 	}
 }
+
+func TestExecutePlanPutIntoAppliesNotOverweighted(t *testing.T) {
+	w := world.NewWorld(10, 10)
+	mv := ActorTest{}
+	lj := ActorTest{}
+	sto := ActorTest{}
+	a := Agent{
+		movement:   &mv,
+		storager:   &sto,
+		lumberjack: &lj,
+		State:      goap.StateOf("walkable", "overweighted", "has_storage"),
+	}
+
+	storeGoal := NewGoalStoreInventory(fmt.Sprintf("%s_wood=%d", "STO_ID", 100), &TargetTest{id: "STO_ID"})
+	a.AddGoal(storeGoal)
+
+	if planSet := a.ChooseGoal(&w, cnts.Point{X: 0, Y: 0}); !planSet {
+		t.Fatalf("expect a.ChooseGoal return to be %t. got=%t", true, planSet)
+	}
+
+	if !testPlan(t, a.plan, GoalStoreInventoryType, "{STO_ID_wood=100}", 2, 0) {
+		return
+	}
+
+	a.ExecutePlan()
+
+	a.ExecutePlan()
+
+	match, err := a.State.Match(goap.StateOf("!overweighted"))
+	if err != nil {
+		t.Fatalf("unexpected error matching state: %v", err)
+	}
+	if !match {
+		t.Fatal("expected agent state to contain !overweighted after PutInto action")
+	}
+}
