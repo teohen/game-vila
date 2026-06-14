@@ -1,15 +1,11 @@
 package agent
 
 import (
-	"fmt"
 	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/pathfinding"
 	"github/teohen/mgm-tto/world"
-	"strings"
-
-	"github.com/google/uuid"
 )
 
 type GoalStoreInventory struct {
@@ -19,14 +15,20 @@ type GoalStoreInventory struct {
 	actions      []IAction
 	target       Target
 	inventory    int
+	w            *world.World
 }
 
-func NewGoalStoreInventory(inventory int) IGoal {
-	name := "StoreInventory"
+func NewGoalStoreInventory(w *world.World, t Target, from cnts.Point) IGoal {
+
+	actions := []IAction{NewActionMove(w, t, from), NewActionPutInto(t)}
+
 	g := GoalStoreInventory{
-		id:        strings.ReplaceAll(uuid.NewString(), "-", ""),
-		name:      name,
-		inventory: inventory,
+		name:         "StoreInventory",
+		id:           cnts.NewID(),
+		desiredState: goap.StateOf("inventory_incremented"),
+		target:       t,
+		w:            w,
+		actions:      actions,
 	}
 
 	return &g
@@ -67,27 +69,12 @@ func (gsi *GoalStoreInventory) Type() GoalType {
 	return GoalStoreInventoryType
 }
 
-func (g *GoalStoreInventory) UpdateActions(t Target, desired *goap.State, w *world.World, pos cnts.Point) {
-	newActions := make([]IAction, 0)
-	for _, action := range g.actions {
-		switch action.Type() {
-		case ActionMoveType:
-			newActions = append(newActions, NewActionMove("walkable", "near", t, w, pos))
-		case ActionChopTreeType:
-			newActions = append(newActions, NewActionChopTree("near", t))
-		case ActionPutIntoType:
-			newActions = append(newActions, NewActionPutInto("near", desired, t))
-		}
-	}
+func (gsi *GoalStoreInventory) Actions() []IAction {
+	return gsi.actions
 }
 
-func (gsi *GoalStoreInventory) IsRelevant(w *world.World, from cnts.Point, state *goap.State) bool {
-	match, err := state.Match(goap.StateOf("overweighted"))
-	if err != nil || !match {
-		return false
-	}
-
-	near := pathfinding.FindClosest(w, from, building.Get().GetBuildingsOf(building.StorageType))
+func (gsi *GoalStoreInventory) IsRelevant(from cnts.Point, state *goap.State) bool {
+	near := pathfinding.FindClosest(gsi.w, from, building.Get().GetBuildingsOf(building.StorageType))
 	if near.X == -1 {
 		return false
 	}
@@ -99,6 +86,5 @@ func (gsi *GoalStoreInventory) IsRelevant(w *world.World, from cnts.Point, state
 	}
 
 	gsi.target = storage
-	gsi.desiredState = goap.StateOf(fmt.Sprintf("%s_wood=%d", storage.ID(), storage.Wood+gsi.inventory))
 	return true
 }

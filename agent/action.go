@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
 )
 
@@ -11,6 +12,7 @@ type IAction interface {
 	Target() Target
 	SetTarget(Target)
 	Type() ActionType
+	Update(t Target, from cnts.Point)
 }
 
 type ActionType string

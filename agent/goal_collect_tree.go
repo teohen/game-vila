@@ -6,9 +6,6 @@ import (
 	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/world"
 	"log"
-	"strings"
-
-	"github.com/google/uuid"
 )
 
 type GoalCollectTree struct {
@@ -19,13 +16,15 @@ type GoalCollectTree struct {
 	target       Target
 }
 
-func NewGoalCollectTree(t Target) IGoal {
-	name := "CollectTree"
+func NewGoalCollectTree(w *world.World, t Target, from cnts.Point) IGoal {
+	actions := []IAction{NewActionMove(w, t, from), NewActionChopTree(t)}
 	g := GoalCollectTree{
-		id:           strings.ReplaceAll(uuid.NewString(), "-", ""),
-		name:         name,
+		id:   cnts.NewID(),
+		name: "CollectTree",
+		// TODO: revise the action to not decrement but zero the health or just state the tree downed
 		desiredState: goap.StateOf(fmt.Sprintf("%s_health=0", t.ID())),
 		target:       t,
+		actions:      actions,
 	}
 
 	return &g
@@ -62,21 +61,11 @@ func (g *GoalCollectTree) Type() GoalType {
 	return GoalCollectTreeType
 }
 
-func (g *GoalCollectTree) UpdateActions(t Target, desired *goap.State, w *world.World, pos cnts.Point) {
-	newActions := make([]IAction, 0)
-	for _, action := range g.actions {
-		switch action.Type() {
-		case ActionMoveType:
-			newActions = append(newActions, NewActionMove("walkable", "near", t, w, pos))
-		case ActionChopTreeType:
-			newActions = append(newActions, NewActionChopTree("near", t))
-		case ActionPutIntoType:
-			newActions = append(newActions, NewActionPutInto("near", desired, t))
-		}
-	}
+func (g *GoalCollectTree) Actions() []IAction {
+	return g.actions
 }
 
-func (g *GoalCollectTree) IsRelevant(w *world.World, from cnts.Point, state *goap.State) bool {
+func (g *GoalCollectTree) IsRelevant(from cnts.Point, state *goap.State) bool {
 	ok, err := state.Match(goap.StateOf("!overweighted"))
 	if err != nil {
 		log.Fatal("invalid state passed to match", err.Error())

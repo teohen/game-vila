@@ -80,10 +80,7 @@ func (d *Deer) AddRoamGoal(w *world.World, entities *[]Entity) {
 	newY := RandomIntRangeFast(d.Pos().Y-5, d.Pos().Y+5)
 
 	pin := cnts.Pin{Id: cnts.NewID(), Position: cnts.Point{X: newX, Y: newY}}
-	action := agent.NewActionMove("walkable", "near", &pin, w, d.Pos())
-	actions := make([]agent.IAction, 0)
-	actions = append(actions, action)
-	g := agent.NewGoalRoam(&pin, actions)
+	g := agent.NewGoalRoam(w, &pin, d.movement.pos)
 	d.agent.AddGoal(g)
 }
 

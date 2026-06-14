@@ -74,11 +74,14 @@ func (a *Agent) ChooseGoal(w *world.World, pos cnts.Point) bool {
 
 	for _, goal := range a.Goals {
 		startPlan := a.State
-		if !goal.IsRelevant(w, pos, a.State) {
+		if !goal.IsRelevant(pos, a.State) {
 			continue
 		}
 
-		goal.UpdateActions(goal.Target(), goal.DesiredState(), w, pos)
+		for _, act := range goal.Actions() {
+			act.Update(goal.Target(), pos)
+		}
+
 		actions, err := goap.Plan(startPlan, goal.DesiredState(), goal.GetGoapActions())
 		if err != nil {
 			if cnts.DEBUGGING {
@@ -168,14 +171,7 @@ func (a *Agent) AddStorageGoal(w *world.World, from cnts.Point, inventory int) {
 		return
 	}
 
-	mv := NewActionMove("walkable", "near", j.Object, w, from)
-	pi := NewActionPutInto("near", goal.DesiredState(), goal.Target())
-
-	// TODO: Resolver isso depois
-	// na hora de validar o plan, é preciso ter em mãos apenas quais são as ações necessárias para realizá-lo
-	actions := make([]IAction, 0)
-	actions = append(actions, mv, pi)
-	g := NewGoalStoreInventory(inventory, actions)
+	g := NewGoalStoreInventory(w, nil, from)
 
 	a.AddGoal(g)
 }
@@ -194,12 +190,7 @@ func (a *Agent) AddCollectTreeGoal(w *world.World, from cnts.Point) {
 	closest := pathfinding.FindClosest(w, from, targets)
 	for _, j := range job.GetJobQueue().Jobs {
 		if j.GetObject().Pos() == closest {
-			mv := NewActionMove("walkable", "near", j.Object, w, from)
-			cp := NewActionChopTree("near", j.Object)
-
-			actions := make([]IAction, 0)
-			actions = append(actions, mv, cp)
-			g := NewGoalCollectTree(j.Object, actions)
+			g := NewGoalCollectTree(w, j.Object, from)
 			a.AddGoal(g)
 			job.GetJobQueue().Remove(j.Name(), j.Object.ID())
 		}

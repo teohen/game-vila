@@ -7,19 +7,20 @@ import (
 )
 
 type GoalRoam struct {
-	id             string
-	name           string
-	desiredState   *goap.State
-	actions        []IAction
-	target         Target
-	allowedActions []string
+	id           string
+	name         string
+	desiredState *goap.State
+	actions      []IAction
+	target       Target
 }
 
-func NewGoalRoam(t Target, actions []IAction) IGoal {
-	name := "Roam"
+func NewGoalRoam(w *world.World, t Target, from cnts.Point) IGoal {
+
+	actions := []IAction{NewActionMove(w, t, from)}
+
 	g := GoalRoam{
 		id:           cnts.NewID(),
-		name:         name,
+		name:         "Roam",
 		desiredState: goap.StateOf("near"),
 		target:       t,
 
@@ -60,24 +61,10 @@ func (gr *GoalRoam) Type() GoalType {
 	return GoalRoamType
 }
 
-func (gr *GoalRoam) UpdateActions(t Target, desired *goap.State, w *world.World, pos cnts.Point) {
-	newActions := make([]IAction, 0)
-	for _, action := range gr.actions {
-		ac := action.Type()
-		switch ac {
-		case ActionMoveType:
-			newActions = append(newActions, NewActionMove("walkable", "near", t, w, pos))
-		case ActionChopTreeType:
-			newActions = append(newActions, NewActionChopTree("near", t))
-		case ActionPutIntoType:
-			newActions = append(newActions, NewActionPutInto("near", desired, t))
-		}
-	}
-
-	gr.actions = newActions
-
+func (gr *GoalRoam) Actions() []IAction {
+	return gr.actions
 }
 
-func (gr *GoalRoam) IsRelevant(w *world.World, from cnts.Point, state *goap.State) bool {
+func (gr *GoalRoam) IsRelevant(from cnts.Point, state *goap.State) bool {
 	return true
 }
