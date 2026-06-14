@@ -4,7 +4,6 @@ import (
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/world"
-	"strings"
 )
 
 type ActionPutInto struct {
@@ -17,12 +16,12 @@ type ActionPutInto struct {
 	from    cnts.Point
 }
 
-func NewActionPutInto(r string, outcome *goap.State, t Target) IAction {
+func NewActionPutInto(t Target) IAction {
 	pi := ActionPutInto{
 		name:    "put_into",
 		cost:    1,
-		require: goap.StateOf(strings.Split(r, ",")...),
-		outcome: outcome,
+		require: goap.StateOf("near"),
+		outcome: goap.StateOf("inventory_incremented"),
 		target:  t,
 	}
 	return &pi
@@ -50,4 +49,9 @@ func (pi *ActionPutInto) SetTarget(e Target) {
 
 func (pi *ActionPutInto) Type() ActionType {
 	return ActionPutIntoType
+}
+
+func (pi *ActionPutInto) Update(t Target, from cnts.Point) {
+	pi.from = from
+	pi.target = t
 }

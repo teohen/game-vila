@@ -31,6 +31,7 @@ func New() Game {
 	hit := false
 	var villager *entity.Villager
 	var storage *building.Storage
+	var deer *entity.Deer
 	for !hit {
 		x := rand.Intn(cnts.GridCols)
 		y := rand.Intn(cnts.GridRows)
@@ -53,8 +54,21 @@ func New() Game {
 		}
 	}
 
+	hit = false
+
+	for !hit {
+		x := rand.Intn(cnts.GridCols)
+		y := rand.Intn(cnts.GridRows)
+
+		if !sim.World().IsOccupied(x, y) {
+			deer = entity.NewDeer(x, y, sim.World())
+			hit = true
+		}
+	}
+
 	g.sim.AddVillager(villager)
 	g.sim.AddStorage(storage)
+	g.sim.AddDeer(deer)
 	return g
 }
 

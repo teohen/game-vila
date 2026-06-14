@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
-	"github/teohen/mgm-tto/world"
-	"strings"
 )
 
 type ActionChopTree struct {
@@ -14,15 +12,13 @@ type ActionChopTree struct {
 	require *goap.State
 	outcome *goap.State
 	target  Target
-	world   *world.World
-	from    cnts.Point
 }
 
-func NewActionChopTree(r string, t Target) IAction {
+func NewActionChopTree(t Target) IAction {
 	cp := ActionChopTree{
 		name:    "chop_tree",
 		cost:    1,
-		require: goap.StateOf(strings.Split(r, ",")...),
+		require: goap.StateOf("near"),
 		outcome: goap.StateOf(fmt.Sprintf("%s_health=0", t.ID())),
 		target:  t,
 	}
@@ -51,4 +47,8 @@ func (cp *ActionChopTree) SetTarget(e Target) {
 
 func (cp *ActionChopTree) Type() ActionType {
 	return ActionChopTreeType
+}
+
+func (cp *ActionChopTree) Update(t Target, from cnts.Point) {
+	cp.target = t
 }

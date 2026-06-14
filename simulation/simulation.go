@@ -25,6 +25,7 @@ type Simulation struct {
 	villagers []*entity.Villager
 	trees     []*entity.Tree
 	buildings *building.BuildingsList
+	animals   []*entity.Deer
 
 	ActiveTool Tool
 	Selected   map[[2]int]bool
@@ -68,6 +69,7 @@ func New() *Simulation {
 		villagers: nil,
 		trees:     trees,
 		buildings: building.NewBuildingsList(),
+		animals:   nil,
 	}
 }
 
@@ -75,6 +77,10 @@ func (s *Simulation) Tick() {
 	all := s.Entities()
 	for _, v := range s.villagers {
 		v.Tick(s.world, &all, s.buildings)
+	}
+
+	for _, a := range s.animals {
+		a.Tick(s.world, &all, s.buildings)
 	}
 
 	s.processEvents()
@@ -103,6 +109,11 @@ func (s *Simulation) AddVillager(v *entity.Villager) {
 func (s *Simulation) AddTree(tree *entity.Tree) {
 	s.trees = append(s.trees, tree)
 	s.world.Occupy(tree.Pos().X, tree.Pos().Y)
+}
+
+func (s *Simulation) AddDeer(deer *entity.Deer) {
+	s.animals = append(s.animals, deer)
+	s.world.Occupy(deer.Pos().X, deer.Pos().Y)
 }
 
 func (s *Simulation) RemoveTree(x, y int) bool {
@@ -172,6 +183,10 @@ func (s *Simulation) Entities() []entity.Entity {
 
 func (s *Simulation) Buildings() []building.Building {
 	return s.buildings.Buldings()
+}
+
+func (s *Simulation) Animals() []*entity.Deer {
+	return s.animals
 }
 
 func (s *Simulation) OnSelectionComplete() {

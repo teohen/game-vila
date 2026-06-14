@@ -6,7 +6,6 @@ import (
 	"github/teohen/mgm-tto/pathfinding"
 	"github/teohen/mgm-tto/world"
 	"math"
-	"strings"
 )
 
 type ActionMove struct {
@@ -19,26 +18,16 @@ type ActionMove struct {
 	from    cnts.Point
 }
 
-func NewActionMove(r, o string, t Target, w *world.World, from cnts.Point) IAction {
+func NewActionMove(w *world.World, t Target, from cnts.Point) IAction {
 	am := ActionMove{
 		name:    "move_action",
 		cost:    1,
-		require: goap.StateOf(strings.Split(r, ",")...),
-		outcome: goap.StateOf(strings.Split(o, ",")...),
+		require: goap.StateOf("walkable"),
+		outcome: goap.StateOf("near"),
 		target:  t,
 		world:   w,
 		from:    from,
 	}
-
-	path := pathfinding.FindPath(am.world, am.from, am.target.Pos())
-	if path == nil {
-		am.outcome = goap.StateOf("!near")
-		am.cost = math.MaxFloat32
-	} else {
-		am.cost = float32(len(path))
-		am.outcome = goap.StateOf("near")
-	}
-
 	return &am
 }
 
@@ -64,4 +53,18 @@ func (am *ActionMove) SetTarget(e Target) {
 
 func (am *ActionMove) Type() ActionType {
 	return ActionMoveType
+}
+
+func (am *ActionMove) Update(t Target, from cnts.Point) {
+	am.target = t
+	am.from = from
+
+	path := pathfinding.FindPath(am.world, am.from, am.target.Pos())
+	if path == nil {
+		am.outcome = goap.StateOf("!near")
+		am.cost = math.MaxFloat32
+	} else {
+		am.cost = float32(len(path))
+		am.outcome = goap.StateOf("near")
+	}
 }

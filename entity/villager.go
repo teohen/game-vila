@@ -41,7 +41,10 @@ func NewVillager(x, y int, w *world.World) *Villager {
 	v.movement = movement
 	v.storager = storager
 	v.lumberjack = lumberjack
-	v.agent = agent.NewAgent(x, y, nil, movement, lumberjack, storager)
+	v.agent = agent.NewAgent(x, y, w, "Villager", "walkable,!overweighted")
+	v.agent.RegisterActor(agent.ActionMoveType, movement)
+	v.agent.RegisterActor(agent.ActionChopTreeType, lumberjack)
+	v.agent.RegisterActor(agent.ActionPutIntoType, storager)
 	v.w = w
 	return &v
 }
@@ -66,7 +69,6 @@ func (v *Villager) Tick(w *world.World, entities *[]Entity, buildings *building.
 			v.State = StateVillagerIdle
 		}
 	}
-
 }
 
 func (v *Villager) Pos() cnts.Point {

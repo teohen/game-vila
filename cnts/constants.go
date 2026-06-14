@@ -1,5 +1,11 @@
 package cnts
 
+import (
+	"strings"
+
+	"github.com/google/uuid"
+)
+
 const (
 	ScreenW  = 1200
 	ScreenH  = 1200
@@ -33,4 +39,21 @@ func ScreenToWorld(mx, my int32) (int, int, bool) {
 
 type Point struct {
 	X, Y int
+}
+
+func NewID() string {
+	return strings.ReplaceAll(uuid.NewString(), "-", "")
+}
+
+type Pin struct {
+	Id       string
+	Position Point
+}
+
+func (p *Pin) Pos() Point {
+	return p.Position
+}
+
+func (p *Pin) ID() string {
+	return p.Id
 }

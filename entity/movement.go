@@ -141,3 +141,7 @@ func (m *Movement) ExecuteAction(target agent.Target) bool {
 	}
 	return false
 }
+
+func (m *Movement) IsActor(actionType agent.ActionType) bool {
+	return actionType == agent.ActionMoveType
+}
