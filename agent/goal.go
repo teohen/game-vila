@@ -1,7 +1,9 @@
 package agent
 
 import (
+	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
+	"github/teohen/mgm-tto/world"
 )
 
 type IGoal interface {
@@ -12,7 +14,7 @@ type IGoal interface {
 	Name() string
 	ID() string
 	Type() GoalType
-	IsRelevant(state *goap.State) bool
+	IsRelevant(w *world.World, from cnts.Point, state *goap.State) bool
 }
 
 type GoalType string

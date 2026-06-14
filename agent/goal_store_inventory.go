@@ -1,8 +1,12 @@
 package agent
 
 import (
+	"fmt"
+	"github/teohen/mgm-tto/building"
+	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
-	"log"
+	"github/teohen/mgm-tto/pathfinding"
+	"github/teohen/mgm-tto/world"
 	"strings"
 
 	"github.com/google/uuid"
@@ -13,17 +17,16 @@ type GoalStoreInventory struct {
 	name         string
 	desiredState *goap.State
 	actions      []IAction
-
-	target Target
+	target       Target
+	inventory    int
 }
 
-func NewGoalStoreInventory(desired string, t Target) IGoal {
+func NewGoalStoreInventory(inventory int) IGoal {
 	name := "StoreInventory"
 	g := GoalStoreInventory{
-		id:           strings.ReplaceAll(uuid.NewString(), "-", ""),
-		name:         name,
-		desiredState: goap.StateOf(strings.Split(desired, ",")...),
-		target:       t,
+		id:        strings.ReplaceAll(uuid.NewString(), "-", ""),
+		name:      name,
+		inventory: inventory,
 	}
 
 	return &g
@@ -64,10 +67,24 @@ func (gsi *GoalStoreInventory) Type() GoalType {
 	return GoalStoreInventoryType
 }
 
-func (gsi *GoalStoreInventory) IsRelevant(state *goap.State) bool {
-	match, err := state.Match(goap.StateOf("has_storage"))
-	if err != nil {
-		log.Fatal("invalid state passed to match", err.Error())
+func (gsi *GoalStoreInventory) IsRelevant(w *world.World, from cnts.Point, state *goap.State) bool {
+	match, err := state.Match(goap.StateOf("overweighted"))
+	if err != nil || !match {
+		return false
 	}
-	return match
+
+	near := pathfinding.FindClosest(w, from, building.Get().GetBuildingsOf(building.StorageType))
+	if near.X == -1 {
+		return false
+	}
+
+	b := building.Get().GetBuildingAt(near)
+	storage, ok := b.(*building.Storage)
+	if !ok {
+		return false
+	}
+
+	gsi.target = storage
+	gsi.desiredState = goap.StateOf(fmt.Sprintf("%s_wood=%d", storage.ID(), storage.Wood+gsi.inventory))
+	return true
 }

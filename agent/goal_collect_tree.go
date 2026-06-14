@@ -1,7 +1,9 @@
 package agent
 
 import (
+	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
+	"github/teohen/mgm-tto/world"
 	"log"
 	"strings"
 
@@ -60,7 +62,7 @@ func (g *GoalCollectTree) Type() GoalType {
 	return GoalCollectTreeType
 }
 
-func (g *GoalCollectTree) IsRelevant(state *goap.State) bool {
+func (g *GoalCollectTree) IsRelevant(w *world.World, from cnts.Point, state *goap.State) bool {
 	ok, err := state.Match(goap.StateOf("!overweighted"))
 	if err != nil {
 		log.Fatal("invalid state passed to match", err.Error())

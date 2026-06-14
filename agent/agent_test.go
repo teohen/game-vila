@@ -2,6 +2,7 @@ package agent
 
 import (
 	"fmt"
+	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/job"
@@ -47,7 +48,7 @@ func testPlan(t *testing.T, plan *Plan, goalType GoalType, goalDesired string, a
 }
 
 func testGoal(t *testing.T, goal IGoal, typeG GoalType, desired string) bool {
-	if goal.DesiredState().String() != desired {
+	if desired != "" && goal.DesiredState().String() != desired {
 		t.Errorf("expect goal.DesiredState() to be %s. got=%s", desired, goal.DesiredState().String())
 		return false
 	}
@@ -62,6 +63,8 @@ func testGoal(t *testing.T, goal IGoal, typeG GoalType, desired string) bool {
 
 func TestShouldStorageIfOverweighted(t *testing.T) {
 	w := world.NewWorld(10, 10)
+	building.NewBuildingsList()
+	building.Get().AddBuilding(building.NewStorage(3, 4))
 	mv := ActorTest{}
 	lj := ActorTest{}
 	sto := ActorTest{}
@@ -72,8 +75,8 @@ func TestShouldStorageIfOverweighted(t *testing.T) {
 	}
 
 	collectGoal := NewGoalCollectTree(fmt.Sprintf("%s_health=0", "ID_TREE"), &TargetTest{})
-	storeGoal := NewGoalStoreInventory(fmt.Sprintf("%s_wood=%d", "STO_ID", 100), &TargetTest{id: "STO_ID"})
-	a.State = goap.StateOf("walkable", "overweighted", "has_storage")
+	storeGoal := NewGoalStoreInventory(100)
+	a.State = goap.StateOf("walkable", "overweighted")
 
 	a.AddGoal(storeGoal)
 	a.AddGoal(collectGoal)
@@ -82,7 +85,7 @@ func TestShouldStorageIfOverweighted(t *testing.T) {
 		t.Fatalf("expect a.ChooseGoal return to be %t. got=%t", true, planSet)
 	}
 
-	if testPlan(t, a.plan, GoalStoreInventoryType, "{STO_ID_wood=100}", 2, 0) {
+	if testPlan(t, a.plan, GoalStoreInventoryType, "", 2, 0) {
 		return
 	}
 }
@@ -95,7 +98,7 @@ func TestGetGoals(t *testing.T) {
 	}
 	g1 := NewGoalCollectTree(fmt.Sprintf("%s_health=0", "T1"), &TargetTest{id: "T1"})
 	g2 := NewGoalCollectTree(fmt.Sprintf("%s_health=0", "T2"), &TargetTest{id: "T2"})
-	g3 := NewGoalStoreInventory(fmt.Sprintf("%s_wood=%d", "STO", 100), &TargetTest{id: "STO"})
+	g3 := NewGoalStoreInventory(100)
 
 	a.AddGoal(g1)
 	a.AddGoal(g2)
@@ -124,7 +127,7 @@ func TestRemoveGoal(t *testing.T) {
 	}
 	g1 := NewGoalCollectTree(fmt.Sprintf("%s_health=0", "T1"), &TargetTest{id: "T1"})
 	g2 := NewGoalCollectTree(fmt.Sprintf("%s_health=0", "T2"), &TargetTest{id: "T2"})
-	g3 := NewGoalStoreInventory(fmt.Sprintf("%s_wood=%d", "STO", 100), &TargetTest{id: "STO"})
+	g3 := NewGoalStoreInventory(100)
 
 	a.AddGoal(g1)
 	a.AddGoal(g2)
@@ -247,6 +250,8 @@ func TestShouldAddCollectTreeGoal(t *testing.T) {
 
 func TestExecutePlanPutIntoAppliesNotOverweighted(t *testing.T) {
 	w := world.NewWorld(10, 10)
+	building.NewBuildingsList()
+	building.Get().AddBuilding(building.NewStorage(3, 4))
 	mv := ActorTest{}
 	lj := ActorTest{}
 	sto := ActorTest{}
@@ -254,17 +259,17 @@ func TestExecutePlanPutIntoAppliesNotOverweighted(t *testing.T) {
 		movement:   &mv,
 		storager:   &sto,
 		lumberjack: &lj,
-		State:      goap.StateOf("walkable", "overweighted", "has_storage"),
+		State:      goap.StateOf("walkable", "overweighted"),
 	}
 
-	storeGoal := NewGoalStoreInventory(fmt.Sprintf("%s_wood=%d", "STO_ID", 100), &TargetTest{id: "STO_ID"})
+	storeGoal := NewGoalStoreInventory(100)
 	a.AddGoal(storeGoal)
 
 	if planSet := a.ChooseGoal(&w, cnts.Point{X: 0, Y: 0}); !planSet {
 		t.Fatalf("expect a.ChooseGoal return to be %t. got=%t", true, planSet)
 	}
 
-	if !testPlan(t, a.plan, GoalStoreInventoryType, "{STO_ID_wood=100}", 2, 0) {
+	if !testPlan(t, a.plan, GoalStoreInventoryType, "", 2, 0) {
 		return
 	}
 

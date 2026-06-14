@@ -2,13 +2,11 @@ package agent
 
 import (
 	"fmt"
-	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/job"
 	"github/teohen/mgm-tto/pathfinding"
 	"github/teohen/mgm-tto/world"
-	"log"
 )
 
 type IncrementWood func(amount int)
@@ -46,7 +44,7 @@ func NewAgent(x, y int, w *world.World, movement, lumberjack, storager Actor) IA
 	a := Agent{
 		Goals:      make([]IGoal, 0),
 		Actions:    make([]goap.Action, 0),
-		State:      goap.StateOf("walkable", "!has_storage", "!overweighted"),
+		State:      goap.StateOf("walkable", "!overweighted"),
 		movement:   movement,
 		lumberjack: lumberjack,
 		storager:   storager,
@@ -77,7 +75,7 @@ func (a *Agent) ChooseGoal(w *world.World, pos cnts.Point) bool {
 
 	for _, goal := range a.Goals {
 		startPlan := a.State
-		if !goal.IsRelevant(a.State) {
+		if !goal.IsRelevant(w, pos, a.State) {
 			continue
 		}
 
@@ -167,18 +165,7 @@ func (a *Agent) AddStorageGoal(w *world.World, from cnts.Point, inventory int) {
 		return
 	}
 
-	if near := pathfinding.FindClosest(w, from, building.Get().GetBuildingsOf(building.StorageType)); near.X != -1 {
-		a.State.Apply(goap.StateOf("has_storage"))
-		b := building.Get().GetBuildingAt(near)
-		storage, ok := b.(*building.Storage)
-		if !ok {
-			log.Fatal("FOUND A BUILDING DIFERENT THAN A STORAGE")
-		}
-
-		desired := fmt.Sprintf("%s_wood=%d", storage.ID(), (storage.Wood + inventory))
-		a.AddGoal(NewGoalStoreInventory(desired, storage))
-	}
-	// a.State.Apply(goap.StateOf("!has_storage"))
+	a.AddGoal(NewGoalStoreInventory(inventory))
 }
 
 func (a *Agent) AddCollectTreeGoal(w *world.World, from cnts.Point) {
