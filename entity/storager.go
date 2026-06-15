@@ -40,6 +40,6 @@ func (sto *Storager) IncrementInventory(amount int) {
 	sto.weight += amount * 2
 }
 
-func (sto *Storager) isOverweighted() bool {
+func (sto *Storager) IsOverweighted() bool {
 	return sto.weight >= sto.maxCarryWeight
 }

@@ -9,6 +9,7 @@ import (
 	"github/teohen/mgm-tto/events"
 	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/job"
+	"github/teohen/mgm-tto/npc"
 	"github/teohen/mgm-tto/world"
 )
 
@@ -22,10 +23,9 @@ const (
 type Simulation struct {
 	tickCount int
 	world     *world.World
-	villagers []*entity.Villager
+	npcs      *npc.NPCList
 	trees     []*entity.Tree
 	buildings *building.BuildingsList
-	animals   []*entity.Deer
 
 	ActiveTool Tool
 	Selected   map[[2]int]bool
@@ -66,42 +66,23 @@ func New() *Simulation {
 
 	return &Simulation{
 		world:     &w,
-		villagers: nil,
+		npcs:      npc.NewNPCList(),
 		trees:     trees,
 		buildings: building.NewBuildingsList(),
-		animals:   nil,
 	}
 }
 
 func (s *Simulation) Tick() {
-	for _, v := range s.villagers {
+	for _, v := range s.npcs.NPCS() {
 		v.Tick()
-	}
-
-	for _, a := range s.animals {
-		a.Tick()
 	}
 
 	s.processEvents()
 	s.tickCount++
 }
 
-func (s *Simulation) GetEntityPosition(entityID string) cnts.Point {
-	for _, v := range s.villagers {
-		if v.ID() == entityID {
-			return v.Pos()
-		}
-	}
-	for _, t := range s.trees {
-		if t.ID() == entityID {
-			return t.Pos()
-		}
-	}
-	return cnts.Point{X: -1, Y: -1}
-}
-
-func (s *Simulation) AddVillager(v *entity.Villager) {
-	s.villagers = append(s.villagers, v)
+func (s *Simulation) AddVillager(v *npc.Villager) {
+	s.npcs.AddNPC(v)
 	s.world.Occupy(v.Pos().X, v.Pos().Y)
 }
 
@@ -110,8 +91,8 @@ func (s *Simulation) AddTree(tree *entity.Tree) {
 	s.world.Occupy(tree.Pos().X, tree.Pos().Y)
 }
 
-func (s *Simulation) AddDeer(deer *entity.Deer) {
-	s.animals = append(s.animals, deer)
+func (s *Simulation) AddDeer(deer *npc.Deer) {
+	s.npcs.AddNPC(deer)
 	s.world.Occupy(deer.Pos().X, deer.Pos().Y)
 }
 
@@ -168,24 +149,12 @@ func (s *Simulation) World() *world.World {
 	return s.world
 }
 
-func (s *Simulation) Entities() []entity.Entity {
-	total := len(s.villagers) + len(s.trees)
-	all := make([]entity.Entity, 0, total)
-	for _, v := range s.villagers {
-		all = append(all, v)
-	}
-	for _, t := range s.trees {
-		all = append(all, t)
-	}
-	return all
-}
-
 func (s *Simulation) Buildings() []building.Building {
 	return s.buildings.Buldings()
 }
 
-func (s *Simulation) Animals() []*entity.Deer {
-	return s.animals
+func (s *Simulation) NPCs() []npc.NPC {
+	return s.npcs.NPCS()
 }
 
 func (s *Simulation) OnSelectionComplete() {

@@ -1,8 +1,10 @@
-package entity
+package npc
 
 import (
 	"github/teohen/mgm-tto/agent"
 	"github/teohen/mgm-tto/cnts"
+	"github/teohen/mgm-tto/entity"
+	"github/teohen/mgm-tto/pathfinding"
 	"github/teohen/mgm-tto/spritebank"
 	"github/teohen/mgm-tto/world"
 	"math/rand/v2"
@@ -13,13 +15,14 @@ import (
 type DeerState string
 
 const (
-	StateIdle    DeerState = "Idle"
-	StateRoaming DeerState = "roaming"
+	StateIdle      DeerState = "idle"
+	StateRoaming   DeerState = "roaming"
+	StateThreatned DeerState = "threatned"
 )
 
 type Deer struct {
 	agent    agent.IAgent
-	movement *Movement
+	movement *entity.Movement
 	id       string
 	State    DeerState
 	w        *world.World
@@ -27,8 +30,8 @@ type Deer struct {
 
 func NewDeer(x, y int, w *world.World) *Deer {
 	d := Deer{id: cnts.NewID()}
-	mv := NewMovement(x, y, w)
-	d.agent = agent.NewAgent(x, y, w, "Deer", "walkable")
+	mv := entity.NewMovement(x, y, w)
+	d.agent = agent.NewAgent(x, y, w, "Deer", "walkable,!threatned")
 	d.agent.RegisterActor(agent.ActionMoveType, mv)
 	d.movement = mv
 	d.State = StateIdle
@@ -40,6 +43,7 @@ func NewDeer(x, y int, w *world.World) *Deer {
 func (d *Deer) Tick() {
 	if d.State == StateIdle {
 		d.AddRoamGoal()
+		d.AddRunAwayGoal()
 	}
 
 	switch d.State {
@@ -56,7 +60,7 @@ func (d *Deer) Tick() {
 }
 
 func (d *Deer) Pos() cnts.Point {
-	return d.movement.pos
+	return d.movement.Pos()
 }
 
 func (d *Deer) ID() string {
@@ -70,8 +74,8 @@ func (d *Deer) Draw() {
 	rl.DrawTexturePro(spritebank.Animals, src, dst, rl.NewVector2(0, 0), 0, rl.White)
 }
 
-func (d *Deer) Type() EntityType {
-	return EntityTypeVillager
+func (d *Deer) Type() NPCType {
+	return DeerNPCType
 }
 
 func (d *Deer) AddRoamGoal() {
@@ -79,8 +83,30 @@ func (d *Deer) AddRoamGoal() {
 	newY := RandomIntRangeFast(d.Pos().Y-5, d.Pos().Y+5)
 
 	pin := cnts.Pin{Id: cnts.NewID(), Position: cnts.Point{X: newX, Y: newY}}
-	g := agent.NewGoalRoam(d.w, &pin, d.movement.pos)
+	g := agent.NewGoalRoam(d.w, &pin, d.Pos())
 	d.agent.AddGoal(g)
+}
+
+func (d *Deer) AddRunAwayGoal() {
+	villagers := GetListInstance().GetNPCSOf(VillagerNPCType)
+	closeVil := pathfinding.FindClosest(d.w, d.Pos(), villagers)
+	if closeVil.X == -1 {
+		d.agent.SetState("!threatned")
+		return
+	}
+
+	near := closeVil.Near(2, d.Pos())
+	if !near {
+		d.agent.SetState("!threatned")
+		return
+	}
+
+	away := closeVil.Away(d.Pos())
+
+	pin := cnts.Pin{Id: cnts.NewID(), Position: away}
+	g := agent.NewGoalRunAway(d.w, &pin, d.Pos())
+	d.agent.AddGoal(g)
+	d.agent.SetState("threatned")
 }
 
 func RandomIntRangeFast(min, max int) int {

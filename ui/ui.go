@@ -48,16 +48,12 @@ func (ui *UI) Draw() {
 	cam := *ui.camera
 	rl.BeginMode2D(cam)
 	ui.simulation.World().Draw()
-	for _, e := range ui.simulation.Entities() {
+	for _, e := range ui.simulation.NPCs() {
 		e.Draw()
 	}
 
 	for _, b := range ui.simulation.Buildings() {
 		b.Draw()
-	}
-
-	for _, a := range ui.simulation.Animals() {
-		a.Draw()
 	}
 
 	drawSelectionRectangle(ui)

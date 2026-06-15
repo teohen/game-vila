@@ -81,7 +81,7 @@ func (a *Agent) ChooseGoal(w *world.World, pos cnts.Point) bool {
 
 		actions, err := goap.Plan(startPlan, goal.DesiredState(), goal.GetGoapActions())
 		if err != nil {
-			if cnts.DEBUGGING {
+			if cnts.DEBUGGING && goal.Type() == GoalRunAwayType {
 				fmt.Println(err.Error())
 			}
 			continue

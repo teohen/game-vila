@@ -37,23 +37,6 @@ func ScreenToWorld(mx, my int32) (int, int, bool) {
 	return gx, gy, true
 }
 
-type Point struct {
-	X, Y int
-}
-
 func NewID() string {
 	return strings.ReplaceAll(uuid.NewString(), "-", "")
-}
-
-type Pin struct {
-	Id       string
-	Position Point
-}
-
-func (p *Pin) Pos() Point {
-	return p.Position
-}
-
-func (p *Pin) ID() string {
-	return p.Id
 }
