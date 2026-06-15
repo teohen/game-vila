@@ -9,8 +9,8 @@ import (
 const (
 	ScreenW  = 1200
 	ScreenH  = 1200
-	GridCols = 30
-	GridRows = 30
+	GridCols = 10
+	GridRows = 10
 	TileSize = ScreenW / GridCols
 
 	GridOffsetX = 0
@@ -19,7 +19,7 @@ const (
 	CameraZoomMin = 0.25
 	CameraZoomMax = 7.0
 
-	TickInterval = 200 // milliseconds between ticks (5 ticks/sec)
+	TickInterval = 50 // milliseconds between ticks (5 ticks/sec)
 )
 
 var DEBUGGING = false

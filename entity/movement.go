@@ -55,6 +55,7 @@ func (m *Movement) SetTarget(target cnts.Point) bool {
 	return false
 }
 
+// TODO: THE MOVE ACTION NOW SHOULD CONSIDER REACHED ONLY WHEN IT HITS THE TARGET
 func (m *Movement) Update() {
 	switch m.State {
 	case StateMovementIdle:

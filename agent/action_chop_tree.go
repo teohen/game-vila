@@ -18,7 +18,7 @@ func NewActionChopTree(t Target) IAction {
 	cp := ActionChopTree{
 		name:    "chop_tree",
 		cost:    1,
-		require: goap.StateOf("near"),
+		require: goap.StateOf(fmt.Sprintf("near_%s", t.ID())),
 		outcome: goap.StateOf(fmt.Sprintf("%s_health=0", t.ID())),
 		target:  t,
 	}

@@ -1,6 +1,7 @@
 package npc
 
 import (
+	"fmt"
 	"github/teohen/mgm-tto/agent"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/entity"
@@ -15,9 +16,9 @@ import (
 type DeerState string
 
 const (
-	StateIdle      DeerState = "idle"
-	StateRoaming   DeerState = "roaming"
-	StateThreatned DeerState = "threatned"
+	StateIdle    DeerState = "idle"
+	StateRoaming DeerState = "roaming"
+	// StateThreatned DeerState = "threatned"
 )
 
 type Deer struct {
@@ -42,14 +43,17 @@ func NewDeer(x, y int, w *world.World) *Deer {
 
 func (d *Deer) Tick() {
 	if d.State == StateIdle {
-		d.AddRoamGoal()
-		d.AddRunAwayGoal()
+		if threatned := d.AddRunAwayGoal(); !threatned {
+			d.AddRoamGoal()
+		}
 	}
 
 	switch d.State {
 	case StateIdle:
 		if found := d.agent.ChooseGoal(d.w, d.Pos()); found {
 			d.State = StateRoaming
+		} else {
+			fmt.Println("not plan")
 		}
 
 	case StateRoaming:
@@ -79,36 +83,69 @@ func (d *Deer) Type() NPCType {
 }
 
 func (d *Deer) AddRoamGoal() {
-	newX := RandomIntRangeFast(d.Pos().X-5, d.Pos().X+5)
-	newY := RandomIntRangeFast(d.Pos().Y-5, d.Pos().Y+5)
+	if len(d.agent.GetGoalsOf(agent.GoalRoamType)) > 0 {
+		return
+	}
 
-	pin := cnts.Pin{Id: cnts.NewID(), Position: cnts.Point{X: newX, Y: newY}}
+	curPoint := d.Pos()
+	nextPoint := cnts.Point{
+		X: randomInSlice([]int{curPoint.X - 1, curPoint.X + 1}),
+		Y: randomInSlice([]int{curPoint.Y - 1, curPoint.Y + 1}),
+	}
+
+	if nextPoint.Equals(d.Pos()) {
+		return
+	}
+
+	pin := cnts.Pin{Id: cnts.NewID(), Position: nextPoint}
 	g := agent.NewGoalRoam(d.w, &pin, d.Pos())
+
+	d.ClearGoals()
 	d.agent.AddGoal(g)
 }
 
-func (d *Deer) AddRunAwayGoal() {
+func (d *Deer) AddRunAwayGoal() bool {
+	if len(d.agent.GetGoalsOf(agent.GoalRunAwayType)) > 0 {
+		return false
+	}
 	villagers := GetListInstance().GetNPCSOf(VillagerNPCType)
 	closeVil := pathfinding.FindClosest(d.w, d.Pos(), villagers)
 	if closeVil.X == -1 {
 		d.agent.SetState("!threatned")
-		return
+		return false
 	}
 
 	near := closeVil.Near(2, d.Pos())
 	if !near {
 		d.agent.SetState("!threatned")
-		return
+		return false
 	}
 
 	away := closeVil.Away(d.Pos())
 
 	pin := cnts.Pin{Id: cnts.NewID(), Position: away}
 	g := agent.NewGoalRunAway(d.w, &pin, d.Pos())
+	d.ClearGoals()
 	d.agent.AddGoal(g)
 	d.agent.SetState("threatned")
+	return true
 }
 
-func RandomIntRangeFast(min, max int) int {
-	return rand.N(max-min+1) + min
+func (d *Deer) ClearGoals() {
+	for _, g := range d.agent.GetGoals() {
+		d.agent.RemoveGoal(g.ID())
+	}
+}
+
+func randomInSlice(options []int) int {
+	randPos := rand.N(len(options) - 1)
+	if randPos > cnts.GridCols-1 {
+		return cnts.GridCols - 1
+	}
+
+	if options[randPos] < 0 {
+		return 0
+	}
+
+	return options[randPos]
 }

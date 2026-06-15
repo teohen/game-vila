@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"fmt"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/world"
@@ -21,7 +22,7 @@ func NewGoalRunAway(w *world.World, t Target, from cnts.Point) IGoal {
 	g := GoalRunAway{
 		id:           cnts.NewID(),
 		name:         "Roam",
-		desiredState: goap.StateOf("!near"),
+		desiredState: goap.StateOf(fmt.Sprintf("near_%s", t.ID())),
 		target:       t,
 
 		actions: actions,

@@ -42,6 +42,10 @@ func (p *Point) Away(p2 Point) Point {
 	}
 }
 
+func (p *Point) Equals(p2 Point) bool {
+	return p.X == p2.X && p.Y == p2.Y
+}
+
 type Pin struct {
 	Id       string
 	Position Point
