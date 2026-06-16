@@ -20,11 +20,12 @@ type ActionMove struct {
 }
 
 func NewActionMove(w *world.World, t Target, from cnts.Point) IAction {
+	targetPos := t.Pos()
 	am := ActionMove{
 		name:    "move_action",
 		cost:    1,
 		require: goap.StateOf("walkable"),
-		outcome: goap.StateOf(fmt.Sprintf("near_%s", t.ID())),
+		outcome: goap.StateOf(fmt.Sprintf("at_%s", targetPos.String())),
 		target:  t,
 		world:   w,
 		from:    from,
@@ -62,10 +63,10 @@ func (am *ActionMove) Update(t Target, from cnts.Point) {
 
 	path := pathfinding.FindPath(am.world, am.from, am.target.Pos())
 	if path == nil {
-		am.outcome = goap.StateOf(fmt.Sprintf("!near_%s", t.ID()))
+		am.outcome = goap.StateOf(fmt.Sprintf("!at_%s", t.ID()))
 		am.cost = math.MaxFloat32
 	} else {
 		am.cost = float32(len(path))
-		am.outcome = goap.StateOf(fmt.Sprintf("near_%s", t.ID()))
+		am.outcome = goap.StateOf(fmt.Sprintf("at_%s", t.ID()))
 	}
 }

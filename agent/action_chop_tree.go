@@ -15,10 +15,11 @@ type ActionChopTree struct {
 }
 
 func NewActionChopTree(t Target) IAction {
+	targetPos := t.Pos()
 	cp := ActionChopTree{
 		name:    "chop_tree",
 		cost:    1,
-		require: goap.StateOf(fmt.Sprintf("near_%s", t.ID())),
+		require: goap.StateOf(fmt.Sprintf("at_%s", targetPos.String())),
 		outcome: goap.StateOf(fmt.Sprintf("%s_health=0", t.ID())),
 		target:  t,
 	}
