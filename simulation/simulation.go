@@ -1,16 +1,16 @@
 package simulation
 
 import (
-	"time"
-
 	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
-	"github/teohen/mgm-tto/entity"
 	"github/teohen/mgm-tto/events"
 	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/job"
 	"github/teohen/mgm-tto/npc"
+	"github/teohen/mgm-tto/resource"
 	"github/teohen/mgm-tto/world"
+	"log"
+	"time"
 )
 
 type Tool int
@@ -24,7 +24,7 @@ type Simulation struct {
 	tickCount int
 	world     *world.World
 	npcs      *npc.NPCList
-	trees     []*entity.Tree
+	resources []resource.IResource
 	buildings *building.BuildingsList
 
 	ActiveTool Tool
@@ -45,8 +45,14 @@ func New() *Simulation {
 	w := world.NewWorld(cnts.GridRows, cnts.GridCols)
 	w.Generate(seed)
 
+	sim := Simulation{
+		world:     &w,
+		npcs:      npc.NewNPCList(),
+		buildings: building.NewBuildingsList(),
+	}
+
 	forestNoise := world.NewNoise(seed + 1)
-	var trees []*entity.Tree
+	// var trees []*resource.Tree
 	treeCount := 0
 	for r := 0; r < w.Rows(); r++ {
 		for c := 0; c < w.Cols(); c++ {
@@ -58,18 +64,14 @@ func New() *Simulation {
 				continue
 			}
 			treeCount++
-			t := entity.NewTree(c, r, treeHealth, treeWoodYield)
-			w.Occupy(c, r)
-			trees = append(trees, t)
+			t := resource.NewTree(c, r, treeHealth, treeWoodYield)
+			// w.Occupy(c, r)
+			// trees = append(trees, t)
+			sim.AddTree(t)
 		}
 	}
 
-	return &Simulation{
-		world:     &w,
-		npcs:      npc.NewNPCList(),
-		trees:     trees,
-		buildings: building.NewBuildingsList(),
-	}
+	return &sim
 }
 
 func (s *Simulation) Tick() {
@@ -86,9 +88,9 @@ func (s *Simulation) AddVillager(v *npc.Villager) {
 	s.world.Occupy(v.Pos().X, v.Pos().Y)
 }
 
-func (s *Simulation) AddTree(tree *entity.Tree) {
-	s.trees = append(s.trees, tree)
-	s.world.Occupy(tree.Pos().X, tree.Pos().Y)
+func (s *Simulation) AddTree(tree *resource.Tree) {
+	s.resources = append(s.resources, tree)
+	// s.world.Occupy(tree.Pos().X, tree.Pos().Y)
 }
 
 func (s *Simulation) AddDeer(deer *npc.Deer) {
@@ -102,10 +104,10 @@ func (s *Simulation) RemoveTree(x, y int) bool {
 		Y: y,
 	}
 
-	for i, t := range s.trees {
-		if t.Pos() == p {
+	for i, t := range s.resources {
+		if t.Type() == resource.ResourceTreeType && t.Pos() == p {
 			s.world.Vacate(x, y)
-			s.trees = append(s.trees[:i], s.trees[i+1:]...)
+			s.resources = append(s.resources[:i], s.resources[i+1:]...)
 			return true
 		}
 	}
@@ -133,13 +135,17 @@ func (s *Simulation) ProcessAxeSelection(cells [][2]int) {
 	}
 }
 
-func (s *Simulation) TreeAt(x, y int) *entity.Tree {
+func (s *Simulation) TreeAt(x, y int) *resource.Tree {
 	p := cnts.Point{
 		X: x, Y: y,
 	}
-	for _, t := range s.trees {
-		if t.Pos() == p {
-			return t
+	for _, t := range s.resources {
+		if t.Type() == resource.ResourceTreeType && t.Pos() == p {
+			tree, ok := t.(*resource.Tree)
+			if !ok {
+				log.Fatal("TREE CONVERTION NOT WOTK")
+			}
+			return tree
 		}
 	}
 	return nil
@@ -166,6 +172,10 @@ func (s *Simulation) OnSelectionComplete() {
 		}
 		s.ProcessAxeSelection(cells)
 	}
+}
+
+func (s *Simulation) Resources() []resource.IResource {
+	return s.resources
 }
 
 func (s *Simulation) processEvents() {

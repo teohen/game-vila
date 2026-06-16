@@ -5,6 +5,12 @@ type World struct {
 	occupied [][]bool
 }
 
+const (
+	terrainFrequency = 0.035
+	waterThreshold   = -0.15
+	dirtThreshold    = 0.05
+)
+
 func NewWorld(rows, cols int) World {
 	w := World{
 		cells:    make([][]Cell, rows),
@@ -77,12 +83,6 @@ func (w *World) IsWalkable(col, row int) bool {
 	}
 	return cell.Walkable()
 }
-
-const (
-	terrainFrequency = 0.035
-	waterThreshold   = -0.15
-	dirtThreshold    = 0.05
-)
 
 func (w *World) Generate(seed int64) {
 	n := NewNoise(seed)

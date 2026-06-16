@@ -48,6 +48,11 @@ func (ui *UI) Draw() {
 	cam := *ui.camera
 	rl.BeginMode2D(cam)
 	ui.simulation.World().Draw()
+
+	for _, r := range ui.simulation.Resources() {
+		r.Draw()
+	}
+
 	for _, e := range ui.simulation.NPCs() {
 		e.Draw()
 	}

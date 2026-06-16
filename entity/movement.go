@@ -55,7 +55,6 @@ func (m *Movement) SetTarget(target cnts.Point) bool {
 	return false
 }
 
-// TODO: THE MOVE ACTION NOW SHOULD CONSIDER REACHED ONLY WHEN IT HITS THE TARGET
 func (m *Movement) Update() {
 	switch m.State {
 	case StateMovementIdle:
@@ -68,20 +67,6 @@ func (m *Movement) Update() {
 			return
 		}
 		next := m.Waypoints[0]
-		if next == m.TargetPos {
-			if m.w.IsOccupied(m.TargetPos.X, m.TargetPos.Y) {
-				m.Waypoints = m.Waypoints[1:]
-				m.State = StateMovementArrived
-				return
-			}
-			m.w.Vacate(m.pos.X, m.pos.Y)
-			m.pos.X = next.X
-			m.pos.Y = next.Y
-			m.w.Occupy(m.pos.X, m.pos.Y)
-			m.Waypoints = m.Waypoints[1:]
-			m.State = StateMovementArrived
-			return
-		}
 		if m.w.IsOccupied(next.X, next.Y) {
 			m.State = StateMovementWaiting
 			m.WaitTicks = 0
@@ -141,8 +126,4 @@ func (m *Movement) ExecuteAction(target agent.Target) bool {
 		}
 	}
 	return false
-}
-
-func (m *Movement) IsActor(actionType agent.ActionType) bool {
-	return actionType == agent.ActionMoveType
 }

@@ -3,6 +3,7 @@ package npc
 import (
 	"fmt"
 	"github/teohen/mgm-tto/agent"
+	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/entity"
 	"github/teohen/mgm-tto/job"
@@ -83,7 +84,7 @@ func (v *Villager) ID() string {
 func (v *Villager) Draw() {
 	x, y := cnts.WorldToScreen(v.Pos().X, v.Pos().Y)
 	src := rl.NewRectangle(41, 21, 16, 19)
-	dst := rl.NewRectangle(x, y, cnts.TileSize, cnts.TileSize)
+	dst := rl.NewRectangle(x+5, y+5, cnts.TileSize-10, cnts.TileSize-10)
 
 	rl.DrawTexturePro(spritebank.Human, src, dst, rl.NewVector2(0, 0), 0, rl.White)
 }
@@ -97,7 +98,18 @@ func (v *Villager) AddStorageGoal() {
 		return
 	}
 
-	v.agent.AddGoal(agent.NewGoalStoreInventory(v.w, nil, v.Pos()))
+	near := pathfinding.FindClosest(v.w, v.Pos(), building.Get().GetBuildingsOf(building.StorageType))
+	if near.X == -1 {
+		return
+	}
+
+	b := building.Get().GetBuildingAt(near)
+	storage, ok := b.(*building.Storage)
+	if !ok {
+		return
+	}
+
+	v.agent.AddGoal(agent.NewGoalStoreInventory(v.w, storage, v.Pos()))
 	v.agent.SetState("overweighted")
 }
 

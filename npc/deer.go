@@ -87,17 +87,33 @@ func (d *Deer) AddRoamGoal() {
 		return
 	}
 
-	curPoint := d.Pos()
-	nextPoint := cnts.Point{
-		X: randomInSlice([]int{curPoint.X - 1, curPoint.X + 1}),
-		Y: randomInSlice([]int{curPoint.Y - 1, curPoint.Y + 1}),
+	cur := d.Pos()
+
+	dirs := []cnts.Point{
+		{X: cur.X, Y: cur.Y - 1},
+		{X: cur.X, Y: cur.Y + 1},
+		{X: cur.X - 1, Y: cur.Y},
+		{X: cur.X + 1, Y: cur.Y},
 	}
 
-	if nextPoint.Equals(d.Pos()) {
+	var valid []cnts.Point
+	for _, p := range dirs {
+		if p.X < 0 || p.X >= d.w.Cols() || p.Y < 0 || p.Y >= d.w.Rows() {
+			continue
+		}
+		if !d.w.IsWalkable(p.X, p.Y) || d.w.IsOccupied(p.X, p.Y) {
+			continue
+		}
+		valid = append(valid, p)
+	}
+
+	if len(valid) == 0 {
 		return
 	}
 
-	pin := cnts.Pin{Id: cnts.NewID(), Position: nextPoint}
+	next := valid[rand.N(len(valid))]
+
+	pin := cnts.Pin{Id: cnts.NewID(), Position: next}
 	g := agent.NewGoalRoam(d.w, &pin, d.Pos())
 
 	d.ClearGoals()
@@ -135,17 +151,4 @@ func (d *Deer) ClearGoals() {
 	for _, g := range d.agent.GetGoals() {
 		d.agent.RemoveGoal(g.ID())
 	}
-}
-
-func randomInSlice(options []int) int {
-	randPos := rand.N(len(options) - 1)
-	if randPos > cnts.GridCols-1 {
-		return cnts.GridCols - 1
-	}
-
-	if options[randPos] < 0 {
-		return 0
-	}
-
-	return options[randPos]
 }
