@@ -52,7 +52,6 @@ func New() *Simulation {
 	}
 
 	forestNoise := world.NewNoise(seed + 1)
-	// var trees []*resource.Tree
 	treeCount := 0
 	for r := 0; r < w.Rows(); r++ {
 		for c := 0; c < w.Cols(); c++ {
@@ -65,8 +64,6 @@ func New() *Simulation {
 			}
 			treeCount++
 			t := resource.NewTree(c, r, treeHealth, treeWoodYield)
-			// w.Occupy(c, r)
-			// trees = append(trees, t)
 			sim.AddTree(t)
 		}
 	}
@@ -90,7 +87,19 @@ func (s *Simulation) AddVillager(v *npc.Villager) {
 
 func (s *Simulation) AddTree(tree *resource.Tree) {
 	s.resources = append(s.resources, tree)
-	// s.world.Occupy(tree.Pos().X, tree.Pos().Y)
+}
+
+func (s *Simulation) AddResource(res resource.IResource) {
+	s.resources = append(s.resources, res)
+}
+
+func (s *Simulation) RemoveResource(res resource.IResource) {
+	for i, r := range s.resources {
+		if res.ID() == r.ID() {
+			s.resources = append(s.resources[:i], s.resources[i+1:]...)
+			return
+		}
+	}
 }
 
 func (s *Simulation) AddDeer(deer *npc.Deer) {
@@ -106,7 +115,6 @@ func (s *Simulation) RemoveTree(x, y int) bool {
 
 	for i, t := range s.resources {
 		if t.Type() == resource.ResourceTreeType && t.Pos() == p {
-			s.world.Vacate(x, y)
 			s.resources = append(s.resources[:i], s.resources[i+1:]...)
 			return true
 		}
@@ -186,6 +194,8 @@ func (s *Simulation) processEvents() {
 			case events.EventTreeCut:
 				treePos := evt.Payload["pos"].(cnts.Point)
 				s.RemoveTree(treePos.X, treePos.Y)
+				woodYeld := evt.Payload["woodYield"].(int)
+				s.AddResource(resource.NewWood(treePos, woodYeld))
 			default:
 				// Canal está vazio, sai do loop de eventos e segue o frame
 				return
@@ -195,4 +205,14 @@ func (s *Simulation) processEvents() {
 			return
 		}
 	}
+}
+
+func (s *Simulation) CollectResourceAt(pos cnts.Point) int {
+	for _, r := range s.resources {
+		if r.Collectable() && r.Pos() == pos {
+			s.RemoveResource(r)
+			return r.Amount()
+		}
+	}
+	return 0
 }

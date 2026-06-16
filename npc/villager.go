@@ -27,27 +27,31 @@ type Villager struct {
 	movement   *entity.Movement
 	lumberjack *entity.Lumberjack
 	storager   *entity.Storager
+	collecter  *entity.Collecter
 	id         string
 	State      VillagerState
 	w          *world.World
 }
 
-func NewVillager(x, y int, w *world.World) *Villager {
+func NewVillager(x, y int, w *world.World, cr entity.CollectResource) *Villager {
 	v := Villager{}
 	id := fmt.Sprintf("villager_%d_%d", x, y)
 	movement := entity.NewMovement(x, y, w)
 	storager := entity.NewStorager(100)
-	lumberjack := entity.NewLumberjack(storager.IncrementInventory)
+	lumberjack := entity.NewLumberjack()
+	collecter := entity.NewCollecter(cr, storager.IncrementInventory)
 
 	v.id = id
 	v.State = StateVillagerIdle
 	v.movement = movement
 	v.storager = storager
 	v.lumberjack = lumberjack
+	v.collecter = collecter
 	v.agent = agent.NewAgent(x, y, w, "Villager", "walkable,!overweighted")
 	v.agent.RegisterActor(agent.ActionMoveType, movement)
 	v.agent.RegisterActor(agent.ActionChopTreeType, lumberjack)
 	v.agent.RegisterActor(agent.ActionPutIntoType, storager)
+	v.agent.RegisterActor(agent.ActionPickUpType, collecter)
 	v.w = w
 	return &v
 }

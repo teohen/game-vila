@@ -14,8 +14,11 @@ type IResource interface {
 	Type() ResourceType
 	Draw()
 	Pos() cnts.Point
+	Collectable() bool
+	Amount() int
 }
 
 const (
 	ResourceTreeType ResourceType = "ResourceTreeType"
+	ResourceWoodType ResourceType = "ResourceWoodType"
 )

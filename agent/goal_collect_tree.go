@@ -17,12 +17,16 @@ type GoalCollectTree struct {
 }
 
 func NewGoalCollectTree(w *world.World, t Target, from cnts.Point) IGoal {
-	actions := []IAction{NewActionMove(w, t, from), NewActionChopTree(t)}
+	targetPos := t.Pos()
+	actions := []IAction{
+		NewActionMove(w, t, from),
+		NewActionChopTree(t),
+		NewActionPickUp(t),
+	}
 	g := GoalCollectTree{
-		id:   cnts.NewID(),
-		name: "CollectTree",
-		// TODO: revise the action to not decrement but zero the health or just state the tree downed
-		desiredState: goap.StateOf(fmt.Sprintf("%s_health=0", t.ID())),
+		id:           cnts.NewID(),
+		name:         "CollectTree",
+		desiredState: goap.StateOf(fmt.Sprintf("picked_up_%s", targetPos.String())),
 		target:       t,
 		actions:      actions,
 	}
