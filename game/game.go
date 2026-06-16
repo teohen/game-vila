@@ -32,6 +32,7 @@ func New() Game {
 	var villager *npc.Villager
 	var storage *building.Storage
 	var deer *npc.Deer
+	// var wood resource.IResource
 	for !hit {
 		x := rand.Intn(cnts.GridCols)
 		y := rand.Intn(cnts.GridRows)
@@ -66,6 +67,20 @@ func New() Game {
 		}
 	}
 
+	hit = false
+
+	for !hit {
+		x := rand.Intn(cnts.GridCols)
+		y := rand.Intn(cnts.GridRows)
+
+		if !sim.World().IsOccupied(x, y) {
+			// p := cnts.Point{X: x, Y: y}
+			// wood = resource.NewWood(p, 10)
+			hit = true
+		}
+	}
+
+	// g.sim.AddResource(wood)
 	g.sim.AddVillager(villager)
 	g.sim.AddStorage(storage)
 	g.sim.AddDeer(deer)

@@ -18,4 +18,5 @@ type IResource interface {
 
 const (
 	ResourceTreeType ResourceType = "ResourceTreeType"
+	ResourceWoodType ResourceType = "ResourceWoodType"
 )
