@@ -33,13 +33,13 @@ type Villager struct {
 	w          *world.World
 }
 
-func NewVillager(x, y int, w *world.World) *Villager {
+func NewVillager(x, y int, w *world.World, cr entity.CollectResource) *Villager {
 	v := Villager{}
 	id := fmt.Sprintf("villager_%d_%d", x, y)
 	movement := entity.NewMovement(x, y, w)
 	storager := entity.NewStorager(100)
-	lumberjack := entity.NewLumberjack(storager.IncrementInventory)
-	collecter := entity.NewCollecter()
+	lumberjack := entity.NewLumberjack()
+	collecter := entity.NewCollecter(cr, storager.IncrementInventory)
 
 	v.id = id
 	v.State = StateVillagerIdle

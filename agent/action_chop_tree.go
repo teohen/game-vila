@@ -20,7 +20,7 @@ func NewActionChopTree(t Target) IAction {
 		name:    "chop_tree",
 		cost:    1,
 		require: goap.StateOf(fmt.Sprintf("at_%s", targetPos.String())),
-		outcome: goap.StateOf(fmt.Sprintf("%s_health=0", t.ID())),
+		outcome: goap.StateOf(fmt.Sprintf("harvested_%s", targetPos.String())),
 		target:  t,
 	}
 	return &cp
@@ -51,5 +51,7 @@ func (cp *ActionChopTree) Type() ActionType {
 }
 
 func (cp *ActionChopTree) Update(t Target, from cnts.Point) {
+	tpos := t.Pos()
+	cp.outcome = goap.StateOf(fmt.Sprintf("harvested_%s", tpos.String()))
 	cp.target = t
 }

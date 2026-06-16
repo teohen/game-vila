@@ -18,11 +18,12 @@ type ActionPutInto struct {
 }
 
 func NewActionPutInto(t Target) IAction {
+	tpos := t.Pos()
 	pi := ActionPutInto{
 		name:    "put_into",
 		cost:    1,
-		require: goap.StateOf(fmt.Sprintf("near_%s", t.ID())),
-		outcome: goap.StateOf("inventory_incremented"),
+		require: goap.StateOf(fmt.Sprintf("at_%s", tpos.String())),
+		outcome: goap.StateOf("inventory_stored"),
 		target:  t,
 	}
 	return &pi

@@ -25,7 +25,7 @@ func NewGoalStoreInventory(w *world.World, t Target, from cnts.Point) IGoal {
 	g := GoalStoreInventory{
 		name:         "StoreInventory",
 		id:           cnts.NewID(),
-		desiredState: goap.StateOf("inventory_incremented"),
+		desiredState: goap.StateOf("inventory_stored"),
 		target:       t,
 		w:            w,
 		actions:      actions,

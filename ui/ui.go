@@ -12,7 +12,6 @@ type UI struct {
 	isDragging bool
 	dragStart  rl.Vector2
 	dragEnd    rl.Vector2
-	console    Console
 	simulation *simulation.Simulation
 	camera     *rl.Camera2D
 }
@@ -35,11 +34,6 @@ func New(sim *simulation.Simulation) *UI {
 }
 
 func (ui *UI) Input() {
-	ui.console.handleConsole(ui)
-	if ui.console.IsOpen() {
-		return
-	}
-
 	handleMouse(ui)
 	handleKeyboard(ui)
 }
@@ -64,9 +58,6 @@ func (ui *UI) Draw() {
 	drawSelectionRectangle(ui)
 	drawSelectedCells(ui)
 	rl.EndMode2D()
-	if ui.console.IsOpen() {
-		ui.console.DrawConsole()
-	}
 }
 
 func drawSelectionRectangle(ui *UI) {

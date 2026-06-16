@@ -58,15 +58,16 @@ func (am *ActionMove) Type() ActionType {
 }
 
 func (am *ActionMove) Update(t Target, from cnts.Point) {
+	tpos := t.Pos()
 	am.target = t
 	am.from = from
 
 	path := pathfinding.FindPath(am.world, am.from, am.target.Pos())
 	if path == nil {
-		am.outcome = goap.StateOf(fmt.Sprintf("!at_%s", t.ID()))
+		am.outcome = goap.StateOf(fmt.Sprintf("!at_%s", tpos.String()))
 		am.cost = math.MaxFloat32
 	} else {
 		am.cost = float32(len(path))
-		am.outcome = goap.StateOf(fmt.Sprintf("at_%s", t.ID()))
+		am.outcome = goap.StateOf(fmt.Sprintf("at_%s", tpos.String()))
 	}
 }

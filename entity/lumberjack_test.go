@@ -18,7 +18,7 @@ func incrementWood(amount int) {
 func TestCutDownTree(t *testing.T) {
 
 	tree := resource.NewTree(0, 0, 100, 100)
-	lj := NewLumberjack(incrementWood)
+	lj := NewLumberjack()
 	lj.hit = 50
 
 	end := false

@@ -40,3 +40,11 @@ func (w *Wood) Draw() {
 func (w *Wood) Pos() cnts.Point {
 	return w.pos
 }
+
+func (w *Wood) Collectable() bool {
+	return true
+}
+
+func (w *Wood) Amount() int {
+	return w.amount
+}

@@ -12,6 +12,8 @@ type ActionPickUp struct {
 	require *goap.State
 	outcome *goap.State
 	target  Target
+
+	needsHarvest bool
 }
 
 func NewActionPickUp(t Target) IAction {
@@ -19,11 +21,12 @@ func NewActionPickUp(t Target) IAction {
 	targetPos := t.Pos()
 
 	cp := ActionPickUp{
-		name:    "pick_up",
-		cost:    1,
-		require: goap.StateOf(fmt.Sprintf("at_%s", targetPos.String())),
-		outcome: goap.StateOf("picked_up_%s", targetPos.String()),
-		target:  t,
+		name:         "pick_up",
+		cost:         1,
+		require:      goap.StateOf(fmt.Sprintf("at_%s", targetPos.String())),
+		outcome:      goap.StateOf(fmt.Sprintf("picked_up_%s", targetPos.String())),
+		target:       t,
+		needsHarvest: true,
 	}
 	return &cp
 }
@@ -54,4 +57,15 @@ func (cp *ActionPickUp) Type() ActionType {
 
 func (cp *ActionPickUp) Update(t Target, from cnts.Point) {
 	cp.target = t
+
+	tpos := t.Pos()
+	if cp.needsHarvest {
+		cp.require = goap.StateOf(
+			fmt.Sprintf("at_%s", tpos.String()),
+			fmt.Sprintf("harvested_%s", tpos.String()),
+		)
+	} else {
+		cp.require = goap.StateOf(fmt.Sprintf("at_%s", tpos.String()))
+	}
+	cp.outcome = goap.StateOf(fmt.Sprintf("picked_up_%s", tpos.String()))
 }

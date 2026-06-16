@@ -135,6 +135,12 @@ func (a *Agent) ExecutePlan() bool {
 			a.State.Apply(goap.StateOf("!overweighted"))
 			a.plan.nextAction()
 		}
+
+	case ActionPickUpType:
+		actor := a.Actors[ActionPickUpType]
+		if done := actor.ExecuteAction(action.Target()); done {
+			a.plan.nextAction()
+		}
 	}
 
 	return false

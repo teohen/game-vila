@@ -58,3 +58,11 @@ func (t *Tree) Type() ResourceType {
 func (t *Tree) Mark(v bool) {
 	t.marked = v
 }
+
+func (t *Tree) Collectable() bool {
+	return false
+}
+
+func (t *Tree) Amount() int {
+	return 0
+}

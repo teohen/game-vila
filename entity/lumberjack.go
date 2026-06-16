@@ -18,21 +18,17 @@ const (
 	StateLumberjackHitting LumberjackState = "hitting"
 )
 
-type IncrementWood func(amount int)
-
 type Lumberjack struct {
-	State         LumberjackState
-	tree          *resource.Tree
-	hit           int
-	incrementWood IncrementWood
+	State LumberjackState
+	tree  *resource.Tree
+	hit   int
 }
 
-func NewLumberjack(iw IncrementWood) *Lumberjack {
+func NewLumberjack() *Lumberjack {
 	return &Lumberjack{
-		incrementWood: iw,
-		State:         StateLumberjackIdle,
-		tree:          nil,
-		hit:           LUMBERJACK_HIT,
+		State: StateLumberjackIdle,
+		tree:  nil,
+		hit:   LUMBERJACK_HIT,
 	}
 }
 
@@ -50,11 +46,10 @@ func (lj *Lumberjack) Update() bool {
 		events.Emit(events.GameEvent{
 			Type: events.EventTreeCut,
 			Payload: map[string]interface{}{
-				"pos": lj.tree.Pos(),
+				"pos":       lj.tree.Pos(),
+				"woodYield": lj.tree.WoodYield,
 			},
 		})
-
-		lj.incrementWood(lj.tree.WoodYield)
 		lj.tree = nil
 		return true
 	}
