@@ -13,6 +13,10 @@ type Target interface {
 	ID() string
 }
 
+type InteractionPositioner interface {
+	InteractionPos(w *world.World, from cnts.Point) cnts.Point
+}
+
 type IAgent interface {
 	AddGoal(goal IGoal)
 	RemoveGoal(ID string)
@@ -29,21 +33,19 @@ type Actor interface {
 }
 
 type Agent struct {
-	Owner   string
-	Actors  map[ActionType]Actor
-	State   *goap.State
-	Goals   []IGoal
-	Actions []goap.Action
-	plan    *Plan
+	Owner  string
+	Actors map[ActionType]Actor
+	State  *goap.State
+	Goals  []IGoal
+	plan   *Plan
 }
 
 func NewAgent(x, y int, w *world.World, own string, initialState string) IAgent {
 	a := Agent{
-		Owner:   own,
-		Goals:   make([]IGoal, 0),
-		Actions: make([]goap.Action, 0),
-		State:   goap.StateOf(strings.Split(initialState, ",")...),
-		Actors:  make(map[ActionType]Actor),
+		Owner:  own,
+		Goals:  make([]IGoal, 0),
+		State:  goap.StateOf(strings.Split(initialState, ",")...),
+		Actors: make(map[ActionType]Actor),
 	}
 
 	return &a
@@ -61,16 +63,11 @@ func (a *Agent) RemoveGoal(id string) {
 	}
 }
 
-func (ag *Agent) AddAction(a IAction) {
-	ag.Actions = append(ag.Actions, a)
-}
-
 func (a *Agent) ChooseGoal(w *world.World, pos cnts.Point) bool {
 	a.plan = NewPlan()
 	cheapest := float32(10_000)
 
 	for _, goal := range a.Goals {
-		startPlan := a.State
 		if !goal.IsRelevant(pos, a.State) {
 			continue
 		}
@@ -79,9 +76,9 @@ func (a *Agent) ChooseGoal(w *world.World, pos cnts.Point) bool {
 			act.Update(goal.Target(), pos)
 		}
 
-		actions, err := goap.Plan(startPlan, goal.DesiredState(), goal.GetGoapActions())
+		actions, err := goap.Plan(a.State, goal.DesiredState(), goal.GetGoapActions())
 		if err != nil {
-			if cnts.DEBUGGING {
+			if cnts.DEBUGGING && goal.Type() == GoalRunAwayType {
 				fmt.Println(err.Error())
 			}
 			continue
@@ -114,7 +111,6 @@ func (a *Agent) ExecutePlan() bool {
 	hasAct := a.plan.hasAction()
 	if !hasAct {
 		a.RemoveGoal(a.plan.goal.ID())
-		a.Actions = make([]goap.Action, 0)
 		a.plan.Clear()
 		return true
 	}

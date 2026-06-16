@@ -67,20 +67,6 @@ func (m *Movement) Update() {
 			return
 		}
 		next := m.Waypoints[0]
-		if next == m.TargetPos {
-			if m.w.IsOccupied(m.TargetPos.X, m.TargetPos.Y) {
-				m.Waypoints = m.Waypoints[1:]
-				m.State = StateMovementArrived
-				return
-			}
-			m.w.Vacate(m.pos.X, m.pos.Y)
-			m.pos.X = next.X
-			m.pos.Y = next.Y
-			m.w.Occupy(m.pos.X, m.pos.Y)
-			m.Waypoints = m.Waypoints[1:]
-			m.State = StateMovementArrived
-			return
-		}
 		if m.w.IsOccupied(next.X, next.Y) {
 			m.State = StateMovementWaiting
 			m.WaitTicks = 0
@@ -132,7 +118,11 @@ func (m *Movement) Pos() cnts.Point {
 
 func (m *Movement) ExecuteAction(target agent.Target) bool {
 	if m.State == StateMovementIdle {
-		m.SetTarget(target.Pos())
+		dest := target.Pos()
+		if ip, ok := target.(agent.InteractionPositioner); ok {
+			dest = ip.InteractionPos(m.w, m.pos)
+		}
+		m.SetTarget(dest)
 	} else {
 		m.Update()
 		if m.State == StateMovementArrived {
@@ -140,8 +130,4 @@ func (m *Movement) ExecuteAction(target agent.Target) bool {
 		}
 	}
 	return false
-}
-
-func (m *Movement) IsActor(actionType agent.ActionType) bool {
-	return actionType == agent.ActionMoveType
 }

@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"fmt"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/world"
@@ -21,7 +22,7 @@ func NewGoalRoam(w *world.World, t Target, from cnts.Point) IGoal {
 	g := GoalRoam{
 		id:           cnts.NewID(),
 		name:         "Roam",
-		desiredState: goap.StateOf("near"),
+		desiredState: goap.StateOf(fmt.Sprintf("near_%s", t.ID())),
 		target:       t,
 
 		actions: actions,
@@ -66,5 +67,13 @@ func (gr *GoalRoam) Actions() []IAction {
 }
 
 func (gr *GoalRoam) IsRelevant(from cnts.Point, state *goap.State) bool {
+	match, err := state.Match(goap.StateOf("!threatned"))
+	if err != nil {
+		return false
+	}
+
+	if !match {
+		return false
+	}
 	return true
 }

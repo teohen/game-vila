@@ -3,6 +3,7 @@ package entity
 import (
 	"github/teohen/mgm-tto/agent"
 	"github/teohen/mgm-tto/events"
+	"github/teohen/mgm-tto/resource"
 	"log"
 )
 
@@ -21,7 +22,7 @@ type IncrementWood func(amount int)
 
 type Lumberjack struct {
 	State         LumberjackState
-	tree          *Tree
+	tree          *resource.Tree
 	hit           int
 	incrementWood IncrementWood
 }
@@ -35,7 +36,7 @@ func NewLumberjack(iw IncrementWood) *Lumberjack {
 	}
 }
 
-func (lj *Lumberjack) Start(tree *Tree) {
+func (lj *Lumberjack) Start(tree *resource.Tree) {
 	lj.tree = tree
 	lj.State = StateLumberjackHitting
 }
@@ -62,7 +63,7 @@ func (lj *Lumberjack) Update() bool {
 }
 
 func (lj *Lumberjack) ExecuteAction(target agent.Target) bool {
-	t, ok := target.(*Tree)
+	t, ok := target.(*resource.Tree)
 	if !ok {
 		log.Fatal("TREE CONVERTION NOT WOTK")
 	}

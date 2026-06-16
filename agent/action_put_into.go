@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"fmt"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/world"
@@ -20,7 +21,7 @@ func NewActionPutInto(t Target) IAction {
 	pi := ActionPutInto{
 		name:    "put_into",
 		cost:    1,
-		require: goap.StateOf("near"),
+		require: goap.StateOf(fmt.Sprintf("near_%s", t.ID())),
 		outcome: goap.StateOf("inventory_incremented"),
 		target:  t,
 	}

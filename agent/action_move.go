@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"fmt"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/goap"
 	"github/teohen/mgm-tto/pathfinding"
@@ -23,7 +24,7 @@ func NewActionMove(w *world.World, t Target, from cnts.Point) IAction {
 		name:    "move_action",
 		cost:    1,
 		require: goap.StateOf("walkable"),
-		outcome: goap.StateOf("near"),
+		outcome: goap.StateOf(fmt.Sprintf("near_%s", t.ID())),
 		target:  t,
 		world:   w,
 		from:    from,
@@ -61,10 +62,10 @@ func (am *ActionMove) Update(t Target, from cnts.Point) {
 
 	path := pathfinding.FindPath(am.world, am.from, am.target.Pos())
 	if path == nil {
-		am.outcome = goap.StateOf("!near")
+		am.outcome = goap.StateOf(fmt.Sprintf("!near_%s", t.ID()))
 		am.cost = math.MaxFloat32
 	} else {
 		am.cost = float32(len(path))
-		am.outcome = goap.StateOf("near")
+		am.outcome = goap.StateOf(fmt.Sprintf("near_%s", t.ID()))
 	}
 }

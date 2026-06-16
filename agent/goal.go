@@ -23,4 +23,5 @@ const (
 	GoalCollectTreeType    GoalType = "CollectTree"
 	GoalStoreInventoryType GoalType = "StoreInventory"
 	GoalRoamType           GoalType = "Roam"
+	GoalRunAwayType        GoalType = "RunAway"
 )

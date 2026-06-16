@@ -6,7 +6,7 @@ import (
 
 	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
-	"github/teohen/mgm-tto/entity"
+	"github/teohen/mgm-tto/npc"
 	"github/teohen/mgm-tto/save"
 	"github/teohen/mgm-tto/simulation"
 	"github/teohen/mgm-tto/ui"
@@ -29,15 +29,15 @@ func New() Game {
 	}
 
 	hit := false
-	var villager *entity.Villager
+	var villager *npc.Villager
 	var storage *building.Storage
-	var deer *entity.Deer
+	var deer *npc.Deer
 	for !hit {
 		x := rand.Intn(cnts.GridCols)
 		y := rand.Intn(cnts.GridRows)
 
 		if !sim.World().IsOccupied(x, y) {
-			villager = entity.NewVillager(x, y, sim.World())
+			villager = npc.NewVillager(x, y, sim.World())
 			hit = true
 		}
 	}
@@ -61,7 +61,7 @@ func New() Game {
 		y := rand.Intn(cnts.GridRows)
 
 		if !sim.World().IsOccupied(x, y) {
-			deer = entity.NewDeer(x, y, sim.World())
+			deer = npc.NewDeer(x, y, sim.World())
 			hit = true
 		}
 	}

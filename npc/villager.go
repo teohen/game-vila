@@ -1,9 +1,11 @@
-package entity
+package npc
 
 import (
 	"fmt"
 	"github/teohen/mgm-tto/agent"
+	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
+	"github/teohen/mgm-tto/entity"
 	"github/teohen/mgm-tto/job"
 	"github/teohen/mgm-tto/pathfinding"
 	"github/teohen/mgm-tto/spritebank"
@@ -22,9 +24,9 @@ const (
 
 type Villager struct {
 	agent      agent.IAgent
-	movement   *Movement
-	lumberjack *Lumberjack
-	storager   *Storager
+	movement   *entity.Movement
+	lumberjack *entity.Lumberjack
+	storager   *entity.Storager
 	id         string
 	State      VillagerState
 	w          *world.World
@@ -33,9 +35,9 @@ type Villager struct {
 func NewVillager(x, y int, w *world.World) *Villager {
 	v := Villager{}
 	id := fmt.Sprintf("villager_%d_%d", x, y)
-	movement := NewMovement(x, y, w)
-	storager := NewStorager(100)
-	lumberjack := NewLumberjack(storager.IncrementInventory)
+	movement := entity.NewMovement(x, y, w)
+	storager := entity.NewStorager(100)
+	lumberjack := entity.NewLumberjack(storager.IncrementInventory)
 
 	v.id = id
 	v.State = StateVillagerIdle
@@ -54,7 +56,7 @@ func (v *Villager) Tick() {
 	if v.State == StateVillagerIdle {
 		v.AddCollectTreeGoal()
 	}
-	if v.storager.isOverweighted() {
+	if v.storager.IsOverweighted() {
 		v.AddStorageGoal()
 	}
 
@@ -72,7 +74,7 @@ func (v *Villager) Tick() {
 }
 
 func (v *Villager) Pos() cnts.Point {
-	return v.movement.pos
+	return v.movement.Pos()
 }
 
 func (v *Villager) ID() string {
@@ -82,13 +84,13 @@ func (v *Villager) ID() string {
 func (v *Villager) Draw() {
 	x, y := cnts.WorldToScreen(v.Pos().X, v.Pos().Y)
 	src := rl.NewRectangle(41, 21, 16, 19)
-	dst := rl.NewRectangle(x, y, cnts.TileSize, cnts.TileSize)
+	dst := rl.NewRectangle(x+5, y+5, cnts.TileSize-10, cnts.TileSize-10)
 
 	rl.DrawTexturePro(spritebank.Human, src, dst, rl.NewVector2(0, 0), 0, rl.White)
 }
 
-func (v *Villager) Type() EntityType {
-	return EntityTypeVillager
+func (v *Villager) Type() NPCType {
+	return VillagerNPCType
 }
 
 func (v *Villager) AddStorageGoal() {
@@ -96,7 +98,18 @@ func (v *Villager) AddStorageGoal() {
 		return
 	}
 
-	v.agent.AddGoal(agent.NewGoalStoreInventory(v.w, nil, v.movement.pos))
+	near := pathfinding.FindClosest(v.w, v.Pos(), building.Get().GetBuildingsOf(building.StorageType))
+	if near.X == -1 {
+		return
+	}
+
+	b := building.Get().GetBuildingAt(near)
+	storage, ok := b.(*building.Storage)
+	if !ok {
+		return
+	}
+
+	v.agent.AddGoal(agent.NewGoalStoreInventory(v.w, storage, v.Pos()))
 	v.agent.SetState("overweighted")
 }
 
@@ -110,10 +123,10 @@ func (v *Villager) AddCollectTreeGoal() {
 		targets = append(targets, j.GetObject())
 	}
 
-	closest := pathfinding.FindClosest(v.w, v.movement.pos, targets)
+	closest := pathfinding.FindClosest(v.w, v.Pos(), targets)
 	for _, j := range job.GetJobQueue().Jobs {
 		if j.GetObject().Pos() == closest {
-			v.agent.AddGoal(agent.NewGoalCollectTree(v.w, j.Object, v.movement.pos))
+			v.agent.AddGoal(agent.NewGoalCollectTree(v.w, j.Object, v.Pos()))
 			job.GetJobQueue().Remove(j.Name(), j.Object.ID())
 		}
 	}

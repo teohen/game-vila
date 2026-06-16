@@ -1,4 +1,4 @@
-package entity
+package resource
 
 import (
 	"fmt"
@@ -51,8 +51,8 @@ func (t *Tree) ID() string {
 	return t.id
 }
 
-func (t *Tree) Type() EntityType {
-	return EntityTypeTree
+func (t *Tree) Type() ResourceType {
+	return ResourceTreeType
 }
 
 func (t *Tree) Mark(v bool) {

@@ -3,7 +3,8 @@ package ui
 import (
 	"fmt"
 	"github/teohen/mgm-tto/cnts"
-	"github/teohen/mgm-tto/entity"
+	"github/teohen/mgm-tto/npc"
+	"github/teohen/mgm-tto/resource"
 	"github/teohen/mgm-tto/simulation"
 	"strconv"
 	"strings"
@@ -87,7 +88,7 @@ func ExecuteCommand(sim *simulation.Simulation, cmd string) {
 			fmt.Println("invalid coordinates")
 			return
 		}
-		sim.AddVillager(entity.NewVillager(x, y, sim.World()))
+		sim.AddVillager(npc.NewVillager(x, y, sim.World()))
 		fmt.Printf("spawned villager %s at (%d,%d)\n", parts[1], x, y)
 
 	case "addtree":
@@ -101,7 +102,7 @@ func ExecuteCommand(sim *simulation.Simulation, cmd string) {
 			fmt.Println("invalid coordinates")
 			return
 		}
-		sim.AddTree(entity.NewTree(x, y, 3, 5))
+		sim.AddTree(resource.NewTree(x, y, 3, 5))
 		fmt.Printf("added tree at (%d,%d)\n", x, y)
 
 	case "removetree":

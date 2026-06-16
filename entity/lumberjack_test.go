@@ -1,6 +1,9 @@
 package entity
 
-import "testing"
+import (
+	"github/teohen/mgm-tto/resource"
+	"testing"
+)
 
 var wood = 0
 
@@ -14,7 +17,7 @@ func incrementWood(amount int) {
 
 func TestCutDownTree(t *testing.T) {
 
-	tree := NewTree(0, 0, 100, 100)
+	tree := resource.NewTree(0, 0, 100, 100)
 	lj := NewLumberjack(incrementWood)
 	lj.hit = 50
 
