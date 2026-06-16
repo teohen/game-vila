@@ -118,7 +118,11 @@ func (m *Movement) Pos() cnts.Point {
 
 func (m *Movement) ExecuteAction(target agent.Target) bool {
 	if m.State == StateMovementIdle {
-		m.SetTarget(target.Pos())
+		dest := target.Pos()
+		if ip, ok := target.(agent.InteractionPositioner); ok {
+			dest = ip.InteractionPos(m.w, m.pos)
+		}
+		m.SetTarget(dest)
 	} else {
 		m.Update()
 		if m.State == StateMovementArrived {

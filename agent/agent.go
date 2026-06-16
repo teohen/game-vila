@@ -13,6 +13,10 @@ type Target interface {
 	ID() string
 }
 
+type InteractionPositioner interface {
+	InteractionPos(w *world.World, from cnts.Point) cnts.Point
+}
+
 type IAgent interface {
 	AddGoal(goal IGoal)
 	RemoveGoal(ID string)

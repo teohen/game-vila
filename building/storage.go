@@ -3,6 +3,7 @@ package building
 import (
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/spritebank"
+	"github/teohen/mgm-tto/world"
 	"strings"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -52,4 +53,21 @@ func (s *Storage) ID() string {
 
 func (s *Storage) Type() BuildingType {
 	return StorageType
+}
+
+func (s *Storage) InteractionPos(w *world.World, from cnts.Point) cnts.Point {
+	dirs := []cnts.Point{
+		{s.pos.X, s.pos.Y - 1},
+		{s.pos.X, s.pos.Y + 1},
+		{s.pos.X - 1, s.pos.Y},
+		{s.pos.X + 1, s.pos.Y},
+	}
+	for _, p := range dirs {
+		if p.X >= 0 && p.X < w.Cols() && p.Y >= 0 && p.Y < w.Rows() {
+			if w.IsWalkable(p.X, p.Y) && !w.IsOccupied(p.X, p.Y) {
+				return p
+			}
+		}
+	}
+	return s.pos
 }
