@@ -5,6 +5,7 @@ import (
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/events"
 	"github/teohen/mgm-tto/goap"
+	"github/teohen/mgm-tto/inventory"
 	"github/teohen/mgm-tto/job"
 	"github/teohen/mgm-tto/npc"
 	"github/teohen/mgm-tto/resource"
@@ -26,6 +27,7 @@ type Simulation struct {
 	npcs      *npc.NPCList
 	resources []resource.IResource
 	buildings *building.BuildingsList
+	inventory *inventory.Inventory
 
 	ActiveTool Tool
 	Selected   map[[2]int]bool
@@ -53,6 +55,7 @@ func New(worldSize int, initialSeed int64) *Simulation {
 		world:     &w,
 		npcs:      npc.NewNPCList(),
 		buildings: building.NewBuildingsList(),
+		inventory: inventory.NewInventory(),
 	}
 
 	forestNoise := world.NewNoise(seed + 1)

@@ -2,6 +2,7 @@ package building
 
 import (
 	"github/teohen/mgm-tto/cnts"
+	"github/teohen/mgm-tto/inventory"
 	"github/teohen/mgm-tto/spritebank"
 	"github/teohen/mgm-tto/world"
 	"strings"
@@ -18,7 +19,6 @@ const (
 
 type Storage struct {
 	id        string
-	Wood      int
 	pos       cnts.Point
 	typeBuild BuildingType
 }
@@ -27,13 +27,12 @@ func NewStorage(x, y int) *Storage {
 	return &Storage{
 		id:        strings.ReplaceAll(uuid.NewString(), "-", ""),
 		pos:       cnts.Point{X: x, Y: y},
-		Wood:      50,
 		typeBuild: StorageType,
 	}
 }
 
 func (s *Storage) Insert(amount int) {
-	s.Wood += amount
+	inventory.Get().AddToInventory(inventory.Wood, amount)
 }
 
 func (s *Storage) Draw() {
@@ -57,10 +56,10 @@ func (s *Storage) Type() BuildingType {
 
 func (s *Storage) InteractionPos(w *world.World, from cnts.Point) cnts.Point {
 	dirs := []cnts.Point{
-		{s.pos.X, s.pos.Y - 1},
-		{s.pos.X, s.pos.Y + 1},
-		{s.pos.X - 1, s.pos.Y},
-		{s.pos.X + 1, s.pos.Y},
+		{X: s.pos.X, Y: s.pos.Y - 1},
+		{X: s.pos.X, Y: s.pos.Y + 1},
+		{X: s.pos.X - 1, Y: s.pos.Y},
+		{X: s.pos.X + 1, Y: s.pos.Y},
 	}
 	for _, p := range dirs {
 		if p.X >= 0 && p.X < w.Cols() && p.Y >= 0 && p.Y < w.Rows() {

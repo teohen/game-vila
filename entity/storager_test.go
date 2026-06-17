@@ -26,8 +26,4 @@ func TestStoreInventory(t *testing.T) {
 	if sto.storage != nil {
 		t.Fatal("expect sto.storage to be nil")
 	}
-
-	if storage.Wood != 100 {
-		t.Fatalf("expect storage.Wood to be %d. got=%d", 100, storage.Wood)
-	}
 }
