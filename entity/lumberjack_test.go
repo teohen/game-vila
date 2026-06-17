@@ -11,10 +11,6 @@ func reset() {
 	wood = 0
 }
 
-func incrementWood(amount int) {
-	wood += amount
-}
-
 func TestCutDownTree(t *testing.T) {
 
 	tree := resource.NewTree(0, 0, 100, 100)
@@ -54,10 +50,5 @@ func TestCutDownTree(t *testing.T) {
 	if actionCounter != 2 {
 		t.Fatalf("expect counter to be %d. got=%d", 2, actionCounter)
 	}
-
-	if wood != 100 {
-		t.Fatalf("expect wood to be %d. got=%d", 100, wood)
-	}
-
 	reset()
 }

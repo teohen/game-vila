@@ -18,7 +18,6 @@ type DeerState string
 const (
 	StateIdle    DeerState = "idle"
 	StateRoaming DeerState = "roaming"
-	// StateThreatned DeerState = "threatned"
 )
 
 type Deer struct {
@@ -145,6 +144,10 @@ func (d *Deer) AddRunAwayGoal() bool {
 	d.agent.AddGoal(g)
 	d.agent.SetState("threatned")
 	return true
+}
+
+func (d *Deer) GetGoals() []agent.IGoal {
+	return d.agent.GetGoals()
 }
 
 func (d *Deer) ClearGoals() {

@@ -1,7 +1,6 @@
 package npc
 
 import (
-	"fmt"
 	"github/teohen/mgm-tto/agent"
 	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
@@ -35,7 +34,7 @@ type Villager struct {
 
 func NewVillager(x, y int, w *world.World, cr entity.CollectResource) *Villager {
 	v := Villager{}
-	id := fmt.Sprintf("villager_%d_%d", x, y)
+	id := cnts.NewID()
 	movement := entity.NewMovement(x, y, w)
 	storager := entity.NewStorager(100)
 	lumberjack := entity.NewLumberjack()
@@ -61,6 +60,7 @@ func (v *Villager) Tick() {
 		v.AddCollectTreeGoal()
 	}
 	if v.storager.IsOverweighted() {
+		v.agent.SetState("overweighted")
 		v.AddStorageGoal()
 	}
 
@@ -95,6 +95,10 @@ func (v *Villager) Draw() {
 
 func (v *Villager) Type() NPCType {
 	return VillagerNPCType
+}
+
+func (v *Villager) Storager() *entity.Storager {
+	return v.storager
 }
 
 func (v *Villager) AddStorageGoal() {

@@ -13,7 +13,7 @@ What the player builds over time. Composed of buildings, Villagers, and animals.
 _Avoid_: Town, city, settlement
 
 **World**:
-A fixed-size 2D grid of cells (30×30) where everything exists. Supports pan and zoom camera navigation.
+A fixed-size 2D grid of cells  where everything exists. Supports pan and zoom camera navigation.
 _Avoid_: Map, level, board
 
 **Cell**:
@@ -25,7 +25,7 @@ The surface type of a Cell. Determines visual appearance and background color.
 _Avoid_: Ground, floor, biome
 
 **Villager**:
-A non-player character that inhabits the village. Has an ID, name, type (currently only Human), and a position on the world grid. Is drawn using a spritesheet texture.
+A non-player character that inhabits the village. Has an ID and a position on the world grid. Composes Movement, Lumberjack, Collecter, and Storager traits. Uses GOAP (Goal-Oriented Action Planning) for decision-making. Drawn using a spritesheet texture.
 _Avoid_: Character, person, unit
 
 **Selection**:
@@ -53,15 +53,15 @@ The system by which a Villager determines the sequence of cells to traverse towa
 _Avoid_: Navigation, routing, move planning
 
 **Job**:
-A work order in the JobQueue. Has a Type (JobTypeChopTrees, JobTypeMove) and a target cell (TargetX, TargetY). Created by the player via tool actions (e.g., axe tool creates ChopTrees jobs).
+A work order in the JobQueue. Has a Type (currently only JobChopTreeType) and an Object (the target entity). Created by the player via tool actions (e.g., axe tool creates ChopTree jobs).
 _Avoid_: Task, order, work item
 
 **JobQueue**:
-A queue that holds Jobs for Villagers to consume. Villagers pull from this queue to determine their movement target. Created by tool actions; consumed by any Idle/Arrived Villager.
+A global queue that holds Jobs for Villagers to consume. Villagers scan the queue for the closest reachable job (using A* pathfinding) and remove the chosen job. Created by tool actions; consumed by Idle Villagers.
 _Avoid_: TaskList, work queue, order book
 
 **JobType**:
-The kind of work a Job represents (e.g., JobTypeChopTrees, JobTypeMove). Determines what a Villager does upon arrival. A JobType maps to a Trait that provides the capacity to execute it — e.g., the Lumberjack Trait handles JobTypeChopTrees.
+The kind of work a Job represents (currently only JobChopTreeType). Determines what a Villager does upon arrival. A JobType maps to a GOAP action which triggers the corresponding trait — e.g., JobChopTreeType triggers ActionChopTree, executed by the Lumberjack trait.
 _Avoid_: Job kind, work type, action type
 
 **Camera**:
@@ -69,19 +69,15 @@ A 2D viewport that the player controls with right-click drag (pan) and mouse whe
 _Avoid_: Viewport, view
 
 **SpriteBank**:
-A package-level variable that owns loaded textures and makes them available to any entity that needs to draw. Exposes `Terrain` and `Human` textures. Created by the `spritebank` package, lifecycle managed via `LoadAll()` / `UnloadAll()`.
+A package-level variable that owns loaded textures and makes them available to any entity that needs to draw. Exposes `Terrain`, `Human`, `Structures`, and `Animals` textures. Created by the `spritebank` package, lifecycle managed via `LoadAll()` / `UnloadAll()`.
 _Avoid_: TextureManager, AssetRegistry, resource cache
 
 **Tool**:
 A mode the Player can activate to change what happens when they drag-select Cells. Pressing '1' toggles between ToolSelect (highlight cells only) and ToolAxe (highlight + create ChopTrees Jobs).
 _Avoid_: Mode, weapon, item
 
-**Console**:
-An in-game command console opened by pressing the backtick (`) key. Accepts text input for developer commands. Supported commands: `help`, `spawnvillager <name> <x> <y>`, `addtree <x> <y>`, `removetree <x> <y>`, `cleartrees`, `addjob <move|chop> <x> <y>`, `clearjobs`. Lives in the `ui` package.
-_Avoid_: Terminal, shell, CLI
-
 **Debug**:
-A flag-based debug system. Press F5 to toggle debug mode on/off. When active, number keys 0-6 toggle individual debug categories: 0=Sim, 2=Move, 3=Path, 4=Clock, 5=Job, 6=World. Each category prints diagnostic messages to stdout when its subsystem runs. Lives in the `debug` package.
+A simple debug flag (`cnts.DEBUGGING`) set via the `-debug` CLI flag. When enabled, draws grid coordinates on cells. No per-category debug keys exist.
 _Avoid_: Logging, tracing, verbose
 
 **Trait**:
@@ -89,12 +85,8 @@ A composable unit of behavior and state embedded into an Entity. Each trait owns
 _Avoid_: Component, module, plugin, system
 
 **Movement**:
-A trait that handles grid-based movement. Owns position (X, Y), target (TargetX, TargetY), path (Waypoints), and a state machine (Idle, Moving, Waiting, Arrived). Exposes `Update(world)` which advances one tick of movement, `SetTarget(x, y, world)` which initiates pathfinding toward a destination, and `Pos()` which returns current coordinates. When the next waypoint is occupied, Movement enters the Waiting state for up to `WaitDuration` (5 ticks) per retry, with a maximum of `MaxRetries` (10) before emitting `EventStuck`. Uses A* pathfinding via the pathfinding package and manages Occupy/Vacate on the World as it moves. Meant to be embedded in any mobile entity (Villager, future Animals, Vehicles).
+A trait that handles grid-based movement. Owns position (`cnts.Point`), target (`cnts.Point`), path (Waypoints), and a state machine (Idle, Moving, Waiting, Arrived). Exposes `Update()` which advances one tick of movement, `SetTarget(target cnts.Point)` which initiates pathfinding toward a destination, and `Pos()` which returns current coordinates. When the next waypoint is occupied, Movement enters the Waiting state for up to `WaitDuration` (5 ticks) per retry, with a maximum of `MaxRetries` (10) before giving up and returning to idle. Uses A* pathfinding via the pathfinding package and manages Occupy/Vacate on the World as it moves. Meant to be embedded in any mobile entity (Villager, future Animals, Vehicles).
 _Avoid_: Navigation, locomotion, mover
-
-**MovementEvent**:
-A value returned by an Entity's `Tick()` to signal what happened during the tick. Used by the Simulation to decide what to do next. Possible values: `EventNone` (no event, still moving/waiting), `EventIdle` (entity is idle and can accept a job), `EventArrived` (entity reached its target), `EventStuck` (entity failed to find a path after repeated retries).
-_Avoid_: Signal, message, result
 
 **Tick**:
 The fundamental unit of game time. A pulse that fires at a fixed interval (configurable, independent of frame rate). On each tick the game advances its simulation: entities Tick, actions are processed, resources are updated. Ticks are deterministic — same interval always yields same behavior regardless of FPS.
@@ -113,13 +105,13 @@ A call to Noise at a given frequency and seed. Two invocations are used: one at 
 _Avoid_: Channel, layer, octave
 
 **Save**:
-A serialized snapshot of the whole Game state written to disk as a JSON file. Contains the World grid, Villagers (with movement state), Trees, Jobs, and Camera position/zoom. Created by pressing F9.
+A serialized snapshot of the whole Game state written to disk as a JSON file. Contains the World grid, Villagers (with movement state), Trees, Jobs, and Camera position/zoom. Types exist in the `save` package but are not currently wired to keyboard shortcuts.
 _Avoid_: Save file, save data, save slot
 
 **Load**:
-The act of reading a Save from disk and replacing the current Game state entirely with the reconstructed state. Triggered by pressing F10. If the file is missing or corrupt, an error is printed and the game continues unchanged.
+The act of reading a Save from disk and replacing the current Game state entirely with the reconstructed state. `LoadFromFile()` exists in the `save` package but is currently stubbed (not wired to the game loop).
 _Avoid_: Restore, open, import
 
 **Game**:
-The top-level struct that wires together the Simulation, UI, and Clock. Created by `game.New()` (procedural world) or `game.NewFromSave(save)` (from a save file). The main loop calls `UI.Input()`, `Update()` (advances the Clock and ticks the Simulation), and `UI.Draw()` each frame.
+The top-level struct that wires together the Simulation, UI, and Clock. Created by `game.New()` (procedural world). The main loop calls `UI.Input()`, `Update()` (advances the Clock and ticks the Simulation), and `UI.Draw()` each frame.
 _Avoid_: App, engine, state

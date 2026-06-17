@@ -18,11 +18,12 @@ type GoalRunAway struct {
 func NewGoalRunAway(w *world.World, t Target, from cnts.Point) IGoal {
 
 	actions := []IAction{NewActionMove(w, t, from)}
+	pos := t.Pos()
 
 	g := GoalRunAway{
 		id:           cnts.NewID(),
-		name:         "Roam",
-		desiredState: goap.StateOf(fmt.Sprintf("near_%s", t.ID())),
+		name:         "RunAway",
+		desiredState: goap.StateOf(fmt.Sprintf("at_%s", pos.String())),
 		target:       t,
 
 		actions: actions,

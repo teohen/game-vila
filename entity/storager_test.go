@@ -8,20 +8,19 @@ import (
 func TestStoreInventory(t *testing.T) {
 	storage := building.NewStorage(5, 5)
 	sto := NewStorager(100)
-	sto.inventory = 50
-	sto.weight = 100
+	sto.Inventory = 50
 
 	done := sto.ExecuteAction(storage)
 	if !done {
 		t.Fatal("expected ExecuteAction to return true")
 	}
 
-	if sto.inventory != 0 {
-		t.Fatalf("expect sto.inventory to be %d. got=%d", 0, sto.inventory)
+	if sto.Inventory != 0 {
+		t.Fatalf("expect sto.Inventory to be %d. got=%d", 0, sto.Inventory)
 	}
 
-	if sto.weight != 0 {
-		t.Fatalf("expect sto.weight to be %d. got=%d", 0, sto.weight)
+	if sto.CalculateWeight() != 0 {
+		t.Fatalf("expect sto.Weight to be %d. got=%d", 0, sto.CalculateWeight())
 	}
 
 	if sto.storage != nil {

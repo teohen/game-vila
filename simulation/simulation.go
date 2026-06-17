@@ -40,9 +40,13 @@ const (
 	treeWoodYield   = 20
 )
 
-func New() *Simulation {
-	seed := time.Now().UnixNano()
-	w := world.NewWorld(cnts.GridRows, cnts.GridCols)
+func New(worldSize int, initialSeed int64) *Simulation {
+	seed := int64(0)
+	if initialSeed == 0 {
+		seed = time.Now().UnixNano()
+	}
+
+	w := world.NewWorld(worldSize, worldSize)
 	w.Generate(seed)
 
 	sim := Simulation{
@@ -66,6 +70,18 @@ func New() *Simulation {
 			t := resource.NewTree(c, r, treeHealth, treeWoodYield)
 			sim.AddTree(t)
 		}
+	}
+
+	return &sim
+}
+
+func NewEmpty(worldSize int) *Simulation {
+	w := world.NewWorld(worldSize, worldSize)
+
+	sim := Simulation{
+		world:     &w,
+		npcs:      npc.NewNPCList(),
+		buildings: building.NewBuildingsList(),
 	}
 
 	return &sim

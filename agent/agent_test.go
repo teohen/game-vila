@@ -208,6 +208,7 @@ func TestShouldExecuteCollectTreePlan(t *testing.T) {
 	mv := ActorTest{}
 	lj := ActorTest{}
 	sto := ActorTest{}
+	pkup := ActorTest{}
 
 	a := Agent{
 		Actors: make(map[ActionType]Actor),
@@ -215,6 +216,7 @@ func TestShouldExecuteCollectTreePlan(t *testing.T) {
 	a.RegisterActor(ActionMoveType, &mv)
 	a.RegisterActor(ActionPutIntoType, &sto)
 	a.RegisterActor(ActionChopTreeType, &lj)
+	a.RegisterActor(ActionPickUpType, &pkup)
 
 	collectGoal := NewGoalCollectTree(&w, &TargetTest{id: "ID_TREE"}, cnts.Point{X: 0, Y: 0})
 	a.State = goap.StateOf("walkable", "!overweighted")
@@ -224,7 +226,7 @@ func TestShouldExecuteCollectTreePlan(t *testing.T) {
 		t.Fatalf("expect a.ChooseGoal return to be %t. got=%t", true, planSet)
 	}
 
-	if !testPlan(t, a.plan, GoalCollectTreeType, "{ID_TREE_health=0}", 2, 0) {
+	if !testPlan(t, a.plan, GoalCollectTreeType, "{picked_up_3_4=100}", 3, 0) {
 		return
 	}
 
@@ -264,7 +266,7 @@ func TestShouldAddCollectTreeGoal(t *testing.T) {
 		t.Fatalf("expect len(a.Goal) to be %d. got=%d", 1, len(a.Goals))
 	}
 
-	if !testGoal(t, a.Goals[0], GoalCollectTreeType, "{TREE_ID_health=0}") {
+	if !testGoal(t, a.Goals[0], GoalCollectTreeType, "{picked_up_3_4=100}") {
 		return
 	}
 }
