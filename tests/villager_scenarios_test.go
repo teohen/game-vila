@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/job"
 	"github/teohen/mgm-tto/npc"
 	"github/teohen/mgm-tto/resource"
@@ -14,7 +15,7 @@ func advanceTicks(sim *simulation.Simulation, n int) {
 	}
 }
 
-func TestFullCollectWoodGoal(t *testing.T) {
+func TestVillagerCollectsTree(t *testing.T) {
 	sim := simulation.NewEmpty(5)
 	vil := npc.NewVillager(0, 0, sim.World(), sim.CollectResourceAt)
 	tree := resource.NewTree(3, 3, 100, 10)
@@ -46,7 +47,7 @@ func TestFullCollectWoodGoal(t *testing.T) {
 
 }
 
-func TestFullCollectTwoTreesSequentially(t *testing.T) {
+func TestVillagerCollectsTwoTrees(t *testing.T) {
 	job.GetJobQueue().Jobs = job.GetJobQueue().Jobs[:0]
 
 	sim := simulation.NewEmpty(10)
@@ -139,5 +140,61 @@ func TestVillagerSkipsTreeWhenOverweighted(t *testing.T) {
 
 	if sim.Resources()[0].Type() != resource.ResourceTreeType {
 		t.Fatalf("expected remaining resource to be tree3, got %v", sim.Resources()[0].Type())
+	}
+}
+
+func TestVillagerStoresAndThenCollectsSecondTree(t *testing.T) {
+	job.GetJobQueue().Jobs = job.GetJobQueue().Jobs[:0]
+
+	sim := simulation.NewEmpty(10)
+	vil := npc.NewVillager(0, 0, sim.World(), sim.CollectResourceAt)
+	vil.Storager().MaxCarryWeight = 50
+
+	tree1 := resource.NewTree(2, 0, 100, 30)
+	tree2 := resource.NewTree(5, 0, 100, 10)
+	storage := building.NewStorage(7, 0)
+
+	sim.AddVillager(vil)
+	sim.AddTree(tree1)
+	sim.AddTree(tree2)
+	sim.AddStorage(storage)
+
+	job.GetJobQueue().Push(*job.NewJob(job.JobChopTreeType, tree1))
+	job.GetJobQueue().Push(*job.NewJob(job.JobChopTreeType, tree2))
+
+	advanceTicks(sim, 12)
+
+	if vil.Storager().Inventory != 30 {
+		t.Fatalf("expected inventory=30 after first tree, got %d", vil.Storager().Inventory)
+	}
+	if !vil.Storager().IsOverweighted() {
+		t.Fatalf("expected villager to be overweighted after first tree")
+	}
+	if storage.Wood != 50 {
+		t.Fatalf("expected storage.Wood=50 before storing, got %d", storage.Wood)
+	}
+
+	advanceTicks(sim, 12)
+
+	if vil.Storager().Inventory != 0 {
+		t.Fatalf("expected inventory=0 after storing, got %d", vil.Storager().Inventory)
+	}
+	if vil.Storager().IsOverweighted() {
+		t.Fatalf("expected villager to NOT be overweighted after storing")
+	}
+	if storage.Wood != 80 {
+		t.Fatalf("expected storage.Wood=80 after storing, got %d", storage.Wood)
+	}
+
+	advanceTicks(sim, 15)
+
+	if len(sim.Resources()) != 0 {
+		t.Fatalf("expected 0 resources on ground, got %d", len(sim.Resources()))
+	}
+	if vil.Pos() != tree2.Pos() {
+		t.Errorf("expected vil.Pos()=%v, got %v", tree2.Pos(), vil.Pos())
+	}
+	if storage.Wood != 80 {
+		t.Fatalf("expected storage.Wood=80 after collecting tree2, got %d", storage.Wood)
 	}
 }
