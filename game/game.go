@@ -21,7 +21,7 @@ type Game struct {
 }
 
 func New() Game {
-	sim := simulation.New()
+	sim := simulation.New(cnts.GridCols, 0)
 	g := Game{
 		sim:   sim,
 		UI:    ui.New(sim),

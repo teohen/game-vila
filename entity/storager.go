@@ -8,16 +8,14 @@ import (
 
 type Storager struct {
 	storage        *building.Storage
-	inventory      int
-	maxCarryWeight int
-	weight         int
+	Inventory      int
+	MaxCarryWeight int
 }
 
 func NewStorager(max int) *Storager {
 	return &Storager{
-		inventory:      0,
-		maxCarryWeight: max,
-		weight:         0,
+		Inventory:      0,
+		MaxCarryWeight: max,
 	}
 }
 
@@ -27,19 +25,21 @@ func (sto *Storager) ExecuteAction(target agent.Target) bool {
 		log.Fatal("storage convertion")
 	}
 
-	t.Insert(sto.inventory)
-	sto.inventory = 0
+	t.Insert(sto.Inventory)
+	sto.Inventory = 0
 	sto.storage = nil
-	sto.weight = 0
 
 	return true
 }
 
 func (sto *Storager) IncrementInventory(amount int) {
-	sto.inventory += amount
-	sto.weight += amount * 2
+	sto.Inventory += amount
+}
+
+func (sto *Storager) CalculateWeight() int {
+	return sto.Inventory * 2
 }
 
 func (sto *Storager) IsOverweighted() bool {
-	return sto.weight >= sto.maxCarryWeight
+	return sto.CalculateWeight() >= sto.MaxCarryWeight
 }
