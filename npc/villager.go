@@ -60,6 +60,7 @@ func (v *Villager) Tick() {
 		v.AddCollectTreeGoal()
 	}
 	if v.storager.IsOverweighted() {
+		v.agent.SetState("overweighted")
 		v.AddStorageGoal()
 	}
 

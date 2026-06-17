@@ -87,3 +87,57 @@ func TestFullCollectTwoTreesSequentially(t *testing.T) {
 		t.Fatalf("expected inventory=%d, got %d", expected, vil.Storager().Inventory)
 	}
 }
+
+func TestVillagerSkipsTreeWhenOverweighted(t *testing.T) {
+	job.GetJobQueue().Jobs = job.GetJobQueue().Jobs[:0]
+
+	sim := simulation.NewEmpty(10)
+	vil := npc.NewVillager(0, 0, sim.World(), sim.CollectResourceAt)
+	vil.Storager().MaxCarryWeight = 40
+
+	tree1 := resource.NewTree(1, 1, 100, 10)
+	tree2 := resource.NewTree(2, 2, 100, 10)
+	tree3 := resource.NewTree(3, 3, 100, 10)
+	sim.AddVillager(vil)
+	sim.AddTree(tree1)
+	sim.AddTree(tree2)
+	sim.AddTree(tree3)
+	job.GetJobQueue().Push(*job.NewJob(job.JobChopTreeType, tree1))
+	job.GetJobQueue().Push(*job.NewJob(job.JobChopTreeType, tree2))
+	job.GetJobQueue().Push(*job.NewJob(job.JobChopTreeType, tree3))
+
+	advanceTicks(sim, 11)
+
+	foundWood := false
+	for _, r := range sim.Resources() {
+		if r.Type() == resource.ResourceWoodType {
+			foundWood = true
+			break
+		}
+	}
+	if !foundWood {
+		t.Fatalf("expected wood on ground after first tree chopped")
+	}
+
+	advanceTicks(sim, 19)
+
+	if vil.Pos() != tree2.Pos() {
+		t.Errorf("expected vil.Pos()=%v, got %v", tree2.Pos(), vil.Pos())
+	}
+
+	if vil.Storager().Inventory != 20 {
+		t.Fatalf("expected inventory=20, got %d", vil.Storager().Inventory)
+	}
+
+	if !vil.Storager().IsOverweighted() {
+		t.Fatalf("expected villager to be overweighted")
+	}
+
+	if len(sim.Resources()) != 1 {
+		t.Fatalf("expected 1 resource (tree3) on ground, got %d: %v", len(sim.Resources()), sim.Resources())
+	}
+
+	if sim.Resources()[0].Type() != resource.ResourceTreeType {
+		t.Fatalf("expected remaining resource to be tree3, got %v", sim.Resources()[0].Type())
+	}
+}
