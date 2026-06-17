@@ -1,8 +1,16 @@
 package world
 
+import (
+	"github/teohen/mgm-tto/cnts"
+
+	rl "github.com/gen2brain/raylib-go/raylib"
+)
+
 type World struct {
-	cells    [][]Cell
-	occupied [][]bool
+	cells          [][]Cell
+	occupied       [][]bool
+	terrainTexture rl.RenderTexture2D
+	terrainReady   bool
 }
 
 const (
@@ -25,11 +33,39 @@ func NewWorld(rows, cols int) World {
 	return w
 }
 
-func (w *World) Draw() {
+func (w *World) renderTerrain() {
+	tw := int32(cnts.GridCols * cnts.TileSize)
+	th := int32(cnts.GridRows * cnts.TileSize)
+	w.terrainTexture = rl.LoadRenderTexture(tw, th)
+	rl.BeginTextureMode(w.terrainTexture)
 	for _, row := range w.cells {
 		for _, cell := range row {
 			cell.Draw()
 		}
+	}
+	rl.EndTextureMode()
+	w.terrainReady = true
+}
+
+func (w *World) Draw() {
+	if !w.terrainReady {
+		w.renderTerrain()
+	}
+	src := rl.NewRectangle(0, 0, float32(w.terrainTexture.Texture.Width), float32(w.terrainTexture.Texture.Height))
+	dst := rl.NewRectangle(0, 0, float32(cnts.GridCols*cnts.TileSize), float32(cnts.GridRows*cnts.TileSize))
+	rl.DrawTexturePro(w.terrainTexture.Texture, src, dst, rl.NewVector2(0, 0), 0, rl.White)
+	if cnts.DEBUGGING {
+		for _, row := range w.cells {
+			for _, cell := range row {
+				cell.DrawDebug()
+			}
+		}
+	}
+}
+
+func (w *World) Unload() {
+	if w.terrainReady {
+		rl.UnloadRenderTexture(w.terrainTexture)
 	}
 }
 

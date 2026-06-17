@@ -76,10 +76,13 @@ func (g *Game) Update() {
 	dt := float64(rl.GetFrameTime()) * 1000.0
 	ticks := g.clock.Advance(dt)
 
-	for i := 0; i < ticks; i++ {
+	for range ticks {
 		g.sim.Tick()
-		g.UI.Draw()
 	}
+}
+
+func (g *Game) Unload() {
+	g.sim.World().Unload()
 }
 
 func (g *Game) Save() {

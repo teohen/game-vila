@@ -48,6 +48,7 @@ func init() {
 }
 
 func quit() {
+	g.Unload()
 	spritebank.UnloadAll()
 	rl.CloseWindow()
 }

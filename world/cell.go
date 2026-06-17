@@ -73,9 +73,12 @@ func (t *Cell) Draw() {
 	rl.DrawRectangleRec(dst, t.bgColor())
 	rl.DrawTexturePro(spritebank.Terrain, src, dst, rl.NewVector2(0, 0), 0, rl.White)
 	rl.DrawRectangleLinesEx(dst, t.BorderWidth, t.BorderColor)
-	if cnts.DEBUGGING {
-		rl.DrawText(fmt.Sprintf("%d, %d", t.col, t.row), dst.ToInt32().X, dst.ToInt32().Y, 8, rl.Black)
-	}
+}
+
+func (t *Cell) DrawDebug() {
+	x := float32(t.col) * t.size
+	y := float32(t.row) * t.size
+	rl.DrawText(fmt.Sprintf("%d, %d", t.col, t.row), int32(x), int32(y), 8, rl.Black)
 }
 
 func (t *Cell) bgColor() rl.Color {
