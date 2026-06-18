@@ -63,12 +63,6 @@ func (w *World) Draw() {
 	}
 }
 
-func (w *World) Unload() {
-	if w.terrainReady {
-		rl.UnloadRenderTexture(w.terrainTexture)
-	}
-}
-
 func (w *World) GetCell(col, row int) *Cell {
 	if col < 0 || col >= len(w.cells[0]) || row < 0 || row >= len(w.cells) {
 		return nil

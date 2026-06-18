@@ -1,31 +1,28 @@
 package game
 
 import (
-	"fmt"
 	"math/rand"
 
 	"github/teohen/mgm-tto/building"
 	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/npc"
-	"github/teohen/mgm-tto/save"
 	"github/teohen/mgm-tto/simulation"
-	"github/teohen/mgm-tto/ui"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 type Game struct {
-	sim   *simulation.Simulation
-	UI    *ui.UI
-	clock Clock
+	sim      *simulation.Simulation
+	Commands []string
+	clock    Clock
 }
 
 func New() Game {
 	sim := simulation.New(cnts.GridCols, 0)
 	g := Game{
-		sim:   sim,
-		UI:    ui.New(sim),
-		clock: newClock(),
+		sim:      sim,
+		clock:    newClock(),
+		Commands: make([]string, 0),
 	}
 
 	hit := false
@@ -72,19 +69,13 @@ func New() Game {
 	return g
 }
 
-func (g *Game) Update() {
+func (g *Game) Update() *simulation.Simulation {
 	dt := float64(rl.GetFrameTime()) * 1000.0
 	ticks := g.clock.Advance(dt)
 
 	for range ticks {
 		g.sim.Tick()
 	}
-}
 
-func (g *Game) Unload() {
-	g.sim.World().Unload()
-}
-
-func (g *Game) Save() {
-	fmt.Printf("[SAVE] Game saved to %s\n", save.GetSavePath())
+	return g.sim
 }

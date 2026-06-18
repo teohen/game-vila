@@ -4,6 +4,8 @@ github.com/gen2brain/raylib-go/raylib v0.60.0 h1:KsP7W3EMkmb9zztivdgbh1bXR78pEuq
 github.com/gen2brain/raylib-go/raylib v0.60.0/go.mod h1:puAMU7Zcx6VJ6pcZSSs3gGFPyFvJuTwQlfm4KzeoXy8=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=
+github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/jupiterrider/ffi v0.7.0 h1:RKsl6Ascal+3kyAqR5Qcbp83LceQMLc1VZbPfHWoNzs=
 github.com/jupiterrider/ffi v0.7.0/go.mod h1:9dauhpOfNqrqk28fxuu0kkdeFtT9Qr4vbfigiuIXN7c=
 github.com/klauspost/cpuid/v2 v2.2.10 h1:tBs3QSyvjDyFTq3uoc/9xFpCuOsJQFNPiAhYdw2skhE=

@@ -1,69 +1,65 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"log"
-	"os"
-
-	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/game"
-	"github/teohen/mgm-tto/save"
-	"github/teohen/mgm-tto/spritebank"
+	"log"
+	"net/http"
+	"time"
 
-	rl "github.com/gen2brain/raylib-go/raylib"
+	"github.com/gorilla/websocket"
 )
 
 var (
-	running = true
-	g       game.Game
+	g game.Game
 )
 
-func init() {
-	loadPath := flag.String("load", "", "start from a save file")
-	debug := flag.Bool("debug", false, "toggle debug info")
-	flag.Parse()
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool { return true },
+}
 
-	rl.InitWindow(cnts.ScreenW, cnts.ScreenH, "mgm-tto")
-	rl.SetExitKey(rl.KeyEscape)
-	rl.SetTargetFPS(60)
-
-	spritebank.LoadAll()
-
-	if *loadPath != "" {
-		_, err := save.LoadFromFile(*loadPath)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error: %v\n", err)
-			os.Exit(1)
-		}
-		log.Fatal("LOAD FROM SAVE NOT IMPLEMENTED")
-		return
-	}
-
-	if *debug == true {
-		cnts.DEBUGGING = true
-	}
-
+func Init() {
 	g = game.New()
 }
 
-func quit() {
-	g.Unload()
-	spritebank.UnloadAll()
-	rl.CloseWindow()
+func Quit() {
+	fmt.Println("QUINT")
+}
+
+func Tick() {
+	ticker := time.NewTicker(2000 * time.Millisecond)
+	defer ticker.Stop()
+	for range ticker.C {
+		state := g.Update()
+		fmt.Println(state)
+	}
+}
+
+func handleConnections(w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println("Upgrade error:", err)
+		return
+	}
+	defer conn.Close()
+	log.Println("Client connected!")
+	done := make(chan struct{})
+	for {
+		_, message, err := conn.ReadMessage()
+		if err != nil {
+			log.Println("Read error:", err)
+			close(done)
+			break
+		}
+
+		g.Commands = append(g.Commands, string(message))
+	}
 }
 
 func main() {
-	defer quit()
-
-	for running {
-		g.UI.Input()
-		g.Update()
-		running = !rl.WindowShouldClose()
-
-		rl.BeginDrawing()
-		rl.ClearBackground(rl.White)
-		g.UI.Draw()
-		rl.EndDrawing()
-	}
+	Init()
+	go Tick()
+	http.HandleFunc("/ws", handleConnections)
+	fmt.Println("Server started on :8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
