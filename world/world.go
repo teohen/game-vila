@@ -8,7 +8,7 @@ import (
 
 type World struct {
 	cells          [][]Cell
-	occupied       [][]bool
+	Occupied       [][]bool
 	terrainTexture rl.RenderTexture2D
 	terrainReady   bool
 }
@@ -22,12 +22,12 @@ const (
 func NewWorld(rows, cols int) World {
 	w := World{
 		cells:    make([][]Cell, rows),
-		occupied: make([][]bool, rows),
+		Occupied: make([][]bool, rows),
 	}
 
 	for i := range w.cells {
 		w.cells[i] = make([]Cell, cols)
-		w.occupied[i] = make([]bool, cols)
+		w.Occupied[i] = make([]bool, cols)
 	}
 
 	return w
@@ -85,10 +85,10 @@ func (w *World) Occupy(col, row int) bool {
 	if col < 0 || col >= w.Cols() || row < 0 || row >= w.Rows() {
 		return false
 	}
-	if w.occupied[row][col] {
+	if w.Occupied[row][col] {
 		return false
 	}
-	w.occupied[row][col] = true
+	w.Occupied[row][col] = true
 	return true
 }
 
@@ -96,14 +96,14 @@ func (w *World) Vacate(col, row int) {
 	if col < 0 || col >= w.Cols() || row < 0 || row >= w.Rows() {
 		return
 	}
-	w.occupied[row][col] = false
+	w.Occupied[row][col] = false
 }
 
 func (w *World) IsOccupied(col, row int) bool {
 	if col < 0 || col >= w.Cols() || row < 0 || row >= w.Rows() {
 		return true
 	}
-	return w.occupied[row][col]
+	return w.Occupied[row][col]
 }
 
 func (w *World) IsWalkable(col, row int) bool {

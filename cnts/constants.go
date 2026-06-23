@@ -19,7 +19,7 @@ const (
 	CameraZoomMin = 0.25
 	CameraZoomMax = 7.0
 
-	TickInterval = 200 // milliseconds between ticks (5 ticks/sec)
+	TickInterval = 1000 // milliseconds between ticks (5 ticks/sec)
 )
 
 var DEBUGGING = false

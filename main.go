@@ -1,17 +1,23 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"github/teohen/mgm-tto/cnts"
 	"github/teohen/mgm-tto/game"
+	"github/teohen/mgm-tto/state"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
 )
 
 var (
-	g game.Game
+	g         game.Game
+	clients   = make(map[*websocket.Conn]bool)
+	clientsMu sync.Mutex
 )
 
 var upgrader = websocket.Upgrader{
@@ -27,11 +33,27 @@ func Quit() {
 }
 
 func Tick() {
-	ticker := time.NewTicker(2000 * time.Millisecond)
+	ticker := time.NewTicker(time.Duration(cnts.TickInterval) * time.Millisecond)
 	defer ticker.Stop()
 	for range ticker.C {
-		state := g.Update()
-		fmt.Println(state)
+		sim := g.ServerTick()
+		dto := state.FromSimulation(sim)
+		data, err := json.Marshal(dto)
+		if err != nil {
+			log.Println("JSON error:", err)
+			continue
+		}
+
+		clientsMu.Lock()
+		for conn := range clients {
+			err := conn.WriteMessage(websocket.TextMessage, data)
+			if err != nil {
+				log.Println("Write error:", err)
+				conn.Close()
+				delete(clients, conn)
+			}
+		}
+		clientsMu.Unlock()
 	}
 }
 
@@ -41,19 +63,28 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 		log.Println("Upgrade error:", err)
 		return
 	}
-	defer conn.Close()
-	log.Println("Client connected!")
-	done := make(chan struct{})
-	for {
-		_, message, err := conn.ReadMessage()
-		if err != nil {
-			log.Println("Read error:", err)
-			close(done)
-			break
-		}
 
-		g.Commands = append(g.Commands, string(message))
-	}
+	clientsMu.Lock()
+	clients[conn] = true
+	clientsMu.Unlock()
+	log.Println("Client connected!")
+
+	go func() {
+		defer func() {
+			clientsMu.Lock()
+			delete(clients, conn)
+			clientsMu.Unlock()
+			conn.Close()
+		}()
+		for {
+			_, message, err := conn.ReadMessage()
+			if err != nil {
+				log.Println("Read error:", err)
+				return
+			}
+			g.Commands = append(g.Commands, string(message))
+		}
+	}()
 }
 
 func main() {

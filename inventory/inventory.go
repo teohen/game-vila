@@ -8,22 +8,22 @@ const (
 )
 
 type Inventory struct {
-	wood  int
-	meat  int
-	hide  int
-	stone int
-	iron  int
+	Wood  int
+	Meat  int
+	Hide  int
+	Stone int
+	Iron  int
 }
 
 var inventory Inventory
 
 func NewInventory() *Inventory {
 	inventory = Inventory{
-		wood:  0,
-		meat:  0,
-		hide:  0,
-		iron:  0,
-		stone: 0,
+		Wood:  0,
+		Meat:  0,
+		Hide:  0,
+		Iron:  0,
+		Stone: 0,
 	}
 	return &inventory
 }
@@ -31,13 +31,13 @@ func NewInventory() *Inventory {
 func (i *Inventory) AddToInventory(res string, amount int) {
 	switch res {
 	case Wood:
-		i.wood += amount
+		i.Wood += amount
 	case Food:
-		i.meat += amount
+		i.Meat += amount
 	case Hide:
-		i.hide += amount
+		i.Hide += amount
 	case Stone:
-		i.stone += amount
+		i.Stone += amount
 	}
 }
 

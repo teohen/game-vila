@@ -79,3 +79,11 @@ func (g *Game) Update() *simulation.Simulation {
 
 	return g.sim
 }
+
+func (g *Game) ServerTick() *simulation.Simulation {
+	ticks := g.clock.Advance(float64(cnts.TickInterval))
+	for range ticks {
+		g.sim.Tick()
+	}
+	return g.sim
+}
